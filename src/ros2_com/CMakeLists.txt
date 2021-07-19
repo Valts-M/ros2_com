@@ -29,6 +29,15 @@ target_include_directories(publisher PUBLIC
 install(TARGETS publisher
   DESTINATION lib/${PROJECT_NAME})
 
+add_executable(subscriber src/subscriber.cpp)
+ament_target_dependencies(subscriber rclcpp std_msgs)
+target_include_directories(subscriber PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+install(TARGETS subscriber
+  DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
