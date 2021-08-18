@@ -5,7 +5,9 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/opt/ros/foxy/include/**",
-                "/opt/ros/foxy/include"
+                "/opt/ros/foxy/include",
+                "${workspaceFolder}/src/ros2_com/include",
+                "/vcpkg/installed/x64-linux/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
+#set(VCPKG_TARGET_TRIPLET "x64-linux")
+#set(CMAKE_TOOLCHAIN_FILE "/vcpkg/scripts/buildsystems/vcpkg.cmake")
 project(ros2_com)
 
 # Default to C99
@@ -6,22 +8,28 @@ if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
 endif()
 
-# Default to C++14
+# Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+#include("/vcpkg/scripts/buildsystems/vcpkg.cmake")
+set(Boost_INCLUDE_DIR "/vcpkg/installed/x64-linux/include")
+set(ament_cmake_DIR "")
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
+find_package(rclcpp REQUIRED) 
 find_package(std_msgs REQUIRED)
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIR})
 
 add_executable(publisher src/publisher.cpp)
-ament_target_dependencies(publisher rclcpp std_msgs)
+ament_target_dependencies(publisher rclcpp std_msgs Boost)
 target_include_directories(publisher PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
