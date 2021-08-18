@@ -1,7 +1,3 @@
-/*!
-* @file
-*/
-
 #ifndef SHMEM_BASE_H
 #define SHMEM_BASE_H
 
@@ -235,7 +231,7 @@ namespace ros2_com
 			{
 				consumers.push_back(
 					bip::make_managed_shared_ptr<ConsumerReference<StorageType>>(
-					t_storage.construct<ConsumerReference<StorageType>>(t_consumerName.c_str())(
+					t_storage.template construct<ConsumerReference<StorageType>>(t_consumerName.c_str())(
 					boost::forward<ShmemString<StorageType>>(t_consumerName)),
 					t_storage));
 				t_out = ConRefWeakPtr<StorageType>(consumers.back());
@@ -337,7 +333,7 @@ namespace ros2_com
 		 * Polls for new shared data. If there is no new data then false is returned.
 		 * Otherwise calls copy-assignment with the shared data <i>t_dataOut = sharedData</i>
 		*/
-		bool pollCopy(ConRefWeakPtr<StorageType>& t_consumer, T& t_dataOut )
+		bool pollCopy(ConRefWeakPtr<StorageType>& t_consumer, T& t_dataOut)
 		{
 			if (t_consumer.expired()) return false;
 			bip::sharable_lock<bip::interprocess_sharable_mutex> lock(mtx);

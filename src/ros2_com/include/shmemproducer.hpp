@@ -1,7 +1,3 @@
-/*!
-* @file
-*/
-
 #ifndef SHMEM_PRODUCER_H
 #define SHMEM_PRODUCER_H
 
@@ -226,7 +222,7 @@ namespace ros2_com
 		if (isObjectCreated()) return false; // if this producer has acquired the memory, then there is no conflict
 		try
 		{
-			auto tempObj = m_shmemManager.find<ObjSharedPtr<T, StorageType>>(getProducerName().c_str());
+			auto tempObj = m_shmemManager.template find<ObjSharedPtr<T, StorageType>>(getProducerName().c_str());
 			if (tempObj.second)
 			{
 				std::cout << std::flush << "ShmemProducer: object conflict: '" << getProducerName() 
@@ -282,15 +278,15 @@ namespace ros2_com
 		try
 		{
 			// create data
-			T* data = m_shmemManager.construct<T>(getDataName().c_str())(t_pack...);
+			T* data = m_shmemManager.template construct<T>(getDataName().c_str())(t_pack...);
 			VoidAllocator<StorageType> allocInst = m_shmemManager.get_segment_manager();
 			// create SharedObject
 			SharedObject<T, StorageType>* sharedObject =
-				m_shmemManager.construct<SharedObject<T, StorageType>>(getObjectName().c_str())(boost::move(*data), allocInst);
+				m_shmemManager.template construct<SharedObject<T, StorageType>>(getObjectName().c_str())(boost::move(*data), allocInst);
 			// create shared ptr
 			ObjSharedPtr<SharedObject<T, StorageType>, StorageType> sharedObjectPtr = bip::make_managed_shared_ptr<SharedObject<T, StorageType>>(sharedObject, m_shmemManager);
 			// create owner
-			SharedObjectOwner<T, StorageType>* owner = m_shmemManager.construct<SharedObjectOwner<T, StorageType>>(getOwnerName().c_str())(sharedObjectPtr);
+			SharedObjectOwner<T, StorageType>* owner = m_shmemManager.template construct<SharedObjectOwner<T, StorageType>>(getOwnerName().c_str())(sharedObjectPtr);
 			m_ownerSharedPtr = bip::make_managed_shared_ptr< SharedObjectOwner<T, StorageType>>(owner, m_shmemManager);
 			return true;
 		}

@@ -1,7 +1,3 @@
-/*!
-* @file
-*/
-
 #ifndef SHMEM_CONSUMER_H
 #define SHMEM_CONSUMER_H
 
@@ -333,7 +329,7 @@ namespace ros2_com
 		if (!isMemoryOpen()) return false;
 		try
 		{
-			auto owner = m_shmemManager.find< SharedObjectOwner<T, StorageType>>(getOwnerName().c_str());
+			auto owner = m_shmemManager.template find< SharedObjectOwner<T, StorageType>>(getOwnerName().c_str());
 			if (owner.second != 1)
 			{
 				std::cout << std::flush << "ShmemConsumer: findObject failed: '" << getProducerName() 
@@ -411,7 +407,7 @@ namespace ros2_com
 	{
 		if (!isObjectFound()) return false;
 		ObjSharedPtr<SharedObject<T, StorageType>, StorageType> objectSharedPtr = m_objectWeakPtr.lock();
-		return objectSharedPtr->pollCopy(m_consumer, std::forward<T>(t_dataOut));
+		return objectSharedPtr->pollCopy(m_consumer, std::forward<T&>(t_dataOut));
 	}
 
 	template <class T, class StorageType>

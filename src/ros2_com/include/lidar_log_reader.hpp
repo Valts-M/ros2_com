@@ -1,8 +1,8 @@
 #ifndef LIDAR_LOG_READER_H
 #define LIDAR_LOG_READER_H
 
-#include "os1_datatypes.h"
-#include "os1_lidar_scan.h"
+#include "os1_datatypes.hpp"
+#include "os1_lidar_scan.hpp"
 #include <fstream>
 
 namespace ros2_com
