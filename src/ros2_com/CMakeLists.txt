@@ -18,15 +18,26 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 
-add_executable(publisher src/publisher.cpp)
-ament_target_dependencies(publisher rclcpp std_msgs)
-target_include_directories(publisher PUBLIC
+add_executable(odom_publisher src/odom_publisher.cpp)
+ament_target_dependencies(odom_publisher rclcpp geometry_msgs nav_msgs)
+target_include_directories(odom_publisher PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-install(TARGETS publisher
+install(TARGETS odom_publisher
+  DESTINATION lib/${PROJECT_NAME})
+
+add_executable(lidar_publisher src/lidar_publisher.cpp)
+ament_target_dependencies(lidar_publisher rclcpp sensor_msgs)
+target_include_directories(lidar_publisher PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+install(TARGETS lidar_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(subscriber src/subscriber.cpp)
