@@ -5,9 +5,6 @@
 
 using namespace std::chrono_literals;
 
-/* This example creates a subclass of Node and uses std::bind() to register a
-* member function as a callback from the timer. */
-
 namespace ros2_com
 {
     OdometryPublisher::OdometryPublisher()
@@ -25,7 +22,6 @@ namespace ros2_com
       // RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
       // publisher_->publish(message);
     }
-
 }
 
 int main(int argc, char * argv[])

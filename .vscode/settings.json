@@ -7,7 +7,8 @@
     "files.associations": {
         "*.repos": "yaml",
         "*.world": "xml",
-        "*.xacro": "xml"
+        "*.xacro": "xml",
+        "chrono": "cpp"
     },
     // Autocomplete from ros python packages
     "python.autoComplete.extraPaths": [
