@@ -21,6 +21,8 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(Boost REQUIRED system filesystem)
+include_directories(${Boost_INCLUDE_DIR})
 
 add_executable(odom_publisher src/odom_publisher.cpp)
 ament_target_dependencies(odom_publisher rclcpp geometry_msgs nav_msgs)
