@@ -5,6 +5,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "lidar_log_reader.hpp"
 
 using namespace std::chrono_literals;
 
@@ -20,7 +21,6 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher_;
   size_t count_;
+  LidarLogReader log_reader_;
 };
-
-
 }

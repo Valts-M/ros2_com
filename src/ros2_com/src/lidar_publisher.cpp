@@ -1,6 +1,6 @@
 #include "lidar_publisher.hpp"
+#include "lidar_log_reader.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 
 namespace ros2_com
@@ -8,6 +8,7 @@ namespace ros2_com
 LidarPublisher::LidarPublisher() : Node("lidar_publisher"), count_(0)
 {
   publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
+  log_reader_.init("");
   timer_ = this->create_wall_timer(
     100ms, std::bind(&LidarPublisher::timer_callback, this));
 }
