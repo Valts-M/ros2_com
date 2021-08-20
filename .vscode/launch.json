@@ -21,7 +21,7 @@
       "program": "${workspaceFolder}/install/lib/${input:package}/${input:program}",
       "args": [],
       "preLaunchTask": "build",
-      "stopAtEntry": true,
+      "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "externalConsole": false,
       "MIMode": "gdb",

@@ -13,13 +13,44 @@ namespace ros2_com
 {
 class OdometryPublisher : public rclcpp::Node
 {
-  public:
-    OdometryPublisher();
+public:
+  OdometryPublisher();
 
-  private:
-    void timer_callback();
-    rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr publisher_;
-    size_t count_;
+private:
+  void timer_callback();
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr publisher_;
+  size_t count_;
+
+  /*!
+  * @brief Data structure for containing reactd log data
+  */
+  struct ReactdLog
+  {
+    /*!
+     * @brief Timestamp that corresponds to the measurements
+    */
+    double ts{0.0};
+    /*!
+     * @brief Gyroscope measurement about Z axis
+    */
+    int gyroZ{0};
+    /*!
+     * @brief VectorNAV gyroscope measurement (not used)
+    */
+    double vGyroZ{0.0};
+    /*!
+     * @brief Left encoder sensor's measurement
+    */
+    int leftEncoder{0};
+    /*!
+     * @brief Right encoder sensor's measurement
+    */
+    int rightEncoder{0};
+    /*!
+     * @brief The id of the measurements
+    */
+    size_t id{0U};
+  };
 };
 }
