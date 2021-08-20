@@ -30,17 +30,16 @@ namespace ros2_com
     {
         ouster::LidarPacket scan[ouster::packetsPerScan+1]{};
         double ts[ouster::packetsPerScan+1]{};
-        uint8_t lidarBuffer[ouster::lidarPacketBytes+1]{};
 
-        m_logFile.read((char*)&scan[0], ouster::lidarPacketBytes);
-        m_logFile.read((char*)&ts[0], sizeof(double));
-        u_int16_t current_frame_id = scan[0].azimuths[0].frameId;
-
-        for(int i{1}; i<ouster::packetsPerScan-1; ++i)
+        for(size_t i{0}; i<ouster::packetsPerScan; ++i)
         {
-            m_logFile.read((char*)&scan[i], ouster::lidarPacketBytes);
             m_logFile.read((char*)&ts[i], sizeof(double));
-            if(scan[i].azimuths[0].frameId != current_frame_id) break;
+            m_logFile.read((char*)&scan[i], ouster::lidarPacketBytes);
+            for(int j=0; j<16; ++j)
+            {
+                std::cout << scan[i].azimuths[j].measurementId << std::endl;
+            }
+            // if(scan[i].azimuths[0].frameId != current_frame_id) break;
         }
     }
 } // namespace ros2_com

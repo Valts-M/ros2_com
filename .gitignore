@@ -2,3 +2,4 @@ build/*
 install/*
 log/*
 site/*
+test/os1log_lidar_0
