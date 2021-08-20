@@ -26,22 +26,20 @@ namespace ros2_com
           m_data.newData = false;
       }
 
-      auto message = std_msgs::msg::String();
-      message.data = m_data.front;
-      RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
-      m_publisher->publish(message);
-
+      auto message = nav_msgs::msg::Odometry();
+      // RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
+      publisher_->publish(message);
     }
 
   bool OdometryPublisher::reconnect()
 	{
-		if (!m_odomConsumer.get())
+		if (!odomConsumer_.get())
 		{
-			m_odomConsumer = std::make_unique<ShmemConsumer<OdomData, Storage>>("ros_odometry", "robot_odometry", "");
+			odomConsumer_ = std::make_unique<ShmemConsumer<OdomData, Storage>>("ros_odometry", "robot_odometry", "");
 			return false;
 		}
 
-		if (!m_odomConsumer->isObjectFound()) m_odomConsumer->findObject();
+		if (!odomConsumer_->isObjectFound()) odomConsumer_->findObject();
 
 		//odomLogTask();
 		return true;

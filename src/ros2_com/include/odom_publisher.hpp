@@ -15,12 +15,14 @@ class OdometryPublisher : public rclcpp::Node
 {
 public:
   OdometryPublisher();
+  ~OdometryPublisher();
 
 private:
   void timer_callback();
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr publisher_;
   size_t count_;
+  bool reconnect();
 
   /*!
   * @brief Data structure for containing reactd log data
