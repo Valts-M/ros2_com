@@ -1,3 +1,8 @@
+/*!
+* @file
+* @ingroup CoreLibGroup
+*/
+
 #ifndef SHMEM_CONSUMER_H
 #define SHMEM_CONSUMER_H
 
@@ -416,7 +421,7 @@ namespace ros2_com
 	{
 		if (!isObjectFound()) return false;
 		ObjSharedPtr<SharedObject<T, StorageType>, StorageType> objectSharedPtr = m_objectWeakPtr.lock();
-		return objectSharedPtr->waitCopy(m_consumer, std::forward<std::chrono::duration<_Rep, _Period>>(t_timeout), std::forward<T>(t_dataOut));
+		return objectSharedPtr->waitCopy(m_consumer, std::forward<const std::chrono::duration<_Rep, _Period>&>(t_timeout), std::forward<T&>(t_dataOut));
 	}
 
 	template <class T, class StorageType>
@@ -425,7 +430,7 @@ namespace ros2_com
 	{
 		if (!isObjectFound()) return false;
 		ObjSharedPtr<SharedObject<T, StorageType>, StorageType> objectSharedPtr = m_objectWeakPtr.lock();
-		return objectSharedPtr->wait(m_consumer, std::forward<std::chrono::duration<_Rep, _Period>>(t_timeout), std::forward<RecieveCallback>(t_get));
+		return objectSharedPtr->wait(m_consumer, std::forward<const std::chrono::duration<_Rep, _Period>&>(t_timeout), std::forward<RecieveCallback&&>(t_get));
 	}
 
 	template <class T, class StorageType>

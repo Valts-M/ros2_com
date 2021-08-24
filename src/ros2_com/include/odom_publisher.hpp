@@ -43,19 +43,44 @@ struct ReactdLog
   size_t id{0U};
 };
 
+using Storage = boost::interprocess::managed_shared_memory;
+
 class OdometryPublisher : public rclcpp::Node
 {
 public:
   OdometryPublisher();
   ~OdometryPublisher();
+  void Run();
 
 private:
-  void timer_callback();
-  rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr publisher_;
+  nav_msgs::msg::Odometry createOdomMsg(ReactdLog &t_reactdLog);
+  double estWheelTravel(int &t_encoderVal);
+  double getDistanceTraveled(ReactdLog &t_reactdLog);
+  double calcEncScale();
+  bool noMovement(ReactdLog &t_reactdLog);
+
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_publisher;
   std::unique_ptr<ShmemConsumer<ReactdLog, Storage>> m_odomConsumer;
-  size_t count_;
-  bool reconnect();
-  };
+  size_t m_count;
+
+  double m_robotPosX{0.0}; //m
+  double m_robotPosY{0.0}; //m
+  double m_robotAngle{0.0}; //rad
+  double m_ts{0.0};
+
+  //For gyro drift correction
+  double m_gyroSum{0.0};
+  int m_noMovementCount{0};
+  double m_gyroCorrection{0.0};
+
+
+  //TODO: Get these from config later
+  const double m_wheelRadius{0.25};
+  const double m_wheelDistance{1.2};
+  const int m_encoderPPR{2048 * 4}; //encoder pulses per rotation TODO: check if accurate
+  const double m_encoderScale{2 * M_PI * m_wheelRadius * m_encoderPPR};
+  const double m_encoderScale_2{m_encoderScale / 2};
+  const double m_gyroScale{3.733262196325799e-07};
+
 };
 }

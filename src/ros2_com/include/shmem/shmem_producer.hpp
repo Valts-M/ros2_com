@@ -1,3 +1,8 @@
+/*!
+* @file
+* @ingroup CoreLibGroup
+*/
+
 #ifndef SHMEM_PRODUCER_H
 #define SHMEM_PRODUCER_H
 

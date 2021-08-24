@@ -16,6 +16,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 set(Boost_INCLUDE_DIR "/vcpkg/installed/x64-linux/include")
+set(Boost_LIBRARY_DIR "/vcpkg/installed/x64-linux/lib")
+include_directories(${Boost_INCLUDE_DIR})
+link_directories(${Boost_LIBRARY_DIR})
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -24,7 +27,6 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIR})
 
 add_library(lidar_log_reader src/lidar_log_reader.cpp)
 include_directories(include)
@@ -34,6 +36,7 @@ ament_target_dependencies(odom_publisher rclcpp geometry_msgs nav_msgs)
 target_include_directories(odom_publisher PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+target_link_libraries(odom_publisher rt)
 
 install(TARGETS odom_publisher
   DESTINATION lib/${PROJECT_NAME})

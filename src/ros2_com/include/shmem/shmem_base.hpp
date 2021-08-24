@@ -1,3 +1,8 @@
+/*!
+* @file
+* @ingroup CoreLibGroup
+*/
+
 #ifndef SHMEM_BASE_H
 #define SHMEM_BASE_H
 
