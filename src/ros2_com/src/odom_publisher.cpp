@@ -15,7 +15,7 @@ namespace ros2_com
   : Node("odom_publisher"), m_count(0)
   {
     m_publisher = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
-    m_odomConsumer = std::make_unique<ShmemConsumer<ReactdLog, Storage>>("LogReader", "RosModuleInput", "");
+    m_odomConsumer = std::make_unique<ShmemConsumer<ReactdLog, Storage>>("RosModuleInput", "RosModuleInput", "LogReader");
     Run();
   }
 
@@ -64,11 +64,7 @@ namespace ros2_com
 
   void OdometryPublisher::Run()
   {
-    if(!m_odomConsumer->isMemoryOpen())
-      m_odomConsumer->memoryOpen();
-    
-    if(!m_odomConsumer->isObjectFound())
-      m_odomConsumer->findObject();
+    if (m_odomConsumer.get()) m_odomConsumer->findObject();
 
     nav_msgs::msg::Odometry odomMsg{};
 
