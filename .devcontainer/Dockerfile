@@ -32,7 +32,7 @@ RUN cd /vcpkg && \
     ./vcpkg integrate bash && \
     ./vcpkg \
     # list of librarries that we eill be using:
-    install boost-atomic boost-interprocess boost-date-time
+    install boost-atomic boost-interprocess boost-date-time boost-circulat-buffer
 
 # add vcpkg to PATH, so that it can be called directly from terminal if needed
 ENV PATH="/vcpkg:${PATH}"

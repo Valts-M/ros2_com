@@ -6,7 +6,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "shmem/shmem_consumer.hpp"
+#include "shmem/shmem_cb_consumer.hpp"
 
 using namespace std::chrono_literals;
 
@@ -47,6 +47,7 @@ struct ReactdLog
 #pragma pack()
 
 using Storage = boost::interprocess::managed_shared_memory;
+using namespace zbot;
 
 class OdometryPublisher : public rclcpp::Node
 {

@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "/opt/ros/foxy/include/**",
                 "/opt/ros/foxy/include",
-                "/vcpkg/installed/x64-linux/include"
+                "/vcpkg/installed/x64-linux/include",
+                "/workspaces/RobotV3/MainCore/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

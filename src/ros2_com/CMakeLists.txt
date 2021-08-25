@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(ros2_com)
 
 # Default to C99
@@ -8,7 +8,7 @@ endif()
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -17,6 +17,7 @@ endif()
 
 set(Boost_INCLUDE_DIR "/vcpkg/installed/x64-linux/include")
 set(Boost_LIBRARY_DIR "/vcpkg/installed/x64-linux/lib")
+include_directories("/workspaces/RobotV3/MainCore/include")
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 
