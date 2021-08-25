@@ -15,7 +15,7 @@ namespace ros2_com
   : Node("odom_publisher"), m_count(0)
   {
     m_publisher = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
-    m_odomConsumer = std::make_unique<ShmemConsumer<ReactdLog, Storage>>("RosModuleInput", "RosModuleInput", "LogReader");
+    m_odomConsumer = std::make_unique<ShmemConsumer<ReactdLog, Storage>>("LogReader", "RosModuleInput", "asd");
     Run();
   }
 
@@ -62,16 +62,32 @@ namespace ros2_com
     return message;
   }
 
+  bool OdometryPublisher::reconnect()
+  {
+    if (!m_odomConsumer.get())
+		{
+      m_odomConsumer = std::make_unique<ShmemConsumer<ReactdLog, Storage>>("LogReader", "RosModuleInput", "asd");
+			return false;
+		}
+
+    if(!m_odomConsumer->isMemoryOpen())
+    
+
+		if (!m_odomConsumer->isObjectFound()) 
+      return m_odomConsumer->findObject();
+
+		return true;
+  }
+
   void OdometryPublisher::Run()
   {
-    if (m_odomConsumer.get()) m_odomConsumer->findObject();
-
     nav_msgs::msg::Odometry odomMsg{};
-
     ReactdLog reactdLog{};
     std::chrono::seconds const waitTime = std::chrono::seconds(100U);
 
-    while(!m_odomConsumer->pollCopy(reactdLog));
+    //wait till connected to the other module
+    while(!reconnect()) std::cout << "a";
+    if(!m_odomConsumer->waitCopy(reactdLog, waitTime)) return;
     m_ts = reactdLog.ts;
 
     while(true)
@@ -84,7 +100,6 @@ namespace ros2_com
       {
         m_gyroSum += reactdLog.gyroZ;
         m_gyroCorrection = m_gyroSum / ++m_noMovementCount;
-        continue;
       }
 
       odomMsg = createOdomMsg(reactdLog);

@@ -12,6 +12,8 @@ using namespace std::chrono_literals;
 
 namespace ros2_com
 {
+
+#pragma pack(1)
 /*!
 * @brief Data structure for containing reactd log data
 */
@@ -42,6 +44,7 @@ struct ReactdLog
   */
   size_t id{0U};
 };
+#pragma pack()
 
 using Storage = boost::interprocess::managed_shared_memory;
 
@@ -58,6 +61,7 @@ private:
   double getDistanceTraveled(ReactdLog &t_reactdLog);
   double calcEncScale();
   bool noMovement(ReactdLog &t_reactdLog);
+  bool reconnect();
 
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_publisher;
   std::unique_ptr<ShmemConsumer<ReactdLog, Storage>> m_odomConsumer;
