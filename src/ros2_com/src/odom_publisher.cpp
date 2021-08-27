@@ -15,96 +15,105 @@ namespace ros2_com
   : Node("odom_publisher"), m_count(0)
   {
     m_publisher = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
-    m_odomConsumer = std::make_unique<ShmemConsumer<ReactdLog, Storage>>("LogReader", "RosModuleInput", "asd");
+    allocateShmem();
     Run();
-  }
-
-  bool OdometryPublisher::noMovement(ReactdLog &t_reacdtdLog)
-	{
-		return t_reacdtdLog.leftEncoder < 10 && t_reacdtdLog.rightEncoder < 10;
   }
 
   OdometryPublisher::~OdometryPublisher()
   {
+    deallocateShmem();
     m_publisher.reset();
-    m_odomConsumer.reset();
   }
 
-  double OdometryPublisher::getDistanceTraveled(ReactdLog &t_reactdLog)
+  bool OdometryPublisher::getPoseAndVelocity()
+	{
+		try
+		{
+			if (!m_poseConsumer->consumerSize()) return false;
+			m_poseVelocity = m_poseConsumer->getAndPop();
+			//std::cout << std::flush << m_reactdRec.id << '\n';
+		}
+		catch (std::exception& e)
+		{
+			std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
+			return false;
+		}
+		return true;
+	}
+
+	bool OdometryPublisher::needAllocateShmem()
+	{
+		return !m_poseConsumer.get();
+	}
+	
+	void OdometryPublisher::allocateShmem()
+	{
+		if (!m_poseConsumer.get())
+		{
+      //TODO: get from config
+			m_poseConsumer = std::make_unique<ShmemPoseConsumer>("ROS2", "KinematicsOutput", "m_uniqueName");
+			m_poseConsumer->start();
+		}
+	}
+	
+	void OdometryPublisher::deallocateShmem()
+	{
+		m_poseConsumer.reset();
+	}
+	
+	void OdometryPublisher::stopShmem()
+	{
+		// if consumers and producers are alot, then create std::vector<ShmemBase> and start, stop with iterators
+		if (m_poseConsumer.get()) m_poseConsumer->stop();
+	}
+	
+	void OdometryPublisher::startShmem()
+	{
+		if (m_poseConsumer.get()) m_poseConsumer->stop();
+	}
+
+  double OdometryPublisher::getDistanceTraveled()
   {
-    return (t_reactdLog.leftEncoder + t_reactdLog.rightEncoder) * m_encoderScale_2;
+    return m_poseVelocity.robotPose.angle;
   }
 
-  nav_msgs::msg::Odometry OdometryPublisher::createOdomMsg(ReactdLog &t_reactdLog)
+  nav_msgs::msg::Odometry OdometryPublisher::createOdomMsg()
   { 
-    const double distanceTraveled = getDistanceTraveled(t_reactdLog);
-    const double angle = m_gyroScale * (t_reactdLog.gyroZ - m_gyroCorrection);
+    const double distanceTraveled = getDistanceTraveled();
 
-    m_robotAngle += angle;
-    m_robotPosX += distanceTraveled * std::cos(angle);
-    m_robotPosY += distanceTraveled * std::sin(angle);
-
-    const double linSpeed = distanceTraveled / t_reactdLog.ts;
-    const double angSpeed = angle / t_reactdLog.ts;
+    const double linSpeed = distanceTraveled / m_poseVelocity.robotPose.ts;
+    const double angSpeed = m_poseVelocity.robotPose.angle / m_poseVelocity.robotPose.ts;
 
     nav_msgs::msg::Odometry message{};
 
     message.header.set__stamp(rclcpp::Time(m_ts));
     message.twist.twist.angular.z = angSpeed;
     message.twist.twist.linear.x = linSpeed;
-    message.pose.pose.position.x = m_robotPosX;
-    message.pose.pose.position.y = m_robotPosY;
+    message.pose.pose.position.x = m_poseVelocity.robotPose.x;
+    message.pose.pose.position.y = m_poseVelocity.robotPose.y;
 
     tf2::Quaternion temp;
-    temp.setRPY(0, 0, angle);
+    temp.setRPY(0, 0, m_poseVelocity.robotPose.angle);
     tf2::convert(temp, message.pose.pose.orientation);
 
     return message;
   }
 
-  bool OdometryPublisher::reconnect()
-  {
-    if (!m_odomConsumer.get())
-		{
-      m_odomConsumer = std::make_unique<ShmemConsumer<ReactdLog, Storage>>("LogReader", "RosModuleInput", "asd");
-			return false;
-		}
-
-    if(!m_odomConsumer->isMemoryOpen())
-    
-
-		if (!m_odomConsumer->isObjectFound()) 
-      return m_odomConsumer->findObject();
-
-		return true;
-  }
-
+ 
   void OdometryPublisher::Run()
   {
     nav_msgs::msg::Odometry odomMsg{};
-    ReactdLog reactdLog{};
     std::chrono::seconds const waitTime = std::chrono::seconds(100U);
-
-    //wait till connected to the other module
-    while(!reconnect()) std::cout << "a";
-    if(!m_odomConsumer->waitCopy(reactdLog, waitTime)) return;
-    m_ts = reactdLog.ts;
 
     while(true)
     {
       //if no data in 100 seconds break the loop
-      if(!m_odomConsumer->waitCopy(reactdLog, waitTime)) break;
-      m_ts += reactdLog.ts;
+      if (needAllocateShmem()) allocateShmem();
+      if(!getPoseAndVelocity()) break;
+      m_ts += m_poseVelocity.robotPose.ts;
 
-      if(noMovement(reactdLog))
-      {
-        m_gyroSum += reactdLog.gyroZ;
-        m_gyroCorrection = m_gyroSum / ++m_noMovementCount;
-      }
+      odomMsg = createOdomMsg();
 
-      odomMsg = createOdomMsg(reactdLog);
-
-      std::cout << reactdLog.id << "\n";
       m_publisher->publish(odomMsg);
     }
   }
