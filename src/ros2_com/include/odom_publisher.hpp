@@ -10,9 +10,9 @@
 
 //robotv3
 #include <shmem/shmem_cb_consumer.hpp>
-#include "/workspaces/RobotV3/ModuleGroups/VilnisGroup/LogReader/include/logdatastructures.hpp"
-#include <robotpose.hpp>
-#include "/workspaces/RobotV3/ModuleGroups/VilnisGroup/Kinematics/include/kinematicsdatastructures.hpp"
+#include "data_structures/log_data_structures.hpp"
+#include "/workspaces/RobotV3/ModuleGroups/VilnisGroup/Kinematics/include/kinematics_data_structures.hpp"
+#include <robot_pose.hpp>
 
 namespace ros2_com
 {
@@ -28,17 +28,63 @@ using ShmemPoseConsumer = shmem::ShmemCBConsumer<PoseAndVelocity, shmem::PolicyF
 public:
   OdometryPublisher();
   ~OdometryPublisher();
-  void Run();
+  void updateHandler();
 
 private:
-  nav_msgs::msg::Odometry createOdomMsg();
-  double getDistanceTraveled();
 
+  /*!
+    * @brief Creates a nav_msg odometry message from the received lidar packets and stores it in m_odomMsg
+  */
+  void updateOdomMsg();
+
+  /*!
+    * @brief Shared pointer to the ros odometry message publisher
+  */
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_publisher;
+
+  /*!
+    * @brief Unique pointer to the shared memory pose consumer
+  */
 	std::unique_ptr<ShmemPoseConsumer> m_poseConsumer;
+
+  /*!
+    * @brief Stores how many ros messages have been published
+  */
   size_t m_count;
+
+  /*!
+    * @brief Stores the PoseAndVelocity data from shared memory
+  */
   PoseAndVelocity m_poseVelocity{};
+
+  /*!
+    * @brief Stores the ros2 odometry mesage
+    * @details http://docs.ros.org/en/api/nav_msgs/html/msg/Odometry.html
+  */
+  nav_msgs::msg::Odometry m_odomMsg{};
+
+  /*!
+    * @brief Stores the timestamp
+  */
   double m_ts{0.0};
+
+  /*!
+    * @brief Stores the X position of the previous message (m)
+  */
+  double m_previousX{0.0};
+
+  /*!
+    * @brief Stores the Y position of the previous message (m)
+  */
+  double m_previousY{0.0};
+
+  /*!
+    * @brief Stores the angle from the previous message (rad)
+  */
+  double m_previousAngle{0.0};
+
+  rclcpp::Clock m_rosClock;
+  rclcpp::TimerBase::SharedPtr m_rosTimer;
 
   /*!
     * @brief Gets data from the kinematics producer
