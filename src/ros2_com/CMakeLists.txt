@@ -15,11 +15,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+
 set(Boost_INCLUDE_DIR "/vcpkg/installed/x64-linux/include")
 set(Boost_LIBRARY_DIR "/vcpkg/installed/x64-linux/lib")
 include_directories("/workspaces/RobotV3/MainCore/include")
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
+link_directories("/workspaces/RobotV3/bin")
+link_libraries("/workspaces/RobotV3/bin/libMainCore.a")
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
