@@ -22,8 +22,8 @@ using namespace zbot;
 class OdometryPublisher : public rclcpp::Node
 {
 
-using Storage = boost::interprocess::managed_shared_memory;
-using ShmemPoseConsumer = shmem::ShmemCBConsumer<PoseAndVelocity, shmem::PolicyFifo, Storage>;
+  using Storage = boost::interprocess::managed_shared_memory;
+  using ShmemPoseConsumer = shmem::ShmemCBConsumer<PoseAndVelocity, shmem::PolicyFifo, Storage>;
 
 public:
   OdometryPublisher();
@@ -31,21 +31,20 @@ public:
   void updateHandler();
 
 private:
-
   /*!
     * @brief Creates a nav_msg odometry message from the received lidar packets and stores it in m_odomMsg
   */
-  void updateOdomMsg();
+  void updateOdom();
 
   /*!
     * @brief Shared pointer to the ros odometry message publisher
   */
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_publisher;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odomPublisher;
 
   /*!
     * @brief Unique pointer to the shared memory pose consumer
   */
-	std::unique_ptr<ShmemPoseConsumer> m_poseConsumer;
+  std::unique_ptr<ShmemPoseConsumer> m_poseConsumer;
 
   /*!
     * @brief Stores how many ros messages have been published
