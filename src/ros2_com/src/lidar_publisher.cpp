@@ -5,7 +5,8 @@
 
 namespace ros2_com
 {
-LidarPublisher::LidarPublisher() : Node("lidar_publisher"), count_(0)
+LidarPublisher::LidarPublisher()
+: Node("lidar_publisher"), count_(0)
 {
   publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
   log_reader_.init("/workspaces/ros2_com/test/os1log_lidar_1");
@@ -20,7 +21,7 @@ void LidarPublisher::timer_callback()
   // RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
   // publisher_->publish(message);
   log_reader_.readScan();
-  std::cout << "---------------------------------------------\n" ;
+  std::cout << "---------------------------------------------\n";
 }
 }
 

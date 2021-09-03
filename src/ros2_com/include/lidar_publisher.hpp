@@ -15,7 +15,7 @@ class LidarPublisher : public rclcpp::Node
 {
 public:
   LidarPublisher();
-  
+
 private:
   void timer_callback();
   rclcpp::TimerBase::SharedPtr timer_;
