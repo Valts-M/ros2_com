@@ -7,6 +7,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_ros/static_transform_broadcaster.h"
 
 //robotv3
 #include <shmem/shmem_cb_consumer.hpp>
@@ -84,6 +86,8 @@ private:
 
   rclcpp::Clock m_rosClock;
   rclcpp::TimerBase::SharedPtr m_rosTimer;
+  tf2_ros::StaticTransformBroadcaster m_tfBroadcaster;
+  geometry_msgs::msg::TransformStamped m_tfMsg;
 
   /*!
     * @brief Gets data from the kinematics producer

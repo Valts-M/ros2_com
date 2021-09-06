@@ -3,25 +3,19 @@
 #include "rclcpp/duration.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include <math.h>
 
 using namespace std::chrono_literals;
 
 namespace ros2_com
 {
 OdometryPublisher::OdometryPublisher()
-: Node("odom_publisher"), m_count(0)
+: Node("odom_publisher"), m_count(0), m_tfBroadcaster(this)
 {
   m_odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>("encoder/odom", 10);
   allocateShmem();
   //TODO: get form config
   m_odomMsg.header.frame_id = "odom";
   m_odomMsg.child_frame_id = "base_link";
-
-  // m_tfStampedMsg.header.frame_id = m_odomMsg.header.frame_id;
-  // m_tfStampedMsg.child_frame_id = m_odomMsg.child_frame_id;
 
   m_rosTimer = this->create_wall_timer(
     10ms,
@@ -43,23 +37,26 @@ void OdometryPublisher::updateOdom()
   m_odomMsg.twist.twist.linear.x = m_poseVelocity.linearVelocity;
   m_odomMsg.pose.pose.position.x = m_poseVelocity.robotPose.x;
   m_odomMsg.pose.pose.position.y = m_poseVelocity.robotPose.y;
-  m_previousX = m_poseVelocity.robotPose.x;
-  m_previousY = m_poseVelocity.robotPose.y;
 
   tf2::Quaternion temp;
   temp.setRPY(0, 0, m_poseVelocity.robotPose.angle);
   tf2::convert(temp, m_odomMsg.pose.pose.orientation);
+
+  m_tfMsg.header = m_odomMsg.header;
+  m_tfMsg.transform.rotation = m_odomMsg.pose.pose.orientation;
+  m_tfMsg.transform.translation.x = m_odomMsg.pose.pose.position.x;
+  m_tfMsg.transform.translation.y = m_odomMsg.pose.pose.position.y;
 }
 
 
 void OdometryPublisher::updateHandler()
 {
   if (needAllocateShmem()) {allocateShmem();}
-  if (!getPoseAndVelocity()) {return;}
-
+  getPoseAndVelocity();
   updateOdom();
 
   m_odomPublisher->publish(m_odomMsg);
+  m_tfBroadcaster.sendTransform(m_tfMsg);
   std::cout << m_poseVelocity.robotPose.ts << '\n' << ++m_count << '\n';
 }
 

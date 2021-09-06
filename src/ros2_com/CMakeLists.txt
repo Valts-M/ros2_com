@@ -30,13 +30,15 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(Boost REQUIRED)
 
 add_library(lidar_log_reader src/lidar_log_reader.cpp)
 include_directories(include)
 
 add_executable(odom_publisher src/odom_publisher.cpp)
-ament_target_dependencies(odom_publisher rclcpp geometry_msgs nav_msgs)
+ament_target_dependencies(odom_publisher rclcpp tf2 tf2_ros geometry_msgs nav_msgs)
 target_include_directories(odom_publisher PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
