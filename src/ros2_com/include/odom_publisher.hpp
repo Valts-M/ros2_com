@@ -1,20 +1,24 @@
+#ifndef ODOM_PUBLISHER_H
+#define ODOM_PUBLISHER_H
+
 #include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 //ros
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_ros/transform_broadcaster.h"
-#include "tf2_ros/static_transform_broadcaster.h"
 
 //robotv3
 #include <shmem/shmem_cb_consumer.hpp>
 #include "data_structures/log_data_structures.hpp"
-#include "/workspaces/RobotV3/ModuleGroups/VilnisGroup/Kinematics/include/kinematics_data_structures.hpp"
 #include <robot_pose.hpp>
+
+#include "kinematics.h"
 
 namespace ros2_com
 {
@@ -25,16 +29,21 @@ class OdometryPublisher : public rclcpp::Node
 {
 
   using Storage = boost::interprocess::managed_shared_memory;
-  using ShmemPoseConsumer = shmem::ShmemCBConsumer<PoseAndVelocity, shmem::PolicyFifo, Storage>;
+  using ShmemPoseConsumer = shmem::ShmemCBConsumer<ReactdLog, shmem::PolicyFifo, Storage>;
 
 public:
   OdometryPublisher();
   ~OdometryPublisher();
-  void updateHandler();
 
 private:
+
   /*!
-    * @brief Creates a nav_msg odometry message from the received lidar packets and stores it in m_odomMsg
+    * @brief Gets new reactd data and publishes tf and Odometry messages
+  */
+  void updateHandler();
+
+  /*!
+    * @brief updates the transform and odometry messages
   */
   void updateOdom();
 
@@ -56,7 +65,7 @@ private:
   /*!
     * @brief Stores the PoseAndVelocity data from shared memory
   */
-  PoseAndVelocity m_poseVelocity{};
+  ReactdLog m_reactdLog{};
 
   /*!
     * @brief Stores the ros2 odometry mesage
@@ -86,8 +95,9 @@ private:
 
   rclcpp::Clock m_rosClock;
   rclcpp::TimerBase::SharedPtr m_rosTimer;
-  tf2_ros::StaticTransformBroadcaster m_tfBroadcaster;
+  tf2_ros::TransformBroadcaster m_tfBroadcaster;
   geometry_msgs::msg::TransformStamped m_tfMsg;
+  Kinematics m_kinematics;
 
   /*!
     * @brief Gets data from the kinematics producer
@@ -118,3 +128,4 @@ private:
 
 };
 }
+#endif //ODOM_PUBLISHER_H

@@ -1,3 +1,6 @@
+#ifndef LIDAR_PUBLISHER_H
+#define LIDAR_PUBLISHER_H
+
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -24,3 +27,4 @@ private:
   LidarLogReader log_reader_;
 };
 }
+#endif //LIDAR_PUBLISHER_H
