@@ -1,6 +1,7 @@
 #include "odom_publisher.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/duration.hpp"
+#include
 
 using namespace std::chrono_literals;
 
@@ -10,10 +11,32 @@ OdometryPublisher::OdometryPublisher()
 : Node("odom_publisher"), m_count(0), m_tfBroadcaster(this)
 {
   m_odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>("encoder/odom", 10);
+  service = this->create_service<example_interfaces::srv::AddTwoInts>("add_two_ints", &add);
+  
   allocateShmem();
   //TODO: get form config
   m_odomMsg.header.frame_id = "odom";
   m_odomMsg.child_frame_id = "base_link";
+
+  m_odomMsg.pose.covariance =
+  {
+    0.008, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.008, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.001, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.001, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.001, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.016
+  };
+
+  m_odomMsg.twist.covariance =
+  {
+    0.004, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.001, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.001, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.001, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.001, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.016
+  };
 
   m_tfMsg.header.frame_id = m_odomMsg.header.frame_id;
   m_tfMsg.child_frame_id = m_odomMsg.child_frame_id;
@@ -76,7 +99,7 @@ void OdometryPublisher::allocateShmem()
   if (!m_poseConsumer.get()) {
     //TODO: get from config
     m_poseConsumer = std::make_unique<ShmemPoseConsumer>(
-      "ROS2", "KinematicsInput",
+      "RobotKinematics", "KinematicsOutput",
       "m_uniqueName");
     m_poseConsumer->start();
   }
