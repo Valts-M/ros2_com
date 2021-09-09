@@ -11,6 +11,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "nav_msgs/msg/path.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
 //robotv3
@@ -47,10 +48,20 @@ private:
   */
   void updateOdom();
 
+  void updatePath();
+
   /*!
     * @brief Shared pointer to the ros odometry message publisher
   */
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odomPublisher;
+
+  /*!
+    * @brief Shared pointer to the ros path message publisher
+  */
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr m_pathPublisher;
+
+  //rclcpp::Service<srv::save_bin_map>::SharedPtr service
+
 
   /*!
     * @brief Unique pointer to the shared memory pose consumer
@@ -72,6 +83,12 @@ private:
     * @details http://docs.ros.org/en/api/nav_msgs/html/msg/Odometry.html
   */
   nav_msgs::msg::Odometry m_odomMsg{};
+
+  /*!
+    * @brief Stores the ros2 odometry mesage
+    * @details http://docs.ros.org/en/api/nav_msgs/html/msg/Odometry.html
+  */
+  nav_msgs::msg::Path m_pathMsg{};
 
   /*!
     * @brief Stores the timestamp
