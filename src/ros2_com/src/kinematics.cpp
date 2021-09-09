@@ -11,7 +11,8 @@ namespace ros2_com
     const double distanceTraveled{(leftDistance + rightDistance) / 2};
 
     //const double deltaAngle{(rightDistance - leftDistance) / m_wheelDistance};
-    const double deltaAngle{m_gyroScale * (input.gyroZ - m_gyroBias)};
+    const double trueGyroZ = input.gyroZ - m_gyroBias;
+    const double deltaAngle{ trueGyroZ < 0 ? trueGyroZ * m_leftGyroScale : trueGyroZ * m_rightGyroScale};
 
     //if moving update message
     if(std::fabs(input.leftEncoder) > 10 || std::fabs(input.rightEncoder) > 10)
@@ -33,7 +34,7 @@ namespace ros2_com
       output.twist.twist.linear.x = distanceTraveled / input.ts;
       output.twist.twist.angular.z = deltaAngle / input.ts;
     }
-    else
+    else //if not moving recalculate gyro bias
     {
       m_gyroTicCount += input.gyroZ;
       m_gyroBias = m_gyroTicCount / ++m_noMovementCount;

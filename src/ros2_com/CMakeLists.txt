@@ -61,7 +61,7 @@ install(TARGETS lidar_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(minimal_publisher src/minimal_publisher.cpp)
-ament_target_dependencies(minimal_publisher rclcpp std_msgs tf2_ros geometry_msgs)
+ament_target_dependencies(minimal_publisher rclcpp std_msgs nav_msgs tf2_ros geometry_msgs)
 target_include_directories(minimal_publisher PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)

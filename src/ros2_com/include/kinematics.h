@@ -17,6 +17,7 @@ namespace ros2_com
 class Kinematics
 {
 public:
+
   void calcPosAndVelocity(zbot::ReactdLog& input, nav_msgs::msg::Odometry& output);
 
 private:
@@ -26,11 +27,13 @@ private:
   const double m_leftEncScale{3.446982481197425E-06};
   const double m_rightEncScale{3.451556213079376E-06};
   const double m_wheelDistance{0.60842}; //m
-  const double m_gyroScale{-3.644141592438521e-07};
+  // const double m_gyroScale{-3.644141592438521E-07};
+  const double m_rightGyroScale{-3.615086195934141E-07};
+  const double m_leftGyroScale{-3.641771822801296E-07};
   uint32_t m_noMovementCount{0};
-  double m_gyroTicCount{0.0};
-  double m_gyroBias{0.0};
+  int32_t m_gyroTicCount{0.0};
   double m_yaw{0.0}; //rad
+  double m_gyroBias{0.0};
 };
 }
 
