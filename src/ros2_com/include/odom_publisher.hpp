@@ -45,10 +45,13 @@ private:
   void updateHandler();
 
   /*!
-    * @brief updates the transform and odometry messages
+    * @brief Updates the transform and odometry messages
   */
   void updateOdom();
 
+  /*!
+    * @brief Updates the travaled path in the odom frame
+  */
   void updatePath();
 
   /*!
@@ -110,10 +113,24 @@ private:
   */
   double m_previousAngle{0.0};
 
-  rclcpp::Clock m_rosClock;
+  /*!
+    * @brief Timer for periodic message publishing
+  */
   rclcpp::TimerBase::SharedPtr m_rosTimer;
+
+  /*!
+    * @brief Transform broadcaster for the odom->base_footprint transform
+  */
   tf2_ros::TransformBroadcaster m_tfBroadcaster;
+
+  /*!
+    * @brief Transform message for the odom->base_footprint transform
+  */
   geometry_msgs::msg::TransformStamped m_tfMsg;
+
+  /*!
+    * @brief For robot kinematics transformations calculations
+  */
   Kinematics m_kinematics;
 
   /*!

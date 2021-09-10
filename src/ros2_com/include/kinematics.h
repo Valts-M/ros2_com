@@ -17,7 +17,12 @@ namespace ros2_com
 class Kinematics
 {
 public:
-
+  /**
+   * @brief Calculates the position and linear and angular velocities nad updates the odometry message
+   * 
+   * @param input Reactd log input
+   * @param output Odometry message to update
+   */
   void calcPosAndVelocity(zbot::ReactdLog& input, nav_msgs::msg::Odometry& output);
   double m_yaw{0.0}; //rad
 
