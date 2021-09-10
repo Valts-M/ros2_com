@@ -80,7 +80,8 @@
         "numbers": "cpp",
         "semaphore": "cpp",
         "stop_token": "cpp",
-        "geometry": "cpp"
+        "geometry": "cpp",
+        "unordered_set": "cpp"
     },
     // Autocomplete from ros python packages
     "python.autoComplete.extraPaths": [

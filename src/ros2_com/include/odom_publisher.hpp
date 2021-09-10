@@ -35,6 +35,7 @@ class OdometryPublisher : public rclcpp::Node
 public:
   OdometryPublisher();
   ~OdometryPublisher();
+  rclcpp::Context::OnShutdownCallback onShutdown();
 
 private:
 
@@ -61,7 +62,6 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr m_pathPublisher;
 
   //rclcpp::Service<srv::save_bin_map>::SharedPtr service
-
 
   /*!
     * @brief Unique pointer to the shared memory pose consumer

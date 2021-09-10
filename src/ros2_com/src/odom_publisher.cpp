@@ -18,7 +18,7 @@ OdometryPublisher::OdometryPublisher()
   allocateShmem();
   //TODO: get form config
   m_odomMsg.header.frame_id = "odom";
-  m_odomMsg.child_frame_id = "base_link";
+  m_odomMsg.child_frame_id = "base_footprint";
   m_pathMsg.header.frame_id = m_odomMsg.header.frame_id;
 
   m_odomMsg.pose.covariance =
@@ -54,7 +54,14 @@ OdometryPublisher::~OdometryPublisher()
   deallocateShmem();
   m_rosTimer.reset();
   m_odomPublisher.reset();
-  std::cout << "\nDestructed\n";
+    RCLCPP_INFO(this->get_logger(), "Destructed");
+
+}
+
+rclcpp::Context::OnShutdownCallback OdometryPublisher::onShutdown()
+{
+  RCLCPP_INFO(this->get_logger(), "Shutting down node");
+  OdometryPublisher::~OdometryPublisher();
 }
 
 void OdometryPublisher::updateOdom()
@@ -86,7 +93,7 @@ void OdometryPublisher::updateHandler()
   m_odomPublisher->publish(m_odomMsg);
   m_pathPublisher->publish(m_pathMsg);
   m_tfBroadcaster.sendTransform(m_tfMsg);
-  std::cout << m_odomMsg.pose.pose.position.x << "\t" << m_odomMsg.pose.pose.position.y << '\n';
+  std::cout << m_odomMsg.pose.pose.position.x << "\t" << m_odomMsg.pose.pose.position.y << '\t' << m_kinematics.m_yaw << '\n';
 }
 
 bool OdometryPublisher::getPoseAndVelocity()
@@ -137,7 +144,9 @@ void OdometryPublisher::startShmem()
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<ros2_com::OdometryPublisher>());
+  auto odom_node = std::make_shared<ros2_com::OdometryPublisher>();
+  rclcpp::spin(odom_node);
+  rclcpp::on_shutdown(odom_node->onShutdown());
   rclcpp::shutdown();
   return 0;
 }
