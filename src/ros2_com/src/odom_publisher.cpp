@@ -61,7 +61,9 @@ OdometryPublisher::~OdometryPublisher()
 rclcpp::Context::OnShutdownCallback OdometryPublisher::onShutdown()
 {
   RCLCPP_INFO(this->get_logger(), "Shutting down node");
-  OdometryPublisher::~OdometryPublisher();
+  deallocateShmem();
+  m_rosTimer.reset();
+  m_odomPublisher.reset();
 }
 
 void OdometryPublisher::updateOdom()
