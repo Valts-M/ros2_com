@@ -2,7 +2,7 @@ ouster_driver:
   ros__parameters:
     lidar_ip: 192.168.3.188
     computer_ip: 192.168.3.167
-    lidar_mode: "1024x20"
+    lidar_mode: "1024x10"
     imu_port: 7503
     lidar_port: 7502
     sensor_frame: laser_sensor_frame
@@ -50,4 +50,4 @@ ouster_driver:
     # IMG|PCL|IMU|SCAN
     # PCL
     #
-    proc_mask: PCL|IMU|SCAN
+    proc_mask: IMU|SCAN

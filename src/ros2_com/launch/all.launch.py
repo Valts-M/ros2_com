@@ -47,6 +47,7 @@ def generate_launch_description():
         package='ros2_com',
         executable='odom_publisher',
         name='odom_publisher',
+        output='screen'
         #parameters=[os.path.join(pkg_share, 'config/mapper_params_online_async.yaml'), {'use_sim_time': LaunchConfiguration('use_sim_time')}]
     )
     ouster_node = LifecycleNode(package='ros2_ouster',
