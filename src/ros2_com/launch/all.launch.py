@@ -102,7 +102,7 @@ def generate_launch_description():
  	    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='false',
                                             description='Flag to enable use_sim_time'),                                 
         robot_state_publisher_node,
-        joint_state_publisher_node,
+        #joint_state_publisher_node,
         slam_toolbox_node,
         odom_publisher_node,
         ouster_node,
