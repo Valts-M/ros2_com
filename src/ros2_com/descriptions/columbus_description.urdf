@@ -175,7 +175,7 @@
 <joint name="lidar_joint" type="fixed">
   <parent link="base_link"/>
   <child link="laser_sensor_frame"/>
-  <origin xyz="${lidar_xoff} 0 ${lidar_zoff-wheel_radius}" rpy="0 0 ${pi}"/>
+  <origin xyz="${lidar_xoff} 0 ${lidar_zoff-wheel_radius}" rpy="0 0 0"/>
 </joint>
 
 <link name="imu_link">
