@@ -2,13 +2,15 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/duration.hpp"
 
-
 using namespace std::chrono_literals;
 
 namespace ros2_com
 {
-OdometryPublisher::OdometryPublisher()
-: Node("odom_publisher"), m_count(0), m_tfBroadcaster(this)
+
+OdometryPublisher::OdometryPublisher() : OdometryPublisher(rclcpp::NodeOptions()){}
+
+OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
+: Node("odom_publisher", options), m_count(0), m_tfBroadcaster(this)
 {
   m_odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>("encoder/odom", 10);
   m_pathPublisher = this->create_publisher<nav_msgs::msg::Path>("encoder/path", 10);
@@ -17,6 +19,32 @@ OdometryPublisher::OdometryPublisher()
   
   allocateShmem();
   //TODO: get form config
+  initMsgs();
+  
+  m_rosTimer = this->create_wall_timer(
+    10ms,
+    std::bind(&OdometryPublisher::updateHandler, this));
+}
+
+OdometryPublisher::~OdometryPublisher()
+{
+  deallocateShmem();
+  m_rosTimer.reset();
+  m_odomPublisher.reset();
+    RCLCPP_INFO(this->get_logger(), "Destructed");
+
+}
+
+rclcpp::Context::OnShutdownCallback OdometryPublisher::onShutdown()
+{
+  RCLCPP_INFO(this->get_logger(), "Shutting down node");
+  deallocateShmem();
+  m_rosTimer.reset();
+  m_odomPublisher.reset();
+}
+
+void OdometryPublisher::initMsgs()
+{
   m_odomMsg.header.frame_id = "odom";
   m_odomMsg.child_frame_id = "base_footprint";
   m_pathMsg.header.frame_id = m_odomMsg.header.frame_id;
@@ -43,27 +71,6 @@ OdometryPublisher::OdometryPublisher()
 
   m_tfMsg.header.frame_id = m_odomMsg.header.frame_id;
   m_tfMsg.child_frame_id = m_odomMsg.child_frame_id;
-
-  m_rosTimer = this->create_wall_timer(
-    10ms,
-    std::bind(&OdometryPublisher::updateHandler, this));
-}
-
-OdometryPublisher::~OdometryPublisher()
-{
-  deallocateShmem();
-  m_rosTimer.reset();
-  m_odomPublisher.reset();
-    RCLCPP_INFO(this->get_logger(), "Destructed");
-
-}
-
-rclcpp::Context::OnShutdownCallback OdometryPublisher::onShutdown()
-{
-  RCLCPP_INFO(this->get_logger(), "Shutting down node");
-  deallocateShmem();
-  m_rosTimer.reset();
-  m_odomPublisher.reset();
 }
 
 void OdometryPublisher::updateOdom()

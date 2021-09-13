@@ -30,32 +30,37 @@ def generate_launch_description():
         name='joint_state_publisher',
         parameters=[{'use_sim_time': use_sim_time}],
     )
+    clock_server = launch_ros.actions.Node(
+        package='ros2_com',
+        executable='clock_server',
+    )
     robot_localization_node = launch_ros.actions.Node(
        package='robot_localization',
        executable='ekf_node',
        name='ekf_filter_node',
        output='screen',
-       parameters=[os.path.join(pkg_share, 'config/ekf.yaml'), {'use_sim_time': LaunchConfiguration('use_sim_time')}]
+       parameters=[os.path.join(pkg_share, 'config/ekf.yaml'), {'use_sim_time': use_sim_time}]
 	)
     slam_toolbox_node = launch_ros.actions.Node(
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
-        parameters=[os.path.join(pkg_share, 'config/mapper_params_online_async.yaml'), {'use_sim_time': LaunchConfiguration('use_sim_time')}]
+        parameters=[os.path.join(pkg_share, 'config/mapper_params_online_async.yaml'), {'use_sim_time': use_sim_time}]
     )
     odom_publisher_node = launch_ros.actions.Node(
         package='ros2_com',
         executable='odom_publisher',
         name='odom_publisher',
-        output='screen'
-        #parameters=[os.path.join(pkg_share, 'config/mapper_params_online_async.yaml'), {'use_sim_time': LaunchConfiguration('use_sim_time')}]
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
+
     )
     ouster_node = LifecycleNode(package='ros2_ouster',
                                 executable='ouster_driver',
                                 name="ouster_driver",
                                 output='screen',
                                 emulate_tty=True,
-                                parameters=[os.path.join(pkg_share, 'config/ouster_config.yaml')],
+                                parameters=[os.path.join(pkg_share, 'config/ouster_config.yaml'), {'use_sim_time': use_sim_time}],
                                 arguments=['--ros-args', '--log-level', 'INFO'],
                                 namespace='/',
                                 )
@@ -99,7 +104,7 @@ def generate_launch_description():
 	#launch.actions.ExecuteProcess(cmd=['gazebo', '--verbose', '-s', 'libgazebo_ros_factory.so', world_path], output='screen'),
         launch.actions.DeclareLaunchArgument(name='model', default_value=default_model_path,
                                             description='Absolute path to robot urdf file'),
- 	    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='false',
+ 	    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='true',
                                             description='Flag to enable use_sim_time'),                                 
         robot_state_publisher_node,
         #joint_state_publisher_node,
@@ -109,5 +114,6 @@ def generate_launch_description():
         activate_event,
         configure_event,
         shutdown_event,
+        clock_server
         #robot_localization_node,
     ])

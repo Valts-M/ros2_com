@@ -34,10 +34,13 @@ class OdometryPublisher : public rclcpp::Node
 
 public:
   OdometryPublisher();
+  OdometryPublisher(const rclcpp::NodeOptions & options);
   ~OdometryPublisher();
   rclcpp::Context::OnShutdownCallback onShutdown();
 
 private:
+
+  void initMsgs();
 
   /*!
     * @brief Gets new reactd data and publishes tf and Odometry messages
