@@ -127,7 +127,7 @@ void OdometryPublisher::allocateShmem()
   if (!m_poseConsumer.get()) {
     //TODO: get from config
     m_poseConsumer = std::make_unique<ShmemPoseConsumer>(
-      "RobotKinematics", "KinematicsOutput",
+      "GGKReactdLog", "GGKReactdLog",
       "m_uniqueName");
     m_poseConsumer->start();
   }
