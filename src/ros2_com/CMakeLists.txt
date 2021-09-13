@@ -33,6 +33,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(rosgraph_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -70,6 +71,15 @@ target_include_directories(minimal_publisher PUBLIC
   $<INSTALL_INTERFACE:include>)
 
 install(TARGETS minimal_publisher
+  DESTINATION lib/${PROJECT_NAME})
+
+add_executable(clock_server src/clock.cpp)
+ament_target_dependencies(clock_server rclcpp rosgraph_msgs)
+target_include_directories(clock_server PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+install(TARGETS clock_server
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch
