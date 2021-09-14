@@ -53,7 +53,7 @@ class MinimalPublisher : public rclcpp::Node
 
     void topic_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) const
     {
-        std::ofstream wf("/map.bin", std::ios::out | std::ios::binary);
+        std::ofstream wf("map.bin", std::ios::out | std::ios::binary);
         if(!wf) 
         {
           std::cout << "Cannot open file!" << '\n';
