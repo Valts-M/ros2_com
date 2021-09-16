@@ -19,7 +19,8 @@ MapSaver::MapSaver() : Node("map_saver_server"), m_count(0)
 {
   m_subscriber = this->create_subscription<nav_msgs::msg::OccupancyGrid>
     ("map", 10, std::bind(&MapSaver::topic_callback, this, _1));
-  m_saveMapService = this->create_service<ros2_com::srv::SaveMap>("ros2_com/save_map", std::bind(&MapSaver::saveMap, this, _1, _2));
+  m_saveMapService = this->create_service<ros2_com::srv::SaveMap>
+    ("ros2_com/save_map", std::bind(&MapSaver::saveMap, this, _1, _2));
 }
 
 void MapSaver::topic_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
@@ -47,7 +48,7 @@ void MapSaver::saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> re
   {
     RCLCPP_WARN(
       this->get_logger(),
-      "ros2_com: Failed to save map as %s, can't open file",
+      "ros2_com: Failed to save map as %s.bin, can't open file",
       path.c_str());
       response->success=false;
       return;

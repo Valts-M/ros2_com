@@ -22,7 +22,8 @@ def generate_launch_description():
     robot_state_publisher_node = launch_ros.actions.Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        parameters=[{'robot_description': Command(['xacro ', LaunchConfiguration('model')]), 'use_sim_time': use_sim_time}]
+        parameters=[{'robot_description': Command(['xacro ', LaunchConfiguration('model')]),
+            'use_sim_time': use_sim_time}]
     )
     joint_state_publisher_node = launch_ros.actions.Node(
         package='joint_state_publisher',
@@ -41,26 +42,38 @@ def generate_launch_description():
         name='map_saver_server'
     )
     robot_localization_node = launch_ros.actions.Node(
-       package='robot_localization',
-       executable='ekf_node',
-       name='ekf_filter_node',
-       output='screen',
-       parameters=[os.path.join(pkg_share, 'config/ekf.yaml'), {'use_sim_time': use_sim_time}]
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[os.path.join(pkg_share, 'config/ekf.yaml'), 
+            {'use_sim_time': use_sim_time}]
 	)
     slam_toolbox_node = launch_ros.actions.Node(
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
-        parameters=[os.path.join(pkg_share, 'config/mapper_params_online_async.yaml'), {'use_sim_time': use_sim_time}]
+        parameters=[os.path.join(pkg_share, 'config/mapper_params_online_async.yaml'), 
+            {'use_sim_time': use_sim_time}]
     )
+
+    localization_node = launch_ros.actions.Node(
+        package='slam_toolbox',
+        executable='localization_slam_toolbox_node',
+        name='slam_toolbox',
+        output='screen',
+        parameters=[os.path.join(pkg_share, 'config/localization_params.yaml'),
+            {"use_sim_time" : use_sim_time}],
+    )
+
     odom_publisher_node = launch_ros.actions.Node(
         package='ros2_com',
         executable='odom_publisher',
         name='odom_publisher',
         output='screen',
         parameters=[{'use_sim_time': use_sim_time}],
-
     )
+
     ouster_node = LifecycleNode(package='ros2_ouster',
                                 executable='ouster_driver',
                                 name="ouster_driver",
@@ -110,17 +123,18 @@ def generate_launch_description():
     return launch.LaunchDescription([      
     launch.actions.DeclareLaunchArgument(name='model', default_value=default_model_path,
                                         description='Absolute path to robot urdf file'),
-    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='false',
+    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='true',
                                         description='Flag to enable use_sim_time'),                               
-    map_saver_server,
-    clock_server,
-    robot_state_publisher_node,
-    slam_toolbox_node,
-    odom_publisher_node,
-    ouster_node,
-    activate_event,
-    configure_event,
-    shutdown_event
+    # map_saver_server,
+    # clock_server,
+    # robot_state_publisher_node,
+    #slam_toolbox_node,
+    localization_node,
+    # odom_publisher_node,
+    # ouster_node,
+    # activate_event,
+    # configure_event,
+    # shutdown_event
     ])
     
     

@@ -22,7 +22,6 @@ OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
   std::bind(&OdometryPublisher::pauseToggle, this, _1, _2));
 
   allocateShmem();
-  startShmem();
   //TODO: get form config
   initMsgs();
   
@@ -33,19 +32,14 @@ OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
 
 OdometryPublisher::~OdometryPublisher()
 {
-  stopShmem();
-  deallocateShmem();
-  m_rosTimer.reset();
-  m_odomPublisher.reset();
   RCLCPP_INFO(this->get_logger(), "Destructed");
+  deallocateShmem();
+  RCLCPP_INFO(this->get_logger(), "Destructed2");
 }
 
 rclcpp::Context::OnShutdownCallback OdometryPublisher::onShutdown()
 {
-  stopShmem();
   deallocateShmem();
-  m_rosTimer.reset();
-  m_odomPublisher.reset();
   RCLCPP_INFO(this->get_logger(), "Shutting down node");
 }
 
@@ -146,12 +140,13 @@ void OdometryPublisher::allocateShmem()
     m_poseConsumer = std::make_unique<ShmemPoseConsumer>(
       "GGKReactdLog", "GGKReactdLog",
       "m_uniqueName");
-    m_poseConsumer->start();
   }
+  startShmem();
 }
 
 void OdometryPublisher::deallocateShmem()
 {
+  stopShmem();
   m_poseConsumer.reset();
 }
 
@@ -171,8 +166,8 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto odom_node = std::make_shared<ros2_com::OdometryPublisher>();
-  rclcpp::spin(odom_node);
   rclcpp::on_shutdown(odom_node->onShutdown());
+  rclcpp::spin(odom_node);
   rclcpp::shutdown();
   return 0;
 }

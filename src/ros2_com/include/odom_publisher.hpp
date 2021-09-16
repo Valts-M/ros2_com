@@ -42,7 +42,6 @@ public:
 
 private:
 
-
   void initMsgs();
 
   /*!
@@ -63,22 +62,22 @@ private:
   /*!
     * @brief Shared pointer to the ros odometry message publisher
   */
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odomPublisher;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odomPublisher{nullptr};
 
   /*!
     * @brief Shared pointer to the ros path message publisher
   */
-  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr m_pathPublisher;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr m_pathPublisher{nullptr};
 
   /*!
     * @brief Service for pausing the publishing of odometry messages
   */
-  rclcpp::Service<ros2_com::srv::PauseOdom>::SharedPtr m_pauseOdomService;
+  rclcpp::Service<ros2_com::srv::PauseOdom>::SharedPtr m_pauseOdomService{nullptr};
 
   /*!
     * @brief Unique pointer to the shared memory pose consumer
   */
-  std::unique_ptr<ShmemPoseConsumer> m_poseConsumer;
+  std::unique_ptr<ShmemPoseConsumer> m_poseConsumer{nullptr};
 
   /*!
     * @brief Stores how many ros messages have been published
@@ -130,7 +129,7 @@ private:
   /*!
     * @brief Timer for periodic message publishing
   */
-  rclcpp::TimerBase::SharedPtr m_rosTimer;
+  rclcpp::TimerBase::SharedPtr m_rosTimer{nullptr};
 
   /*!
     * @brief Transform broadcaster for the odom->base_footprint transform

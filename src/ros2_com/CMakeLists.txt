@@ -69,6 +69,17 @@ rosidl_target_interfaces(odom_publisher ${PROJECT_NAME} "rosidl_typesupport_cpp"
 install(TARGETS odom_publisher
   DESTINATION lib/${PROJECT_NAME})
 
+add_executable(pose_listener src/pose_listener.cpp)
+ament_target_dependencies(pose_listener rclcpp tf2 tf2_ros geometry_msgs)
+target_include_directories(pose_listener PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(pose_listener rt)
+rosidl_target_interfaces(pose_listener ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+install(TARGETS odom_publisher
+  DESTINATION lib/${PROJECT_NAME})
+
 add_executable(lidar_publisher src/lidar_publisher.cpp)
 ament_target_dependencies(lidar_publisher rclcpp sensor_msgs)
 target_include_directories(lidar_publisher PUBLIC
@@ -109,7 +120,7 @@ install(TARGETS map_saver
   DESTINATION lib/${PROJECT_NAME})
 
 install(TARGETS ${libraries}
-  DESTINATION lib)
+  DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
