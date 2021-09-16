@@ -33,6 +33,12 @@ def generate_launch_description():
     clock_server = launch_ros.actions.Node(
         package='ros2_com',
         executable='clock_server',
+        name='clock_server'
+    )
+    map_saver_server = launch_ros.actions.Node(
+        package='ros2_com',
+        executable='map_saver',
+        name='map_saver_server'
     )
     robot_localization_node = launch_ros.actions.Node(
        package='robot_localization',
@@ -100,20 +106,21 @@ def generate_launch_description():
         )
     )
 
-    return launch.LaunchDescription([
-	#launch.actions.ExecuteProcess(cmd=['gazebo', '--verbose', '-s', 'libgazebo_ros_factory.so', world_path], output='screen'),
-        launch.actions.DeclareLaunchArgument(name='model', default_value=default_model_path,
-                                            description='Absolute path to robot urdf file'),
- 	    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='true',
-                                            description='Flag to enable use_sim_time'),                                 
-        robot_state_publisher_node,
-        #joint_state_publisher_node,
-        slam_toolbox_node,
-        odom_publisher_node,
-        ouster_node,
-        activate_event,
-        configure_event,
-        shutdown_event,
-        clock_server
-        #robot_localization_node,
+
+    return launch.LaunchDescription([      
+    launch.actions.DeclareLaunchArgument(name='model', default_value=default_model_path,
+                                        description='Absolute path to robot urdf file'),
+    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='false',
+                                        description='Flag to enable use_sim_time'),                               
+    map_saver_server,
+    clock_server,
+    robot_state_publisher_node,
+    slam_toolbox_node,
+    odom_publisher_node,
+    ouster_node,
+    activate_event,
+    configure_event,
+    shutdown_event
     ])
+    
+    

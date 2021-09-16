@@ -4,6 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/",
                 "/opt/ros/foxy/include/**",
                 "/opt/ros/foxy/include",
                 "/vcpkg/installed/x64-linux/include",

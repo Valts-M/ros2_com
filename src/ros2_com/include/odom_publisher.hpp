@@ -12,6 +12,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "nav_msgs/msg/occupancy_grid.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
 //robotv3
@@ -20,6 +21,7 @@
 #include <robot_pose.hpp>
 
 #include "kinematics.h"
+#include "ros2_com/srv/pause_odom.hpp"
 
 namespace ros2_com
 {
@@ -39,6 +41,7 @@ public:
   rclcpp::Context::OnShutdownCallback onShutdown();
 
 private:
+
 
   void initMsgs();
 
@@ -67,7 +70,8 @@ private:
   */
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr m_pathPublisher;
 
-  //rclcpp::Service<srv::save_bin_map>::SharedPtr service
+
+  rclcpp::Service<ros2_com::srv::PauseOdom>::SharedPtr m_pauseOdomService;
 
   /*!
     * @brief Unique pointer to the shared memory pose consumer
@@ -83,6 +87,11 @@ private:
     * @brief Stores the PoseAndVelocity data from shared memory
   */
   ReactdLog m_reactdLog{};
+
+  bool m_paused{false};
+
+  void pauseToggle(const std::shared_ptr<ros2_com::srv::PauseOdom::Request> request,
+          std::shared_ptr<ros2_com::srv::PauseOdom::Response> response);
 
   /*!
     * @brief Stores the ros2 odometry mesage

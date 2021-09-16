@@ -76,7 +76,7 @@ class MinimalPublisher : public rclcpp::Node
 
         wf.write((char *) &info, sizeof(info));
 
-        for(int i=0; i<info.height*info.width; i++)
+        for(uint32_t i=0U; i<info.height*info.width; i++)
         {
           wf.write((char *) &msg->data[i], sizeof(int8_t));
         }

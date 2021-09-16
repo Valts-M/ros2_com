@@ -14,7 +14,7 @@ class ClockServer : public rclcpp::Node
 {
   public:
     ClockServer()
-    : Node("minimal_publisher"), count_(0)
+    : Node("clock_server"), count_(0)
     {
       publisher_ = this->create_publisher<rosgraph_msgs::msg::Clock>("clock", 10);
       timer_ = this->create_wall_timer(

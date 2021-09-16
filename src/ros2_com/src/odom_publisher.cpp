@@ -3,6 +3,8 @@
 #include "rclcpp/duration.hpp"
 
 using namespace std::chrono_literals;
+using std::placeholders::_1;
+using std::placeholders::_2;
 
 namespace ros2_com
 {
@@ -10,14 +12,17 @@ namespace ros2_com
 OdometryPublisher::OdometryPublisher() : OdometryPublisher(rclcpp::NodeOptions()){}
 
 OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
-: Node("odom_publisher", options), m_count(0), m_tfBroadcaster(this)
+: Node("ros2_com", options), m_count(0), m_tfBroadcaster(this)
 {
-  m_odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>("encoder/odom", 10);
-  m_pathPublisher = this->create_publisher<nav_msgs::msg::Path>("encoder/path", 10);
+  m_paused = this->declare_parameter(
+    "/ros2_com/paused_new_measurements", m_paused);
+  m_odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>("ros2_com/odom", 10);
+  m_pathPublisher = this->create_publisher<nav_msgs::msg::Path>("ros2_com/path", 10);
+  m_pauseOdomService = this->create_service<ros2_com::srv::PauseOdom>("pause_odom", 
+  std::bind(&OdometryPublisher::pauseToggle, this, _1, _2));
 
-  //service = this->create_service<example_interfaces::srv::AddTwoInts>("add_two_ints", &add);
-  
   allocateShmem();
+  startShmem();
   //TODO: get form config
   initMsgs();
   
@@ -28,19 +33,20 @@ OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
 
 OdometryPublisher::~OdometryPublisher()
 {
+  stopShmem();
   deallocateShmem();
   m_rosTimer.reset();
   m_odomPublisher.reset();
-    RCLCPP_INFO(this->get_logger(), "Destructed");
-
+  RCLCPP_INFO(this->get_logger(), "Destructed");
 }
 
 rclcpp::Context::OnShutdownCallback OdometryPublisher::onShutdown()
 {
-  RCLCPP_INFO(this->get_logger(), "Shutting down node");
+  stopShmem();
   deallocateShmem();
   m_rosTimer.reset();
   m_odomPublisher.reset();
+  RCLCPP_INFO(this->get_logger(), "Shutting down node");
 }
 
 void OdometryPublisher::initMsgs()
@@ -73,6 +79,12 @@ void OdometryPublisher::initMsgs()
   m_tfMsg.child_frame_id = m_odomMsg.child_frame_id;
 }
 
+void OdometryPublisher::pauseToggle(const std::shared_ptr<ros2_com::srv::PauseOdom::Request> request,
+          std::shared_ptr<ros2_com::srv::PauseOdom::Response> response)
+{
+  m_paused = !m_paused;
+}
+
 void OdometryPublisher::updateOdom()
 {
   m_odomMsg.header.stamp = this->get_clock()->now();
@@ -96,13 +108,17 @@ void OdometryPublisher::updateHandler()
 {
   if (needAllocateShmem()) {allocateShmem();}
   if(!getPoseAndVelocity()) return;
-  updateOdom();
-  updatePath();
 
-  m_odomPublisher->publish(m_odomMsg);
-  m_pathPublisher->publish(m_pathMsg);
-  m_tfBroadcaster.sendTransform(m_tfMsg);
-  std::cout << m_odomMsg.pose.pose.position.x << "\t" << m_odomMsg.pose.pose.position.y << '\t' << m_kinematics.m_yaw << '\n';
+  if(!m_paused)
+  {
+    updateOdom();
+    updatePath();
+
+    m_odomPublisher->publish(m_odomMsg);
+    m_pathPublisher->publish(m_pathMsg);
+    m_tfBroadcaster.sendTransform(m_tfMsg);
+    std::cout << m_odomMsg.pose.pose.position.x << "\t" << m_odomMsg.pose.pose.position.y << '\t' << m_kinematics.m_yaw << '\n';
+  }
 }
 
 bool OdometryPublisher::getPoseAndVelocity()
@@ -145,7 +161,7 @@ void OdometryPublisher::stopShmem()
 
 void OdometryPublisher::startShmem()
 {
-  if (m_poseConsumer.get()) {m_poseConsumer->stop();}
+  if (m_poseConsumer.get()) {m_poseConsumer->start();}
 }
 
 }
