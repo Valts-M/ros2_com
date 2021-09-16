@@ -30,11 +30,13 @@ void MapSaver::topic_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 void MapSaver::saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> request,
           std::shared_ptr<ros2_com::srv::SaveMap::Response> response)
 {
-  if(!m_map.get())
+  if(m_map == nullptr)
   {
     RCLCPP_WARN(
       this->get_logger(),
       "ros2_com: Haven't gotten any map data yet");
+    response->success=false;
+    return;
   }
 
   std::string path = request->filename;
@@ -47,6 +49,8 @@ void MapSaver::saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> re
       this->get_logger(),
       "ros2_com: Failed to save map as %s, can't open file",
       path.c_str());
+      response->success=false;
+      return;
   }
 
   wf.write((char *) &m_map->info, sizeof(m_map->info));
@@ -60,10 +64,13 @@ void MapSaver::saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> re
   if(wf.good())
     RCLCPP_INFO(this->get_logger(), "Map bin file Saved");
   else
+  {
     RCLCPP_WARN(this->get_logger(), "Error while saving map");
+    response->success=false;
+    return;
+  }
 
-  RCLCPP_INFO(this->get_logger(),
-      "ros2_com: Saving map as %s.", path.c_str());
+  RCLCPP_INFO(this->get_logger(), "ros2_com: Saving map as %s.", path.c_str());
   int rc = system(("ros2 run nav2_map_server map_saver_cli -f " + path  + " --ros-args -p map_subscribe_transient_local:=true").c_str());
   rclcpp::sleep_for(std::chrono::seconds(1));
 }

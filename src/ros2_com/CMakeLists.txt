@@ -79,14 +79,14 @@ target_link_libraries(lidar_publisher lidar_log_reader)
 install(TARGETS lidar_publisher
   DESTINATION lib/${PROJECT_NAME})
 
-add_executable(minimal_publisher src/minimal_publisher.cpp)
-ament_target_dependencies(minimal_publisher rclcpp std_msgs nav_msgs tf2_ros geometry_msgs)
-target_include_directories(minimal_publisher PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+# add_executable(minimal_publisher src/minimal_publisher.cpp)
+# ament_target_dependencies(minimal_publisher rclcpp std_msgs nav_msgs tf2_ros geometry_msgs)
+# target_include_directories(minimal_publisher PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
 
-install(TARGETS minimal_publisher
-  DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS minimal_publisher
+#   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(clock_server src/clock.cpp)
 ament_target_dependencies(clock_server rclcpp rosgraph_msgs)
@@ -102,6 +102,7 @@ ament_target_dependencies(map_saver rclcpp nav_msgs)
 target_include_directories(map_saver PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+target_link_libraries(map_saver rt)
 rosidl_target_interfaces(map_saver ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS map_saver

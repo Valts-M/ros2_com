@@ -56,7 +56,7 @@ private:
   void updateOdom();
 
   /*!
-    * @brief Updates the travaled path in the odom frame
+    * @brief Updates the travelled path in the odom frame
   */
   void updatePath();
 
@@ -70,7 +70,9 @@ private:
   */
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr m_pathPublisher;
 
-
+  /*!
+    * @brief Service for pausing the publishing of odometry messages
+  */
   rclcpp::Service<ros2_com::srv::PauseOdom>::SharedPtr m_pauseOdomService;
 
   /*!
