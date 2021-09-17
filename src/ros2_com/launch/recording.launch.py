@@ -118,13 +118,7 @@ def generate_launch_description():
             ],
         )
     )
-    
-    pose_listener_node = launch_ros.actions.Node(
-        package='ros2_com',
-        executable='pose_listener',
-        name='pose_listener',
-        output='screen'
-    )
+
 
     return launch.LaunchDescription([      
     launch.actions.DeclareLaunchArgument(name='model', default_value=default_model_path,
@@ -132,16 +126,15 @@ def generate_launch_description():
     launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='false',
                                         description='Flag to enable use_sim_time'),                               
     # map_saver_server,
-    # clock_server,
+    clock_server,
     robot_state_publisher_node,
     #slam_toolbox_node,
     # localization_node,
-    pose_listener_node,
     odom_publisher_node,
-    # ouster_node,
-    # activate_event,
-    # configure_event,
-    # shutdown_event
+    ouster_node,
+    activate_event,
+    configure_event,
+    shutdown_event
     ])
     
     

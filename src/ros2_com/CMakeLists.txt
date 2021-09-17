@@ -38,11 +38,25 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(Boost REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/SaveMap.srv"
+  "srv/PauseOdom.srv"
+  DEPENDENCIES nav_msgs
+ )
+
+ament_export_dependencies(rosidl_default_runtime)
 
 include_directories(include)
-add_library(lidar_log_reader src/lidar_log_reader.cpp)
-add_library(kinematics src/kinematics.cpp)
+
+add_library(lidar_log_reader SHARED src/lidar_log_reader.cpp)
+add_library(kinematics SHARED src/kinematics.cpp)
 ament_target_dependencies(kinematics sensor_msgs)
+
+set(libraries 
+    lidar_log_reader
+    kinematics)
 
 add_executable(odom_publisher src/odom_publisher.cpp)
 ament_target_dependencies(odom_publisher rclcpp tf2 tf2_ros geometry_msgs nav_msgs)
@@ -50,8 +64,20 @@ target_include_directories(odom_publisher PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_link_libraries(odom_publisher rt kinematics)
+rosidl_target_interfaces(odom_publisher ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS odom_publisher
+  DESTINATION lib/${PROJECT_NAME})
+
+add_executable(pose_listener src/pose_listener.cpp)
+ament_target_dependencies(pose_listener rclcpp tf2 tf2_ros geometry_msgs)
+target_include_directories(pose_listener PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(pose_listener rt)
+rosidl_target_interfaces(pose_listener ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+install(TARGETS pose_listener
   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(lidar_publisher src/lidar_publisher.cpp)
@@ -64,14 +90,14 @@ target_link_libraries(lidar_publisher lidar_log_reader)
 install(TARGETS lidar_publisher
   DESTINATION lib/${PROJECT_NAME})
 
-add_executable(minimal_publisher src/minimal_publisher.cpp)
-ament_target_dependencies(minimal_publisher rclcpp std_msgs nav_msgs tf2_ros geometry_msgs)
-target_include_directories(minimal_publisher PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+# add_executable(minimal_publisher src/minimal_publisher.cpp)
+# ament_target_dependencies(minimal_publisher rclcpp std_msgs nav_msgs tf2_ros geometry_msgs)
+# target_include_directories(minimal_publisher PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
 
-install(TARGETS minimal_publisher
-  DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS minimal_publisher
+#   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(clock_server src/clock.cpp)
 ament_target_dependencies(clock_server rclcpp rosgraph_msgs)
@@ -82,8 +108,26 @@ target_include_directories(clock_server PUBLIC
 install(TARGETS clock_server
   DESTINATION lib/${PROJECT_NAME})
 
+add_executable(map_saver src/map_saver.cpp)
+ament_target_dependencies(map_saver rclcpp nav_msgs)
+target_include_directories(map_saver PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(map_saver rt)
+rosidl_target_interfaces(map_saver ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+install(TARGETS map_saver
+  DESTINATION lib/${PROJECT_NAME})
+
+install(TARGETS ${libraries}
+  DESTINATION lib/${PROJECT_NAME})
+
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
+)
+
+install(DIRECTORY include
+  DESTINATION include/${PROJECT_NAME}
 )
 
 install(DIRECTORY config

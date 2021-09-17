@@ -12,6 +12,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "nav_msgs/msg/occupancy_grid.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
 //robotv3
@@ -20,6 +21,7 @@
 #include <robot_pose.hpp>
 
 #include "kinematics.h"
+#include "ros2_com/srv/pause_odom.hpp"
 
 namespace ros2_com
 {
@@ -53,26 +55,29 @@ private:
   void updateOdom();
 
   /*!
-    * @brief Updates the travaled path in the odom frame
+    * @brief Updates the travelled path in the odom frame
   */
   void updatePath();
 
   /*!
     * @brief Shared pointer to the ros odometry message publisher
   */
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odomPublisher;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odomPublisher{nullptr};
 
   /*!
     * @brief Shared pointer to the ros path message publisher
   */
-  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr m_pathPublisher;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr m_pathPublisher{nullptr};
 
-  //rclcpp::Service<srv::save_bin_map>::SharedPtr service
+  /*!
+    * @brief Service for pausing the publishing of odometry messages
+  */
+  rclcpp::Service<ros2_com::srv::PauseOdom>::SharedPtr m_pauseOdomService{nullptr};
 
   /*!
     * @brief Unique pointer to the shared memory pose consumer
   */
-  std::unique_ptr<ShmemPoseConsumer> m_poseConsumer;
+  std::unique_ptr<ShmemPoseConsumer> m_poseConsumer{nullptr};
 
   /*!
     * @brief Stores how many ros messages have been published
@@ -83,6 +88,11 @@ private:
     * @brief Stores the PoseAndVelocity data from shared memory
   */
   ReactdLog m_reactdLog{};
+
+  bool m_paused{false};
+
+  void pauseToggle(const std::shared_ptr<ros2_com::srv::PauseOdom::Request> request,
+          std::shared_ptr<ros2_com::srv::PauseOdom::Response> response);
 
   /*!
     * @brief Stores the ros2 odometry mesage
@@ -119,7 +129,7 @@ private:
   /*!
     * @brief Timer for periodic message publishing
   */
-  rclcpp::TimerBase::SharedPtr m_rosTimer;
+  rclcpp::TimerBase::SharedPtr m_rosTimer{nullptr};
 
   /*!
     * @brief Transform broadcaster for the odom->base_footprint transform

@@ -21,8 +21,8 @@ public:
 
 private:
   void timer_callback();
-  rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher_;
+  rclcpp::TimerBase::SharedPtr timer_{nullptr};
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher_{nullptr};
   size_t count_;
   LidarLogReader log_reader_;
 };
