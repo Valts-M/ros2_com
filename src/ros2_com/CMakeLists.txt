@@ -77,7 +77,7 @@ target_include_directories(pose_listener PUBLIC
 target_link_libraries(pose_listener rt)
 rosidl_target_interfaces(pose_listener ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-install(TARGETS odom_publisher
+install(TARGETS pose_listener
   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(lidar_publisher src/lidar_publisher.cpp)

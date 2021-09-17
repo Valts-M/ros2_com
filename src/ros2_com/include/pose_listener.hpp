@@ -31,7 +31,6 @@ class PoseListener : public rclcpp::Node
 public:
   PoseListener();
   ~PoseListener();
-  rclcpp::Context::OnShutdownCallback onShutdown();
 
 private:
 

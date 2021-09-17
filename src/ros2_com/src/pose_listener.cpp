@@ -9,6 +9,7 @@ namespace ros2_com
     m_count(0), m_map_frame("map"), m_odom_frame("odom"),
     m_mapPose(0.0, 0.0, 0.0), m_odomPose(0.0, 0.0, 0.0)
   {
+    allocateShmem();
     startShmem();
 
     this->declare_parameter<std::string>("target_frame", "laser_sensor_frame");
@@ -20,18 +21,12 @@ namespace ros2_com
     m_mapLidarListener = std::make_shared<tf2_ros::TransformListener>(*m_mapLidarTfBuffer);
     m_odomLidarListener = std::make_shared<tf2_ros::TransformListener>(*m_odomLidarTfBuffer);
 
-    m_timer = this->create_wall_timer(10ms, std::bind(&PoseListener::timerCallback, this));
+    m_timer = this->create_wall_timer(50ms, std::bind(&PoseListener::timerCallback, this));
   }
   
   PoseListener::~PoseListener()
   {
     deallocateShmem();
-  }
-
-  rclcpp::Context::OnShutdownCallback PoseListener::onShutdown()
-  {
-    deallocateShmem();
-    RCLCPP_INFO(this->get_logger(), "Shutting down node");
   }
 
   void PoseListener::timerCallback()
@@ -49,6 +44,16 @@ namespace ros2_com
       return;
     }
 
+    tf2::Quaternion tempQuat;
+    tf2::convert(m_odomLidarMsg.transform.rotation, tempQuat);
+    tf2::Matrix3x3 tempMatrix(tempQuat);
+    double roll, pitch, yaw;
+    tempMatrix.getEulerYPR(roll, pitch, yaw);
+
+    m_odomPose.x() = m_odomLidarMsg.transform.translation.x;
+    m_odomPose.y() = m_odomLidarMsg.transform.translation.y;
+    m_odomPose.yaw() = yaw;
+
     try {
       m_mapLidarMsg = m_mapLidarTfBuffer->lookupTransform(
         m_map_frame, m_target_frame,
@@ -60,15 +65,10 @@ namespace ros2_com
       return;
     }
 
-    tf2::Quaternion tempQuat;
-    tf2::convert(m_odomLidarMsg.transform.rotation, tempQuat);
-    tf2::Matrix3x3 tempMatrix(tempQuat);
-    double roll, pitch, yaw;
-    tempMatrix.getEulerYPR(roll, pitch, yaw);
-
-    m_odomPose.x() = m_odomLidarMsg.transform.translation.x;
-    m_odomPose.y() = m_odomLidarMsg.transform.translation.y;
-    m_odomPose.yaw() = yaw;
+    // RCLCPP_INFO(this->get_logger(), "Odom: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
+    if(needAllocateShmem())
+      allocateShmem();
+    m_odomPoseProducer->append(m_odomPose, m_ts);
 
     tf2::convert(m_mapLidarMsg.transform.rotation, tempQuat);
     tempMatrix.setRotation(tempQuat);
@@ -78,7 +78,9 @@ namespace ros2_com
     m_mapPose.y() = m_mapLidarMsg.transform.translation.y;
     m_mapPose.yaw() = yaw;
 
-    m_odomPoseProducer->append(m_odomPose, m_ts);
+    // RCLCPP_INFO(this->get_logger(), "Map: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
+    if(needAllocateShmem())
+      allocateShmem();
     m_mapPoseProducer->append(m_mapPose, m_ts);
   }
 
@@ -91,13 +93,12 @@ void PoseListener::allocateShmem()
 {
   if (!m_odomPoseProducer.get()) {
     //TODO: get from config
-    m_odomPoseProducer = std::make_unique<ShmemPoseProducer>("RosOdomPoses", "OdomPose", 400U, 400U);
+    m_odomPoseProducer = std::make_unique<ShmemPoseProducer>("RosOdomPoses", "OdomPose", 1024U, 1024U * sizeof(RobotPose) + 10240U);
   }
   if (!m_mapPoseProducer.get()) {
     //TODO: get from config
-    m_mapPoseProducer = std::make_unique<ShmemPoseProducer>("RosMapPoses", "MapPose", 400U, 400U);
+    m_mapPoseProducer = std::make_unique<ShmemPoseProducer>("RosMapPoses", "MapPose", 1024U, 1024U * sizeof(RobotPose) + 10240U);
   }
-  startShmem();
 }
 
 void PoseListener::deallocateShmem()
@@ -123,9 +124,8 @@ void PoseListener::startShmem()
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto odom_node = std::make_shared<ros2_com::PoseListener>();
-  rclcpp::on_shutdown(odom_node->onShutdown());
-  rclcpp::spin(odom_node);
+  auto pose_listener_node = std::make_shared<ros2_com::PoseListener>();
+  rclcpp::spin(pose_listener_node);
   rclcpp::shutdown();
   return 0;
 }

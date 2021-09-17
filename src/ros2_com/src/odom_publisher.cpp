@@ -37,12 +37,6 @@ OdometryPublisher::~OdometryPublisher()
   RCLCPP_INFO(this->get_logger(), "Destructed2");
 }
 
-rclcpp::Context::OnShutdownCallback OdometryPublisher::onShutdown()
-{
-  deallocateShmem();
-  RCLCPP_INFO(this->get_logger(), "Shutting down node");
-}
-
 void OdometryPublisher::initMsgs()
 {
   m_odomMsg.header.frame_id = "odom";
@@ -112,7 +106,12 @@ void OdometryPublisher::updateHandler()
     m_odomPublisher->publish(m_odomMsg);
     m_pathPublisher->publish(m_pathMsg);
     m_tfBroadcaster.sendTransform(m_tfMsg);
-    std::cout << m_odomMsg.pose.pose.position.x << "\t" << m_odomMsg.pose.pose.position.y << '\t' << m_kinematics.m_yaw << '\n';
+    // std::cout << m_odomMsg.pose.pose.position.x << "\t" << m_odomMsg.pose.pose.position.y << '\t' << m_kinematics.m_yaw << '\n';
+    RCLCPP_DEBUG(this->get_logger(), 
+      "x=%f, y=%f, yaw=%f", 
+      m_odomMsg.pose.pose.position.x, 
+      m_odomMsg.pose.pose.position.y, 
+      m_kinematics.m_yaw);
   }
 }
 
@@ -122,7 +121,7 @@ bool OdometryPublisher::getPoseAndVelocity()
     if (!m_poseConsumer->consumerSize()) {return false;}
     m_reactdLog = m_poseConsumer->getAndPop();
   } catch (std::exception & e) {
-    // std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
+    std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
     return false;
   }
   return true;
@@ -166,7 +165,6 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto odom_node = std::make_shared<ros2_com::OdometryPublisher>();
-  rclcpp::on_shutdown(odom_node->onShutdown());
   rclcpp::spin(odom_node);
   rclcpp::shutdown();
   return 0;
