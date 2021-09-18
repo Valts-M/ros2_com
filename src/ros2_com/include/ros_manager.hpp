@@ -9,9 +9,6 @@
 
 //ros
 #include "rclcpp/rclcpp.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "tf2_ros/transform_listener.h"
-#include <tf2_ros/buffer.h>
 
 //robotv3
 #include <shmem/shmem_position_producer.hpp>
@@ -30,9 +27,14 @@ class RosManager : public rclcpp::Node
 
 public:
   RosManager();
+  RosManager(const rclcpp::NodeOptions& t_options);
   ~RosManager();
 
 private:
+
+  rclcpp::TimerBase::SharedPtr m_rosTimer;
+
+  void updateHandler();
 
   /*!
     * @brief Allocates and starts the shmem smart pointers
