@@ -46,8 +46,7 @@ void RosManager::updateProcessStates()
 {
   for(size_t i = 0; i < m_currFlags.processMap.size(); ++i)
   {
-    processId id = static_cast<processId>(i);
-    updateProcessState(id);
+    updateProcessState(static_cast<processId>(i));
   }
 }
 
@@ -88,6 +87,24 @@ void RosManager::updateProcessState(const processId & t_processId)
       sendKill(t_processId);
     else
       sendStop(t_processId);
+  }
+}
+
+void RosManager::getRosFlags()
+{
+  try 
+  {
+    if (!m_flagConsumer->consumerSize()) return;
+    m_currFlags = m_poseConsumer->getAndPop();
+  } 
+  catch (std::exception & e){}
+}
+
+void RosManager::killAll()
+{
+  for(size_t i = 0; i < m_pidMap.size(); ++i)
+  {
+    sendKill(static_cast<processId>(i));
   }
 }
 

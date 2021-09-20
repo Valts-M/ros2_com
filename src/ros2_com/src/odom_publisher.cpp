@@ -117,10 +117,13 @@ void OdometryPublisher::updateHandler()
 
 bool OdometryPublisher::getPoseAndVelocity()
 {
-  try {
+  try 
+  {
     if (!m_poseConsumer->consumerSize()) {return false;}
     m_reactdLog = m_poseConsumer->getAndPop();
-  } catch (std::exception & e) {
+  } 
+  catch (std::exception & e) 
+  {
     std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
     return false;
   }
