@@ -45,7 +45,7 @@
       "id": "program",
       "type": "promptString",
       "description": "Program name",
-      "default": "odom_publisher"
+      "default": "ros_manager"
     }
   ]
 }
