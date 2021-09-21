@@ -39,32 +39,32 @@ private:
   std::map<processId, pid_t> m_pidMap
   {
       {odom, 0},
-      {mapping, 0},
       {localization, 0},
+      {mapping, 0},
       {logging, 0}
   };
 
   std::map<processId, std::string> m_commandMap
   {
       {odom, "ros2 launch ros2_com odom.launch.py"},
-      {mapping, "ros2 launch ros2_com slam.launch.py"},
       {localization, "ros2 launch ros2_com localization.launch.py"},
+      {mapping, "ros2 launch ros2_com slam.launch.py"},
       {logging, "ros2 bag record -a"}
   };
 
   std::map<processId, int32_t> m_stopCountMap
   {
       {odom, 0},
-      {mapping, 0},
       {localization, 0},
+      {mapping, 0},
       {logging, 0}
   };
 
   std::map<processId, bool> m_flagMap
   {
       {odom, false},
-      {mapping, false},
       {localization, false},
+      {mapping, false},
       {logging, false}
   };
 
@@ -94,17 +94,19 @@ private:
 
   void updateProcessState(const processId & t_processId);
 
-  void sendStop(const processId & t_processId);
-
   void startProcess(const processId & t_processId);
 
-  bool isProcessRunning(const processId & t_processId);
+  void stopProcess(const processId & t_processId);
+
+  void sendStop(const processId & t_processId);
 
   void sendKill(const processId & t_processId);
 
-  bool incompatibleProcesses(const processId & t_processId);
-
   void killAll();
+
+  bool isProcessRunning(const processId & t_processId);
+
+  bool incompatibleProcesses(const processId & t_processId);
 
   /*!
     * @brief Allocates and starts the shmem smart pointers

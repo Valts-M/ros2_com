@@ -15,7 +15,6 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 : Node("ros_manager", t_options)
 {
   allocateShmem();
-  startShmem();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("/ros2_com/save_map");
   
@@ -36,7 +35,6 @@ void RosManager::updateHandler()
   if (needAllocateShmem()) allocateShmem();
   getRosFlags();
   updateProcessStates();
-  RCLCPP_INFO(this->get_logger(), std::to_string(static_cast<int>(m_saveMapFlag)));
 
   // if(m_currFlags.saveMap)
     // saveMap();
@@ -65,29 +63,25 @@ void RosManager::updateProcessState(const processId & t_processId)
     }
     else return; //if process hasn't died yet safer to try again
   }
-  //if is supposed to be running and is running do nothing
-  if(m_flagMap[t_processId] && isProcessRunning(t_processId)) return;
-
-  //if isn't supposed to be running and isn't running reset the stop count
-  if(!m_flagMap[t_processId] && !isProcessRunning(t_processId))
-  {
-    m_stopCountMap[t_processId] = 0;
-    return;
-  }
   
   //if is supposed to be running and doesn't have a valid pid (therefor not running) start process
-  if(m_flagMap[t_processId] && !isProcessRunning(t_processId)) 
+  if(m_flagMap[t_processId]) 
   {
     startProcess(t_processId);
   }
   //if not supposed to be running, but is running stop process
   else
   {
-    if(m_stopCountMap[t_processId] > 10)
-      sendKill(t_processId);
-    else
-      sendStop(t_processId);
+    stopProcess(t_processId);
   }
+}
+
+void RosManager::stopProcess(const processId & t_processId)
+{
+  if(m_stopCountMap[t_processId] < 20)
+    sendStop(t_processId);  
+  else
+    sendKill(t_processId);
 }
 
 void RosManager::getRosFlags()
@@ -126,11 +120,19 @@ void RosManager::killAll()
 
 void RosManager::sendKill(const processId & t_processId)
 {
-  int status = kill(m_pidMap[t_processId], SIGKILL);
-  if(status == 0)
-    RCLCPP_INFO(this->get_logger(), "Successfully sent SIGKILL signal");
+  if(!isProcessRunning(t_processId))
+  {
+    RCLCPP_INFO(this->get_logger(), "Process %d NOT running, nothing to kill", t_processId);
+    return;
+  }
   else
-    RCLCPP_INFO(this->get_logger(), "Error while sending SIGKILL signal");
+  {
+    int status = kill(m_pidMap[t_processId], SIGKILL);
+    if(status == 0)
+      RCLCPP_INFO(this->get_logger(), "Successfully sent SIGKILL to %d", t_processId);
+    else
+      RCLCPP_WARN(this->get_logger(), "Error while sending SIGKILL to %d", t_processId);
+  }
 }
 
 bool RosManager::incompatibleProcesses(const processId & t_processId)
@@ -138,11 +140,17 @@ bool RosManager::incompatibleProcesses(const processId & t_processId)
   //check if starting localization or mapping
   if(t_processId == processId::localization && isProcessRunning(processId::mapping))
   {
+    RCLCPP_WARN(this->get_logger(), 
+      "Trying to launch localization while mapping is still active! Shutting down mapping");
+
     m_flagMap[processId::mapping] = false; //set mapping flag to false to shut down
     return true; //shouldn't start localization before mapping has shut down
   }
   else if(t_processId == processId::mapping && isProcessRunning(processId::localization))
   {
+    RCLCPP_WARN(this->get_logger(), 
+      "Trying to launch mapping while localization is still active! Shutting down localization");
+
     m_flagMap[processId::localization] = false; //set localization flag to false to shut down
     return true; //shouldn't start mapping before localization has shut down
   }
@@ -151,41 +159,57 @@ bool RosManager::incompatibleProcesses(const processId & t_processId)
 
 void RosManager::startProcess(const processId & t_processId)
 {
-  //if trying to launch slam and localization at the same time return;
-  if(incompatibleProcesses(t_processId))
+  if(isProcessRunning(t_processId))
+  {
+    RCLCPP_INFO(this->get_logger(), "Process %d running", t_processId);
     return;
-
-  m_pidMap[t_processId] = fork();
-
-  if (m_pidMap[t_processId] < 0) 
-  {
-    RCLCPP_INFO(this->get_logger(), "Failed to fork process, trying again");
-  } 
-  else if (m_pidMap[t_processId] == 0) 
-  {
-    setsid();
-    execl("/bin/sh", "sh", "-c", m_commandMap[t_processId], NULL);
-    _exit(1);
   }
   else
   {
-    RCLCPP_INFO(this->get_logger(), "Successacefully forked process with pid %d", m_pidMap[t_processId]);
+    //if trying to launch slam and localization at the same time return;
+    if(incompatibleProcesses(t_processId))
+      return;
+
+    m_pidMap[t_processId] = fork();
+
+    if (m_pidMap[t_processId] < 0) 
+    {
+      RCLCPP_INFO(this->get_logger(), "Failed to fork process %d, trying again", t_processId);
+    } 
+    else if (m_pidMap[t_processId] == 0) 
+    {
+      setsid();
+      execl("/bin/sh", "sh", "-c", m_commandMap[t_processId], NULL);
+      _exit(1);
+    }
+    else
+    {
+      RCLCPP_INFO(this->get_logger(), "Successacefully forked process %d with pid %d", t_processId, m_pidMap[t_processId]);
+    }
   }
 }
 
 void RosManager::sendStop(const processId & t_processId)
 {
-
-  int status = kill(m_pidMap[t_processId], SIGINT);
-  if(status == 0)
+  if(!isProcessRunning(t_processId))
   {
-    RCLCPP_INFO(this->get_logger(), "Successfully sent SIGINT signal");
+    RCLCPP_INFO(this->get_logger(), "Process %d NOT running", t_processId);
+    m_stopCountMap[t_processId] = 0;
+    return;
   }
   else
   {
-    RCLCPP_INFO(this->get_logger(), "Error while sending SIGINT signal");
+    int status = kill(m_pidMap[t_processId], SIGINT);
+    if(status == 0)
+    {
+      RCLCPP_INFO(this->get_logger(), "Successfully sent SIGINT to %d", t_processId);
+    }
+    else
+    {
+      RCLCPP_WARN(this->get_logger(), "Error while sending SIGINT to %d", t_processId);
+    }
+    ++m_stopCountMap[t_processId];
   }
-  ++m_stopCountMap[t_processId];
 }
 
 bool RosManager::isProcessRunning(const processId & t_processId)
@@ -211,6 +235,7 @@ void RosManager::allocateShmem()
   if (!m_flagConsumer.get()) {
     //TODO: get from config
     m_flagConsumer = std::make_unique<ShmemFlagConsumer>("RosFlags", "RosFlags", "RosFlagConsumer");
+    startShmem();
   }
 }
 

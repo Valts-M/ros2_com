@@ -10,7 +10,6 @@ namespace ros2_com
     m_mapPose(0.0, 0.0, 0.0), m_odomPose(0.0, 0.0, 0.0)
   {
     allocateShmem();
-    startShmem();
 
     this->declare_parameter<std::string>("target_frame", "laser_sensor_frame");
     this->get_parameter("target_frame", m_target_frame);
@@ -97,6 +96,7 @@ void PoseListener::allocateShmem()
     //TODO: get from config
     m_mapPoseProducer = std::make_unique<ShmemPoseProducer>("RosMapPoses", "MapPose", 1024U, 1024U * sizeof(RobotPose) + 10240U);
   }
+  startShmem();
 }
 
 void PoseListener::deallocateShmem()
