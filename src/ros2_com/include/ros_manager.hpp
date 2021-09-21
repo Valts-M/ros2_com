@@ -16,8 +16,6 @@
 #include <robot_pose.hpp>
 #include <data_structures/ros_flags.hpp>
 
-#include "ouster/os1_datatypes.h"
-
 namespace ros2_com
 {
 

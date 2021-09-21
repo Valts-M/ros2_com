@@ -36,8 +36,8 @@ void RosManager::updateHandler()
   getRosFlags();
   updateProcessStates();
 
-  // if(m_currFlags.saveMap)
-    // saveMap();
+  if(m_currFlags.saveMap)
+    saveMap();
 }
 
 void RosManager::updateProcessStates()
@@ -223,6 +223,35 @@ bool RosManager::isProcessRunning(const processId & t_processId)
     else return false;
   }
   else return false;
+}
+
+void RosManager::saveMap()
+{
+  if(!isProcessRunning(processId::mapping))
+  {
+    RCLCPP_WARN(this->get_logger(), "Can't save map, mapper process is not active");
+  }
+  else if (m_mapSaver->wait_for_service())
+  {
+    RCLCPP_WARN(this->get_logger(), "Can't save map, service is not active yet");
+  }
+  else
+  {
+    auto request = std::make_shared<ros2_com::srv::SaveMap_Request>();
+
+    auto mapServiceCallback = [&,this](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
+    { 
+      auto result = future.get();
+      if(result->success)
+        RCLCPP_INFO(this->get_logger(), "Map saved successacefully!");
+      else
+        RCLCPP_WARN(this->get_logger(), "Map saving unsuccessful!");
+    };
+    auto result = m_mapSaver->async_send_request(request, mapServiceCallback);
+    
+    //TODO: figure out how the fuck am I supposed to reset this flag from the callback above
+    m_saveMapFlag = false;
+  }
 }
 
 bool RosManager::needAllocateShmem()
