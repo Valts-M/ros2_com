@@ -27,7 +27,7 @@ using namespace zbot;
 class RosManager : public rclcpp::Node
 {
   using Storage = boost::interprocess::managed_shared_memory;
-  using ShmemFlagConsumer = shmem::ShmemCBConsumer<rosFlags, shmem::PolicyFifo, Storage>;
+  using ShmemFlagConsumer = shmem::ShmemCBConsumer<RosFlags, shmem::PolicyFifo, Storage>;
 
 public:
   RosManager();
@@ -35,38 +35,59 @@ public:
   ~RosManager();
 
 private:
-  rosFlags m_currFlags;
+  RosFlags m_currFlags;
 
   std::map<processId, pid_t> m_pidMap
   {
-    {odom, 0},
-    {mapping, 0},
-    {localization, 0},
-    {logging, 0}
+      {odom, 0},
+      {mapping, 0},
+      {localization, 0},
+      {logging, 0}
   };
 
   std::map<processId, std::string> m_commandMap
   {
-    {odom, "ros2 launch ros2_com odom.launch.py"},
-    {mapping, "ros2 launch ros2_com slam.launch.py"},
-    {localization, "ros2 launch ros2_com localization.launch.py"},
-    {logging, "ros2 bag record -a"}
+      {odom, "ros2 launch ros2_com odom.launch.py"},
+      {mapping, "ros2 launch ros2_com slam.launch.py"},
+      {localization, "ros2 launch ros2_com localization.launch.py"},
+      {logging, "ros2 bag record -a"}
   };
 
   std::map<processId, int32_t> m_stopCountMap
   {
-    {odom, 0},
-    {mapping, 0},
-    {localization, 0},
-    {logging, 0}
+      {odom, 0},
+      {mapping, 0},
+      {localization, 0},
+      {logging, 0}
   };
+
+  std::map<processId, bool> m_flagMap
+  {
+      {odom, false},
+      {mapping, false},
+      {localization, false},
+      {logging, false}
+  };
+
+  std::map<processId, bool> m_restartMap
+  {
+      {odom, false},
+      {localization, false},
+      {mapping, false},
+      {logging, false}
+  };
+
+  bool m_saveMapFlag{false};
 
   rclcpp::TimerBase::SharedPtr m_rosTimer;
 
   rclcpp::Client<ros2_com::srv::SaveMap>::SharedPtr m_mapSaver;
   rclcpp::Client<slam_toolbox::srv::Pause>::SharedPtr m_slamPauseToggler;
 
-  std::unique_ptr<ShmemFlagConsumer> m_flagConsumer{nullptr};
+  std::unique_ptr<ShmemFlagConsumer> m_flagCon
+  sumer{nullptr};
+
+  void getRosFlags();
 
   void saveMap();
 
@@ -86,7 +107,7 @@ private:
 
   bool incompatibleProcesses(const processId & t_processId);
 
-  void killAll()
+  void killAll();
 
   /*!
     * @brief Allocates and starts the shmem smart pointers

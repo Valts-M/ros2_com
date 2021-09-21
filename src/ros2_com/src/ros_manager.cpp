@@ -44,7 +44,7 @@ void RosManager::updateHandler()
 
 void RosManager::updateProcessStates()
 {
-  for(size_t i = 0; i < m_currFlags.processMap.size(); ++i)
+  for(size_t i = 0; i < m_flagMap.size(); ++i)
   {
     updateProcessState(static_cast<processId>(i));
   }
@@ -53,30 +53,30 @@ void RosManager::updateProcessStates()
 void RosManager::updateProcessState(const processId & t_processId)
 {
   //check if restart requested
-  if(m_currFlags.restartMap[t_processId])
+  if(m_restartMap[t_processId])
   {
     //if restarting means something's not working right so sending SIGKILL
     sendKill(t_processId);
     if(!isProcessRunning(t_processId))
     {
-      m_currFlags.processMap[t_processId] = true; //setting flag to true so process gets started
-      m_currFlags.restartMap[t_processId] = false; //reset restart flag
+      m_flagMap[t_processId] = true; //setting flag to true so process gets started
+      m_restartMap[t_processId] = false; //reset restart flag
       m_pidMap[t_processId] = 0; //reset process pid
     }
     else return; //if process hasn't died yet safer to try again
   }
   //if is supposed to be running and is running do nothing
-  if(m_currFlags.processMap[t_processId] && isProcessRunning(t_processId)) return;
+  if(m_flagMap[t_processId] && isProcessRunning(t_processId)) return;
 
   //if isn't supposed to be running and isn't running reset the stop count
-  if(!m_currFlags.processMap[t_processId] && !isProcessRunning(t_processId))
+  if(!m_flagMap[t_processId] && !isProcessRunning(t_processId))
   {
     m_stopCountMap[t_processId] = 0;
     return;
   }
   
   //if is supposed to be running and doesn't have a valid pid (therefor not running) start process
-  if(m_currFlags.processMap[t_processId] && !isProcessRunning(t_processId)) 
+  if(m_flagMap[t_processId] && !isProcessRunning(t_processId)) 
   {
     startProcess(t_processId);
   }
@@ -95,7 +95,24 @@ void RosManager::getRosFlags()
   try 
   {
     if (!m_flagConsumer->consumerSize()) return;
-    m_currFlags = m_poseConsumer->getAndPop();
+    m_currFlags = m_flagConsumer->getAndPop();
+    sizeof(RosFlags);
+
+    for(size_t i = 0; i < m_currFlags.flagMap.size(); ++i)
+    {
+      processId id = static_cast<processId>(i);
+      if(m_currFlags.flagMap[id])
+      {
+        if(m_currFlags.flagMap[id] > 0) m_flagMap[id] = true;
+        else m_flagMap[id] = false;
+      }
+
+      if(m_currFlags.restartMap[id])
+        m_restartMap[id] = true;
+
+      if(m_currFlags.saveMap)
+        m_saveMapFlag = true;
+    }
   } 
   catch (std::exception & e){}
 }
@@ -122,12 +139,12 @@ bool RosManager::incompatibleProcesses(const processId & t_processId)
   //check if starting localization or mapping
   if(t_processId == processId::localization && isProcessRunning(processId::mapping))
   {
-    m_currFlags.processMap[processId::mapping] = false; //set mapping flag to false to shut down
+    m_flagMap[processId::mapping] = false; //set mapping flag to false to shut down
     return true; //shouldn't start localization before mapping has shut down
   }
   else if(t_processId == processId::mapping && isProcessRunning(processId::localization))
   {
-    m_currFlags.processMap[processId::localization] = false; //set localization flag to false to shut down
+    m_flagMap[processId::localization] = false; //set localization flag to false to shut down
     return true; //shouldn't start mapping before localization has shut down
   }
   return false;
