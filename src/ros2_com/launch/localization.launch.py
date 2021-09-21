@@ -133,15 +133,15 @@ def generate_launch_description():
                                         description='Flag to enable use_sim_time'),                               
     # map_saver_server,
     # clock_server,
-    robot_state_publisher_node,
+    # robot_state_publisher_node,
     #slam_toolbox_node,
     localization_node,
-    odom_publisher_node,
-    pose_listener_node,
-    ouster_node,
-    activate_event,
-    configure_event,
-    shutdown_event
+    # odom_publisher_node,
+    # pose_listener_node,
+    # ouster_node,
+    # activate_event,
+    # configure_event,
+    # shutdown_event
     ])
     
     
