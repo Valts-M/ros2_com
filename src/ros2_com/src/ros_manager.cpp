@@ -18,11 +18,9 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   startShmem();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("/ros2_com/save_map");
-  m_slamPauseToggler = this->create_client<slam_toolbox::srv::Pause>
-    ("/slam_toolbox/pause_new_measurements");
   
   m_rosTimer = this->create_wall_timer(
-    10s,
+    100ms,
     std::bind(&RosManager::updateHandler, this));
 }
 
@@ -38,6 +36,8 @@ void RosManager::updateHandler()
   if (needAllocateShmem()) allocateShmem();
   getRosFlags();
   updateProcessStates();
+  RCLCPP_INFO(this->get_logger(), std::to_string(static_cast<int>(m_saveMapFlag)));
+
   // if(m_currFlags.saveMap)
     // saveMap();
 }
@@ -96,18 +96,17 @@ void RosManager::getRosFlags()
   {
     if (!m_flagConsumer->consumerSize()) return;
     m_currFlags = m_flagConsumer->getAndPop();
-    sizeof(RosFlags);
 
-    for(size_t i = 0; i < m_currFlags.flagMap.size(); ++i)
+    for(size_t i = 0; i < processId::count; ++i)
     {
       processId id = static_cast<processId>(i);
-      if(m_currFlags.flagMap[id])
+      if(m_currFlags.flagMap[id].second)
       {
-        if(m_currFlags.flagMap[id] > 0) m_flagMap[id] = true;
+        if(m_currFlags.flagMap[id].second > 0) m_flagMap[id] = true;
         else m_flagMap[id] = false;
       }
 
-      if(m_currFlags.restartMap[id])
+      if(m_currFlags.restartMap[id].second)
         m_restartMap[id] = true;
 
       if(m_currFlags.saveMap)
@@ -211,7 +210,7 @@ void RosManager::allocateShmem()
 {
   if (!m_flagConsumer.get()) {
     //TODO: get from config
-    m_flagConsumer = std::make_unique<ShmemFlagConsumer>("sad", "sad", "asd");
+    m_flagConsumer = std::make_unique<ShmemFlagConsumer>("RosFlags", "RosFlags", "RosFlagConsumer");
   }
 }
 

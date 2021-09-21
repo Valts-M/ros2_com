@@ -10,7 +10,6 @@
 //ros
 #include <rclcpp/rclcpp.hpp>
 #include "ros2_com/srv/save_map.hpp"
-#include <slam_toolbox/srv/pause.hpp>
 
 //robotv3
 #include <shmem/shmem_cb_consumer.hpp>
@@ -82,10 +81,8 @@ private:
   rclcpp::TimerBase::SharedPtr m_rosTimer;
 
   rclcpp::Client<ros2_com::srv::SaveMap>::SharedPtr m_mapSaver;
-  rclcpp::Client<slam_toolbox::srv::Pause>::SharedPtr m_slamPauseToggler;
 
-  std::unique_ptr<ShmemFlagConsumer> m_flagCon
-  sumer{nullptr};
+  std::unique_ptr<ShmemFlagConsumer> m_flagConsumer{nullptr};
 
   void getRosFlags();
 
