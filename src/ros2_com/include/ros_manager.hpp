@@ -111,10 +111,6 @@ private:
 
   bool incompatibleProcesses(const processId & t_processId);
 
-  rclcpp::TimerBase::SharedPtr m_rosTimer;
-
-  void updateHandler();
-
   /*!
     * @brief Allocates and starts the shmem smart pointers
   */
