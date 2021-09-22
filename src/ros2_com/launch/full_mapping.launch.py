@@ -63,7 +63,7 @@ def generate_launch_description():
         name='slam_toolbox',
         output='screen',
         parameters=[os.path.join(pkg_share, 'config/localization_params.yaml'),
-            {"use_sim_time" : use_sim_time}],
+            {"use_sim_time" : use_sim_time}]
     )
 
     odom_publisher_node = launch_ros.actions.Node(
@@ -71,7 +71,13 @@ def generate_launch_description():
         executable='odom_publisher',
         name='odom_publisher',
         output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
+        parameters=[{'use_sim_time': use_sim_time}]
+    )
+
+    pose_listener_node = launch_ros.actions.Node(
+        package='ros2_com',
+        executable='pose_listener',
+        name='pose_listener',
     )
 
     ouster_node = LifecycleNode(package='ros2_ouster',
@@ -119,29 +125,23 @@ def generate_launch_description():
         )
     )
 
-    pose_listener_node = launch_ros.actions.Node(
-    package='ros2_com',
-    executable='pose_listener',
-    name='pose_listener',
-    )
-
 
     return launch.LaunchDescription([      
     launch.actions.DeclareLaunchArgument(name='model', default_value=default_model_path,
                                         description='Absolute path to robot urdf file'),
-    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='true',
+    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='false',
                                         description='Flag to enable use_sim_time'),                               
     map_saver_server,
     # clock_server,
-    # robot_state_publisher_node,
+    robot_state_publisher_node,
     slam_toolbox_node,
     # localization_node,
-    # odom_publisher_node,
-    #pose_listener_node,
-    # ouster_node,
-    # activate_event,
-    # configure_event,
-    # shutdown_event
+    odom_publisher_node,
+    pose_listener_node,
+    ouster_node,
+    activate_event,
+    configure_event,
+    shutdown_event
     ])
     
     

@@ -20,7 +20,7 @@
 #include "data_structures/log_data_structures.hpp"
 #include <robot_pose.hpp>
 
-#include "kinematics.h"
+#include "kinematics.hpp"
 #include "ros2_com/srv/pause_odom.hpp"
 
 namespace ros2_com
@@ -38,7 +38,6 @@ public:
   OdometryPublisher();
   OdometryPublisher(const rclcpp::NodeOptions & options);
   ~OdometryPublisher();
-  rclcpp::Context::OnShutdownCallback onShutdown();
 
 private:
 

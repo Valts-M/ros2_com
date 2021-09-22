@@ -69,6 +69,17 @@ rosidl_target_interfaces(odom_publisher ${PROJECT_NAME} "rosidl_typesupport_cpp"
 install(TARGETS odom_publisher
   DESTINATION lib/${PROJECT_NAME})
 
+add_executable(ros_manager src/ros_manager.cpp)
+ament_target_dependencies(ros_manager rclcpp)
+target_include_directories(ros_manager PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(ros_manager rt)
+rosidl_target_interfaces(ros_manager ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+install(TARGETS ros_manager
+  DESTINATION lib/${PROJECT_NAME})
+
 add_executable(pose_listener src/pose_listener.cpp)
 ament_target_dependencies(pose_listener rclcpp tf2 tf2_ros geometry_msgs)
 target_include_directories(pose_listener PUBLIC

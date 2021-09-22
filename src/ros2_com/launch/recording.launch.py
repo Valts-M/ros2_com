@@ -41,6 +41,10 @@ def generate_launch_description():
         executable='map_saver',
         name='map_saver_server'
     )
+    rosbag_node = launch.actions.ExecuteProcess(
+        cmd=['ros2', 'bag', 'record', '-a'],
+        output='screen'
+    )
     robot_localization_node = launch_ros.actions.Node(
         package='robot_localization',
         executable='ekf_node',
@@ -127,14 +131,15 @@ def generate_launch_description():
                                         description='Flag to enable use_sim_time'),                               
     # map_saver_server,
     clock_server,
-    robot_state_publisher_node,
-    #slam_toolbox_node,
+    rosbag_node
+    # robot_state_publisher_node,
+    # slam_toolbox_node,
     # localization_node,
-    odom_publisher_node,
-    ouster_node,
-    activate_event,
-    configure_event,
-    shutdown_event
+    # odom_publisher_node,
+    # ouster_node,
+    # activate_event,
+    # configure_event,
+    # shutdown_event
     ])
     
     

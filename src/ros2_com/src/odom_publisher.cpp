@@ -19,7 +19,7 @@ OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
   m_odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>("ros2_com/odom", 10);
   m_pathPublisher = this->create_publisher<nav_msgs::msg::Path>("ros2_com/path", 10);
   m_pauseOdomService = this->create_service<ros2_com::srv::PauseOdom>("ros2_com/pause_odom", 
-  std::bind(&OdometryPublisher::pauseToggle, this, _1, _2));
+    std::bind(&OdometryPublisher::pauseToggle, this, _1, _2));
 
   allocateShmem();
   //TODO: get form config
@@ -117,11 +117,14 @@ void OdometryPublisher::updateHandler()
 
 bool OdometryPublisher::getPoseAndVelocity()
 {
-  try {
+  try 
+  {
     if (!m_poseConsumer->consumerSize()) {return false;}
     m_reactdLog = m_poseConsumer->getAndPop();
-  } catch (std::exception & e) {
-    std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
+  } 
+  catch (std::exception & e) 
+  {
+    // std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
     return false;
   }
   return true;
