@@ -124,7 +124,7 @@ bool OdometryPublisher::getPoseAndVelocity()
   } 
   catch (std::exception & e) 
   {
-    std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
+    // std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
     return false;
   }
   return true;

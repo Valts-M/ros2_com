@@ -36,34 +36,34 @@ private:
 
   std::map<processId, pid_t> m_pidMap
   {
-      {odom, 0},
-      {localization, 0},
-      {mapping, 0},
-      {logging, 0}
+    {odom, 0},
+    {localization, 0},
+    {mapping, 0},
+    {logging, 0}
   };
 
-  std::map<processId, std::string> m_commandMap
+  std::map<processId, const char*> m_commandMap
   {
-      {odom, "ros2 launch ros2_com odom.launch.py"},
-      {localization, "ros2 launch ros2_com localization.launch.py"},
-      {mapping, "ros2 launch ros2_com slam.launch.py"},
-      {logging, "ros2 bag record -a"}
+    {odom, "odom.launch.py"},
+    {localization, "localization.launch.py"},
+    {mapping, "mapping.launch.py"},
+    {logging, "recording.launch.py"}
   };
 
-  std::map<processId, int32_t> m_stopCountMap
+  std::map<processId, int8_t> m_stopCountMap
   {
-      {odom, 0},
-      {localization, 0},
-      {mapping, 0},
-      {logging, 0}
+    {odom, 0},
+    {localization, 0},
+    {mapping, 0},
+    {logging, 0}
   };
 
   std::map<processId, bool> m_flagMap
   {
-      {odom, false},
-      {localization, false},
-      {mapping, false},
-      {logging, false}
+    {odom, false},
+    {localization, false},
+    {mapping, false},
+    {logging, false}
   };
 
   std::map<processId, bool> m_restartMap
@@ -75,6 +75,8 @@ private:
   };
 
   bool m_saveMapFlag{false};
+  bool m_needToSaveMap{false};
+  bool m_mapSavePending{false};
 
   rclcpp::TimerBase::SharedPtr m_rosTimer;
 

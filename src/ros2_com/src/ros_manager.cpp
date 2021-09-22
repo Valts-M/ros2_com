@@ -16,10 +16,10 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 {
   allocateShmem();
 
-  m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("/ros2_com/save_map");
+  m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("ros2_com/save_map");
   
   m_rosTimer = this->create_wall_timer(
-    100ms,
+    500ms,
     std::bind(&RosManager::updateHandler, this));
 }
 
@@ -36,8 +36,10 @@ void RosManager::updateHandler()
   getRosFlags();
   updateProcessStates();
 
-  if(m_currFlags.saveMap)
+  if(m_saveMapFlag)
     saveMap();
+
+  RCLCPP_INFO(this->get_logger(), "\n\n*********************************************************************************************************************\n");
 }
 
 void RosManager::updateProcessStates()
@@ -53,7 +55,7 @@ void RosManager::updateProcessState(const processId & t_processId)
   //check if restart requested
   if(m_restartMap[t_processId])
   {
-    //if restarting means something's not working right so sending SIGKILL
+    //if restarting means most likely something's not working right so sending SIGKILL
     sendKill(t_processId);
     if(!isProcessRunning(t_processId))
     {
@@ -64,20 +66,15 @@ void RosManager::updateProcessState(const processId & t_processId)
     else return; //if process hasn't died yet safer to try again
   }
   
-  //if is supposed to be running and doesn't have a valid pid (therefor not running) start process
   if(m_flagMap[t_processId]) 
-  {
     startProcess(t_processId);
-  }
-  //if not supposed to be running, but is running stop process
   else
-  {
     stopProcess(t_processId);
-  }
 }
 
 void RosManager::stopProcess(const processId & t_processId)
 {
+  //TODO: replace with timeout
   if(m_stopCountMap[t_processId] < 20)
     sendStop(t_processId);  
   else
@@ -103,9 +100,11 @@ void RosManager::getRosFlags()
       if(m_currFlags.restartMap[id].second)
         m_restartMap[id] = true;
 
-      if(m_currFlags.saveMap)
-        m_saveMapFlag = true;
+      RCLCPP_INFO(this->get_logger(), "Process %d received %d, set to %d", 
+        id, m_currFlags.flagMap[id].second, m_flagMap[id]);
     }
+    if(m_currFlags.saveMap)
+        m_saveMapFlag = true;
   } 
   catch (std::exception & e){}
 }
@@ -127,7 +126,7 @@ void RosManager::sendKill(const processId & t_processId)
   }
   else
   {
-    int status = kill(m_pidMap[t_processId], SIGKILL);
+    int status = kill(m_pidMap[t_processId], SIGINT);
     if(status == 0)
       RCLCPP_INFO(this->get_logger(), "Successfully sent SIGKILL to %d", t_processId);
     else
@@ -179,12 +178,15 @@ void RosManager::startProcess(const processId & t_processId)
     else if (m_pidMap[t_processId] == 0) 
     {
       setsid();
-      execl("/bin/sh", "sh", "-c", m_commandMap[t_processId], NULL);
+      execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "ros2_com", m_commandMap[t_processId], NULL);
       _exit(1);
     }
     else
     {
       RCLCPP_INFO(this->get_logger(), "Successacefully forked process %d with pid %d", t_processId, m_pidMap[t_processId]);
+      //set flag that we need to save a map before exiting this process
+      if(t_processId == processId::mapping)
+        m_needToSaveMap = true;
     }
   }
 }
@@ -199,16 +201,26 @@ void RosManager::sendStop(const processId & t_processId)
   }
   else
   {
-    int status = kill(m_pidMap[t_processId], SIGINT);
-    if(status == 0)
+    //always save a map before exiting mapping
+    if(t_processId == processId::mapping && m_needToSaveMap)
     {
-      RCLCPP_INFO(this->get_logger(), "Successfully sent SIGINT to %d", t_processId);
+      saveMap();
+      m_needToSaveMap = false;
     }
     else
     {
-      RCLCPP_WARN(this->get_logger(), "Error while sending SIGINT to %d", t_processId);
+      int status = kill(m_pidMap[t_processId], SIGINT);
+      if(status == 0)
+      {
+        RCLCPP_INFO(this->get_logger(), "Successfully sent SIGINT to %d", t_processId);
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "Error while sending SIGINT to %d", t_processId);
+      }
+      ++m_stopCountMap[t_processId];
     }
-    ++m_stopCountMap[t_processId];
+    
   }
 }
 
@@ -231,26 +243,32 @@ void RosManager::saveMap()
   {
     RCLCPP_WARN(this->get_logger(), "Can't save map, mapper process is not active");
   }
-  else if (m_mapSaver->wait_for_service())
+  else if (!m_mapSaver->wait_for_service())
   {
     RCLCPP_WARN(this->get_logger(), "Can't save map, service is not active yet");
   }
+  else if(m_mapSavePending)
+  {
+    RCLCPP_WARN(this->get_logger(), "Can't save map, a map save is still pending");
+  }
   else
   {
+    m_mapSavePending = true;
     auto request = std::make_shared<ros2_com::srv::SaveMap_Request>();
 
-    auto mapServiceCallback = [&,this](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
+    auto mapServiceCallback = [&](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
     { 
+      m_mapSavePending = false;
       auto result = future.get();
       if(result->success)
+      {
         RCLCPP_INFO(this->get_logger(), "Map saved successacefully!");
+        m_saveMapFlag = false;
+      }
       else
         RCLCPP_WARN(this->get_logger(), "Map saving unsuccessful!");
     };
     auto result = m_mapSaver->async_send_request(request, mapServiceCallback);
-    
-    //TODO: figure out how the fuck am I supposed to reset this flag from the callback above
-    m_saveMapFlag = false;
   }
 }
 

@@ -74,6 +74,7 @@ void MapSaver::saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> re
   RCLCPP_INFO(this->get_logger(), "ros2_com: Saving map as %s.", path.c_str());
   int rc = system(("ros2 run nav2_map_server map_saver_cli -f " + path  + " --ros-args -p map_subscribe_transient_local:=true").c_str());
   rclcpp::sleep_for(std::chrono::seconds(1));
+  response->success=true;
 }
 }
 

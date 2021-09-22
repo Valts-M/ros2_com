@@ -129,7 +129,7 @@ def generate_launch_description():
     return launch.LaunchDescription([      
     launch.actions.DeclareLaunchArgument(name='model', default_value=default_model_path,
                                         description='Absolute path to robot urdf file'),
-    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='false',
+    launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='true',
                                         description='Flag to enable use_sim_time'),                               
     map_saver_server,
     # clock_server,
