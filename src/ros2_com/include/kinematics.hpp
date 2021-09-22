@@ -7,8 +7,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 #include <math.h>
+
 #include "data_structures/log_data_structures.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 

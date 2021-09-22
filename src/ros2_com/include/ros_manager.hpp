@@ -32,7 +32,7 @@ public:
   ~RosManager();
 
 private:
-  RosFlags m_currFlags;
+  RosFlags m_latestFlags;
 
   std::map<processId, pid_t> m_pidMap
   {
@@ -75,7 +75,6 @@ private:
   };
 
   bool m_saveMapFlag{false};
-  bool m_needToSaveMap{false};
   bool m_mapSavePending{false};
 
   rclcpp::TimerBase::SharedPtr m_rosTimer;
@@ -84,7 +83,11 @@ private:
 
   std::unique_ptr<ShmemFlagConsumer> m_flagConsumer{nullptr};
 
-  void getRosFlags();
+  bool getRosFlags();
+
+  void setLocalFlags();
+
+  void setStateFlag(const processId & t_processId);
 
   void saveMap();
 

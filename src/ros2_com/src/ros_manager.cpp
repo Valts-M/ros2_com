@@ -33,7 +33,10 @@ RosManager::~RosManager()
 void RosManager::updateHandler()
 {
   if (needAllocateShmem()) allocateShmem();
-  getRosFlags();
+
+  if(getRosFlags())
+    setLocalFlags();
+
   updateProcessStates();
 
   if(m_saveMapFlag)
@@ -55,15 +58,13 @@ void RosManager::updateProcessState(const processId & t_processId)
   //check if restart requested
   if(m_restartMap[t_processId])
   {
-    //if restarting means most likely something's not working right so sending SIGKILL
-    sendKill(t_processId);
+    stopProcess(t_processId);
     if(!isProcessRunning(t_processId))
     {
       m_flagMap[t_processId] = true; //setting flag to true so process gets started
       m_restartMap[t_processId] = false; //reset restart flag
-      m_pidMap[t_processId] = 0; //reset process pid
     }
-    else return; //if process hasn't died yet safer to try again
+    else return; //if process hasn't stopped yet, try again
   }
   
   if(m_flagMap[t_processId]) 
@@ -81,32 +82,73 @@ void RosManager::stopProcess(const processId & t_processId)
     sendKill(t_processId);
 }
 
-void RosManager::getRosFlags()
+bool RosManager::getRosFlags()
 {
   try 
   {
-    if (!m_flagConsumer->consumerSize()) return;
-    m_currFlags = m_flagConsumer->getAndPop();
+    if (!m_flagConsumer->consumerSize()) return false;
+    m_latestFlags = m_flagConsumer->getAndPop();
 
-    for(size_t i = 0; i < processId::count; ++i)
-    {
-      processId id = static_cast<processId>(i);
-      if(m_currFlags.flagMap[id].second)
-      {
-        if(m_currFlags.flagMap[id].second > 0) m_flagMap[id] = true;
-        else m_flagMap[id] = false;
-      }
-
-      if(m_currFlags.restartMap[id].second)
-        m_restartMap[id] = true;
-
-      RCLCPP_INFO(this->get_logger(), "Process %d received %d, set to %d", 
-        id, m_currFlags.flagMap[id].second, m_flagMap[id]);
-    }
-    if(m_currFlags.saveMap)
-        m_saveMapFlag = true;
+    return true;
   } 
-  catch (std::exception & e){}
+  catch (std::exception & e)
+  {
+    return false;
+  }
+}
+
+void RosManager::setLocalFlags()
+{
+  for(size_t i = 0; i < processId::count; ++i)
+  {
+    processId id = static_cast<processId>(i);
+
+    setStateFlag(id);
+
+    if(m_latestFlags.restartMap[id].second)
+    {
+      m_restartMap[id] = true;
+      if(id == processId::mapping)
+        m_saveMapFlag = true;
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Process %d received %d, set to %d", 
+      id, m_latestFlags.flagMap[id].second, m_flagMap[id]);
+  }
+  if(m_latestFlags.saveMap)
+      m_saveMapFlag = true;
+}
+
+void RosManager::setStateFlag(const processId & t_processId)
+{
+  //if != 0; 0 == no change
+  if(m_latestFlags.flagMap[t_processId].second)
+  {
+    if(m_latestFlags.flagMap[t_processId].second > 0)
+    {
+      //set to active
+      m_flagMap[t_processId] = true;
+
+      //if localization set to active, turn off mapping and save map
+      if(t_processId == processId::localization)
+      {
+        m_flagMap[processId::mapping] = false;
+        m_saveMapFlag = true;
+      }
+      //if mapping set to active, turn off localization
+      else if(t_processId == processId::mapping)
+        m_flagMap[processId::localization] = false;
+    }
+    else 
+    {
+      //set to shutdown
+      m_flagMap[t_processId] = false;
+
+      //if shutting down mapping, save map
+      if(t_processId == processId::mapping)
+        m_saveMapFlag = true;
+    }
+  }
 }
 
 void RosManager::killAll()
@@ -184,9 +226,6 @@ void RosManager::startProcess(const processId & t_processId)
     else
     {
       RCLCPP_INFO(this->get_logger(), "Successacefully forked process %d with pid %d", t_processId, m_pidMap[t_processId]);
-      //set flag that we need to save a map before exiting this process
-      if(t_processId == processId::mapping)
-        m_needToSaveMap = true;
     }
   }
 }
@@ -199,28 +238,23 @@ void RosManager::sendStop(const processId & t_processId)
     m_stopCountMap[t_processId] = 0;
     return;
   }
+  else if(t_processId == processId::mapping && m_saveMapFlag)
+  {
+    RCLCPP_WARN(this->get_logger(), "Can't stop mapping, map save pending");
+    return;
+  }
   else
   {
-    //always save a map before exiting mapping
-    if(t_processId == processId::mapping && m_needToSaveMap)
+    int status = kill(m_pidMap[t_processId], SIGINT);
+    if(status == 0)
     {
-      saveMap();
-      m_needToSaveMap = false;
+      RCLCPP_INFO(this->get_logger(), "Successfully sent SIGINT to %d", t_processId);
     }
     else
     {
-      int status = kill(m_pidMap[t_processId], SIGINT);
-      if(status == 0)
-      {
-        RCLCPP_INFO(this->get_logger(), "Successfully sent SIGINT to %d", t_processId);
-      }
-      else
-      {
-        RCLCPP_WARN(this->get_logger(), "Error while sending SIGINT to %d", t_processId);
-      }
-      ++m_stopCountMap[t_processId];
+      RCLCPP_WARN(this->get_logger(), "Error while sending SIGINT to %d", t_processId);
     }
-    
+    ++m_stopCountMap[t_processId];
   }
 }
 
