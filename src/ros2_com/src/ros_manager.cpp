@@ -3,6 +3,7 @@
 #include "rclcpp/duration.hpp"
 #include <signal.h>
 #include <sys/wait.h>
+#include <boost/filesystem.hpp>
 
 using namespace std::chrono_literals;
 
@@ -26,7 +27,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 RosManager::~RosManager()
 {
   deallocateShmem();
-  killAll();
+  stopAll();
   RCLCPP_INFO(this->get_logger(), "Destructed");
 }
 
@@ -151,11 +152,11 @@ void RosManager::setStateFlag(const processId & t_processId)
   }
 }
 
-void RosManager::killAll()
+void RosManager::stopAll()
 {
   for(size_t i = 0; i < m_pidMap.size(); ++i)
   {
-    sendKill(static_cast<processId>(i));
+    sendStop(static_cast<processId>(i));
   }
 }
 
@@ -168,7 +169,7 @@ void RosManager::sendKill(const processId & t_processId)
   }
   else
   {
-    int status = kill(m_pidMap[t_processId], SIGINT);
+    int status = kill(m_pidMap[t_processId], SIGKILL);
     if(status == 0)
       RCLCPP_INFO(this->get_logger(), "Successfully sent SIGKILL to %d", t_processId);
     else
@@ -276,10 +277,12 @@ void RosManager::saveMap()
   if(!isProcessRunning(processId::mapping))
   {
     RCLCPP_WARN(this->get_logger(), "Can't save map, mapper process is not active");
+    m_saveMapFlag = false;
   }
   else if (!m_mapSaver->wait_for_service())
   {
     RCLCPP_WARN(this->get_logger(), "Can't save map, service is not active yet");
+    m_saveMapFlag = false;
   }
   else if(m_mapSavePending)
   {
@@ -287,7 +290,11 @@ void RosManager::saveMap()
   }
   else
   {
+
+    std::string path = createMapSavePath() + "/map";
+
     m_mapSavePending = true;
+
     auto request = std::make_shared<ros2_com::srv::SaveMap_Request>();
     request->filename = m_mapSavePath;
 
@@ -313,6 +320,31 @@ void RosManager::saveMap()
     };
     auto result = m_mapSaver->async_send_request(request, mapServiceCallback);
   }
+}
+
+std::string RosManager::createMapSavePath()
+{
+  std::fstream fileReaderWriter(m_mapSavePath + "/num.txt", std::ios::in | std::ios::out | std::ios::trunc);
+  if(!fileReaderWriter.is_open())
+  {
+    RCLCPP_WARN(this->get_logger(), 
+      "Couldn't open file %s/num.txt, saving in %s",
+       m_mapSavePath);
+    return m_mapSavePath;
+  }
+
+  int32_t num;
+  fileReaderWriter >> num;
+  if(!boost::filesystem::create_directory(m_mapSavePath + std::to_string(++num)))
+  {
+    RCLCPP_WARN(this->get_logger(), 
+      "Couldn't create directory %s/%d, saving in %s",
+       m_mapSavePath, num);
+    return m_mapSavePath;
+  }
+
+  fileReaderWriter << num;
+  return m_mapSavePath + std::to_string(num);
 }
 
 bool RosManager::needAllocateShmem()

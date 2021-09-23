@@ -24,9 +24,9 @@ link_directories(${Boost_LIBRARY_DIR})
 # include_directories("/code/RobotV3/MainCore/include")
 # link_directories("/code/RobotV3/bin")
 # link_libraries("/code/RobotV3/bin/libMainCore.a")
-include_directories("/code/RobotV3/MainCore/include")
-link_directories("/code/RobotV3/bin")
-link_libraries("/code/RobotV3/bin/libMainCore.a")
+include_directories("/workspaces/RobotV3/MainCore/include")
+link_directories("/workspaces/RobotV3/bin")
+link_libraries("/workspaces/RobotV3/bin/libMainCore.a")
 
 # find dependencies
 find_package(ament_cmake REQUIRED)

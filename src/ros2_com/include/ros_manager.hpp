@@ -37,7 +37,7 @@ public:
 
 private:
 
-  const std::string m_mapSavePath{"/home/RobotV3/slam_maps/map"};
+  const std::string m_mapSavePath{"/home/RobotV3/slam_maps"};
   const TextualInfo m_text{m_mapSavePath.c_str()};
 
   RosFlags m_latestFlags;
@@ -61,6 +61,8 @@ private:
 
   void saveMap();
 
+  std::string createMapSavePath();
+
   void updateHandler();
 
   void updateProcessStates();
@@ -75,7 +77,7 @@ private:
 
   void sendKill(const processId & t_processId);
 
-  void killAll();
+  void stopAll();
 
   bool isProcessRunning(const processId & t_processId);
 
