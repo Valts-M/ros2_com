@@ -18,12 +18,12 @@ namespace ros2_com
 MapSaver::MapSaver() : Node("map_saver_server"), m_count(0)
 {
   m_subscriber = this->create_subscription<nav_msgs::msg::OccupancyGrid>
-    ("map", 10, std::bind(&MapSaver::topic_callback, this, _1));
+    ("map", 10, std::bind(&MapSaver::topicCallback, this, _1));
   m_saveMapService = this->create_service<ros2_com::srv::SaveMap>
     ("ros2_com/save_map", std::bind(&MapSaver::saveMap, this, _1, _2));
 }
 
-void MapSaver::topic_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
+void MapSaver::topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
   m_map = msg;
 }

@@ -27,7 +27,7 @@ private:
   void saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> t_request,  
           std::shared_ptr<ros2_com::srv::SaveMap::Response> t_response);
   nav_msgs::msg::OccupancyGrid::SharedPtr m_map{nullptr};
-  void topic_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
+  void topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
 };
 }
 #endif //MAP_SAVER_H
