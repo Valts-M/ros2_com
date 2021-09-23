@@ -39,9 +39,9 @@ namespace ros2_com
         m_odom_frame, m_target_frame,
         tf2::TimePointZero);
     } catch (tf2::TransformException & ex) {
-      RCLCPP_INFO(
-        this->get_logger(), "Could not transform %s to %s: %s",
-        m_odom_frame.c_str(), m_target_frame.c_str(), ex.what());
+      // RCLCPP_INFO(
+        // this->get_logger(), "Could not transform %s to %s: %s",
+        // m_odom_frame.c_str(), m_target_frame.c_str(), ex.what());
       return;
     }
 
@@ -60,9 +60,9 @@ namespace ros2_com
         m_map_frame, m_target_frame,
         tf2::TimePointZero);
     } catch (tf2::TransformException & ex) {
-      RCLCPP_INFO(
-        this->get_logger(), "Could not transform %s to %s: %s",
-        m_map_frame.c_str(), m_target_frame.c_str(), ex.what());
+      // RCLCPP_INFO(
+        // this->get_logger(), "Could not transform %s to %s: %s",
+        // m_map_frame.c_str(), m_target_frame.c_str(), ex.what());
       return;
     }
 

@@ -119,12 +119,12 @@ bool OdometryPublisher::getPoseAndVelocity()
 {
   try 
   {
-    if (!m_poseConsumer->consumerSize()) {return false;}
+    if (!m_poseConsumer->isConsumerReferenced() || !m_poseConsumer->consumerSize()) {return false;}
     m_reactdLog = m_poseConsumer->getAndPop();
   } 
   catch (std::exception & e) 
   {
-    // std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
+    std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
     return false;
   }
   return true;
@@ -132,7 +132,16 @@ bool OdometryPublisher::getPoseAndVelocity()
 
 bool OdometryPublisher::needAllocateShmem()
 {
-  return !m_poseConsumer.get();
+  // return !m_poseConsumer.get();
+  bool needAllocate = false;
+  if(!m_poseConsumer) needAllocate = true;
+  else if (m_poseConsumer->isInternalError())
+  {
+    needAllocate = true;
+    m_poseConsumer->stop();
+    m_poseConsumer.reset();
+  }
+  return needAllocate;
 }
 
 void OdometryPublisher::allocateShmem()
