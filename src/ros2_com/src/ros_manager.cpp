@@ -289,18 +289,27 @@ void RosManager::saveMap()
   {
     m_mapSavePending = true;
     auto request = std::make_shared<ros2_com::srv::SaveMap_Request>();
+    request->filename = m_mapSavePath;
 
     auto mapServiceCallback = [&](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
     { 
       m_mapSavePending = false;
       auto result = future.get();
-      if(result->success)
+      if(result->success == 1)
       {
         RCLCPP_INFO(this->get_logger(), "Map saved successacefully!");
+        m_slamPathProducer->copyUpdate(m_text);
         m_saveMapFlag = false;
       }
-      else
+      else if(result->success == 0)
+      {
         RCLCPP_WARN(this->get_logger(), "Map saving unsuccessful!");
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "Map saving unsuccessful! No map has been created yet!");
+        m_saveMapFlag = false;
+      }
     };
     auto result = m_mapSaver->async_send_request(request, mapServiceCallback);
   }
@@ -308,32 +317,39 @@ void RosManager::saveMap()
 
 bool RosManager::needAllocateShmem()
 {
-  return !m_flagConsumer.get();
+  return !m_flagConsumer || !m_slamPathProducer;
 }
 
 void RosManager::allocateShmem()
 {
-  if (!m_flagConsumer.get()) {
+  if (!m_flagConsumer) {
     //TODO: get from config
     m_flagConsumer = std::make_unique<ShmemFlagConsumer>("RosFlags", "RosFlags", "RosFlagConsumer");
-    startShmem();
   }
+  if(!m_slamPathProducer)
+  {
+    m_slamPathProducer = std::make_unique<ShmemSlamMapPathProducer>("SlamMapPath", "SlamMapPath", 1024U * 10U);
+  }
+  startShmem();
 }
 
 void RosManager::deallocateShmem()
 {
   stopShmem();
   m_flagConsumer.reset();
+  m_slamPathProducer.reset();
 }
 
 void RosManager::stopShmem()
 {
   if (m_flagConsumer.get()) {m_flagConsumer->stop();}
+  if (m_slamPathProducer.get()) {m_slamPathProducer->stop();}
 }
 
 void RosManager::startShmem()
 {
   if (m_flagConsumer.get()) {m_flagConsumer->start();}
+  if (m_slamPathProducer.get()) {m_slamPathProducer->start();}
 }
 
 }

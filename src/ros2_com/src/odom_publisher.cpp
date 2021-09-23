@@ -140,10 +140,11 @@ void OdometryPublisher::allocateShmem()
   if (!m_poseConsumer.get()) {
     //TODO: get from config
     m_poseConsumer = std::make_unique<ShmemPoseConsumer>(
-      "GGKReactdLog", "GGKReactdLog",
-      "m_uniqueName");
+      "MsgRawStatus", "MsgRawStatus",
+      "MsgRawStatusConsumer");
+      startShmem();
+
   }
-  startShmem();
 }
 
 void OdometryPublisher::deallocateShmem()
