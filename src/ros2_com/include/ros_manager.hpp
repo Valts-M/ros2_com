@@ -13,8 +13,11 @@
 
 //robotv3
 #include <shmem/shmem_cb_consumer.hpp>
+#include <shmem/shmem_raw_producer.hpp>
 #include <robot_pose.hpp>
-#include <data_structures/ros_flags.hpp>
+#include <data_structures/common_data_structures.hpp>
+
+#include "ros_manager_maps.hpp"
 
 namespace ros2_com
 {
@@ -25,6 +28,7 @@ class RosManager : public rclcpp::Node
 {
   using Storage = boost::interprocess::managed_shared_memory;
   using ShmemFlagConsumer = shmem::ShmemCBConsumer<RosFlags, shmem::PolicyFifo, Storage>;
+  using ShmemSlamMapPathProducer = shmem::ShmemRawProducer<TextualInfo, Storage>;
 
 public:
   RosManager();
@@ -32,47 +36,11 @@ public:
   ~RosManager();
 
 private:
+
+  const std::string m_mapSavePath{"/home/RobotV3/slam_maps/map"};
+  const TextualInfo m_text{m_mapSavePath.c_str()};
+
   RosFlags m_latestFlags;
-
-  std::map<processId, pid_t> m_pidMap
-  {
-    {odom, 0},
-    {localization, 0},
-    {mapping, 0},
-    {logging, 0}
-  };
-
-  std::map<processId, const char*> m_commandMap
-  {
-    {odom, "odom.launch.py"},
-    {localization, "localization.launch.py"},
-    {mapping, "mapping.launch.py"},
-    {logging, "recording.launch.py"}
-  };
-
-  std::map<processId, int8_t> m_stopCountMap
-  {
-    {odom, 0},
-    {localization, 0},
-    {mapping, 0},
-    {logging, 0}
-  };
-
-  std::map<processId, bool> m_flagMap
-  {
-    {odom, false},
-    {localization, false},
-    {mapping, false},
-    {logging, false}
-  };
-
-  std::map<processId, bool> m_restartMap
-  {
-      {odom, false},
-      {localization, false},
-      {mapping, false},
-      {logging, false}
-  };
 
   bool m_saveMapFlag{false};
   bool m_mapSavePending{false};
@@ -82,6 +50,8 @@ private:
   rclcpp::Client<ros2_com::srv::SaveMap>::SharedPtr m_mapSaver;
 
   std::unique_ptr<ShmemFlagConsumer> m_flagConsumer{nullptr};
+
+  std::unique_ptr<ShmemSlamMapPathProducer> m_slamPathProducer{nullptr};
 
   bool getRosFlags();
 

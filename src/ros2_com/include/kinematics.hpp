@@ -9,7 +9,7 @@
 #include <vector>
 #include <math.h>
 
-#include "data_structures/log_data_structures.hpp"
+#include "data_structures/protocol.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
 namespace ros2_com
@@ -23,7 +23,7 @@ public:
    * @param input Reactd log input
    * @param output Odometry message to update
    */
-  void calcPosAndVelocity(zbot::ReactdLog& input, nav_msgs::msg::Odometry& output);
+  void calcPosAndVelocity(zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output);
   double m_yaw{0.0}; //rad
 
 private:

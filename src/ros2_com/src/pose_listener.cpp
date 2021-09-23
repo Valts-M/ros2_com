@@ -90,11 +90,11 @@ void PoseListener::allocateShmem()
 {
   if (!m_odomPoseProducer.get()) {
     //TODO: get from config
-    m_odomPoseProducer = std::make_unique<ShmemPoseProducer>("RosOdomPoses", "OdomPose", 1024U, 1024U * sizeof(RobotPose) + 10240U);
+    m_odomPoseProducer = std::make_unique<ShmemPoseProducer>("RosOdomPoses", "RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U);
   }
   if (!m_mapPoseProducer.get()) {
     //TODO: get from config
-    m_mapPoseProducer = std::make_unique<ShmemPoseProducer>("RosMapPoses", "MapPose", 1024U, 1024U * sizeof(RobotPose) + 10240U);
+    m_mapPoseProducer = std::make_unique<ShmemPoseProducer>("RosMapPoses", "RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U);
   }
   startShmem();
 }
