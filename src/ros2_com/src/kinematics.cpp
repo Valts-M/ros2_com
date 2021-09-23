@@ -4,18 +4,18 @@
 
 namespace ros2_com
 { 
-  void Kinematics::calcPosAndVelocity(zbot::ReactdLog& input, nav_msgs::msg::Odometry& output)
+  void Kinematics::calcPosAndVelocity(zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output)
   {
-    const double leftDistance{input.leftEncoder * m_leftEncScale};
-    const double rightDistance{input.rightEncoder * m_rightEncScale};
+    const double leftDistance{input.encoders[0] * m_leftEncScale};
+    const double rightDistance{input.encoders[1] * m_rightEncScale};
     const double distanceTraveled{(leftDistance + rightDistance) / 2};
 
     //const double deltaAngle{(rightDistance - leftDistance) / m_wheelDistance};
-    const double trueGyroZ = input.gyroZ - m_gyroBias;
+    const double trueGyroZ = input.gyroDelta - m_gyroBias;
     const double deltaAngle{ trueGyroZ < 0 ? trueGyroZ * m_leftGyroScale : trueGyroZ * m_rightGyroScale};
 
     //if moving update message
-    if(std::fabs(input.leftEncoder) > 10 || std::fabs(input.rightEncoder) > 10)
+    if(std::fabs(input.encoders[0]) > 10 || std::fabs(input.encoders[0]) > 10)
     {
       output.pose.pose.position.x += distanceTraveled * cos(m_yaw + deltaAngle / 2);
       output.pose.pose.position.y += distanceTraveled * sin(m_yaw + deltaAngle / 2);
@@ -31,12 +31,12 @@ namespace ros2_com
       temp.setRPY(0, 0, m_yaw);
       tf2::convert(temp, output.pose.pose.orientation);
 
-      output.twist.twist.linear.x = distanceTraveled / input.ts;
-      output.twist.twist.angular.z = deltaAngle / input.ts;
+      output.twist.twist.linear.x = distanceTraveled / input.time;
+      output.twist.twist.angular.z = deltaAngle / input.time;
     }
     else //if not moving recalculate gyro bias
     {
-      m_gyroTicCount += input.gyroZ;
+      m_gyroTicCount += input.gyroDelta;
       m_gyroBias = m_gyroTicCount / ++m_noMovementCount;
     }
   }

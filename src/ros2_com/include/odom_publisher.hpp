@@ -17,7 +17,7 @@
 
 //robotv3
 #include <shmem/shmem_cb_consumer.hpp>
-#include "data_structures/log_data_structures.hpp"
+#include <data_structures/protocol.hpp>
 #include <robot_pose.hpp>
 
 #include "kinematics.hpp"
@@ -32,7 +32,7 @@ class OdometryPublisher : public rclcpp::Node
 {
 
   using Storage = boost::interprocess::managed_shared_memory;
-  using ShmemPoseConsumer = shmem::ShmemCBConsumer<ReactdLog, shmem::PolicyFifo, Storage>;
+  using ShmemPoseConsumer = shmem::ShmemCBConsumer<MsgRawStatus, shmem::PolicyFifo, Storage>;
 
 public:
   OdometryPublisher();
@@ -86,7 +86,7 @@ private:
   /*!
     * @brief Stores the PoseAndVelocity data from shared memory
   */
-  ReactdLog m_reactdLog{};
+  MsgRawStatus m_reactdLog{};
 
   bool m_paused{false};
 
