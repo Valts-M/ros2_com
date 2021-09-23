@@ -220,7 +220,7 @@ void RosManager::startProcess(const processId & t_processId)
     else if (m_pidMap[t_processId] == 0) 
     {
       setsid();
-      execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "ros2_com", m_commandMap[t_processId], NULL);
+      execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", m_commandMap[t_processId], NULL);
       _exit(1);
     }
     else
