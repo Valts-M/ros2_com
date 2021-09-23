@@ -48,7 +48,7 @@ void MapSaver::saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> re
   {
     RCLCPP_WARN(
       this->get_logger(),
-      "ros2_com: Failed to save map as %s.bin, can't open file",
+      "ros2_com: Failed to save map as %s.bin, can't open/create file",
       path.c_str());
       response->success=0;
       return;
