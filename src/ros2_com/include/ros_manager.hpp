@@ -37,8 +37,8 @@ public:
 
 private:
 
-  const std::string m_mapSavePath{"/home/RobotV3/slam_maps"};
-  const TextualInfo m_text{m_mapSavePath.c_str()};
+  const std::string m_slamMapsDir{"/home/RobotV3/slam_maps"};
+  std::string m_latestMapsPath{""};
 
   RosFlags m_latestFlags;
 

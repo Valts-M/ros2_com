@@ -3,7 +3,8 @@
 #include "rclcpp/duration.hpp"
 #include <signal.h>
 #include <sys/wait.h>
-#include <boost/filesystem.hpp>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 using namespace std::chrono_literals;
 
@@ -221,8 +222,24 @@ void RosManager::startProcess(const processId & t_processId)
     else if (m_pidMap[t_processId] == 0) 
     {
       setsid();
-      execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", m_commandMap[t_processId], NULL);
-      _exit(1);
+      switch(t_processId)
+      {
+        case(processId::odom):
+          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "common.launch.py", NULL);
+          break;
+        case(processId::mapping):
+          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "mapping.launch.py", NULL);
+          break;
+        case(processId::localization):
+          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "localization.launch.py", m_latestMapsPath.c_str(), NULL);
+          break;
+        case(processId::logging):
+          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "recording.launch.py", NULL);
+          break;
+        default:
+          RCLCPP_ERROR(this->get_logger(), "Unknown process id, exiting subprocess");
+          exit(EXIT_FAILURE);
+      }
     }
     else
     {
@@ -296,16 +313,20 @@ void RosManager::saveMap()
     m_mapSavePending = true;
 
     auto request = std::make_shared<ros2_com::srv::SaveMap_Request>();
-    request->filename = m_mapSavePath;
+    request->filename = path;
 
-    auto mapServiceCallback = [&](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
+    auto mapServiceCallback = [&, path](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
     { 
       m_mapSavePending = false;
       auto result = future.get();
       if(result->success == 1)
       {
         RCLCPP_INFO(this->get_logger(), "Map saved successacefully!");
-        m_slamPathProducer->copyUpdate(m_text);
+        TextualInfo info{(path + ".bin").c_str()};
+        m_slamPathProducer->copyUpdate(info);
+        m_latestMapsPath = "map:=" + path + ".yaml";
+        RCLCPP_INFO(this->get_logger(), m_latestMapsPath);
+
         m_saveMapFlag = false;
       }
       else if(result->success == 0)
@@ -324,27 +345,42 @@ void RosManager::saveMap()
 
 std::string RosManager::createMapSavePath()
 {
-  std::fstream fileReaderWriter(m_mapSavePath + "/num.txt", std::ios::in | std::ios::out | std::ios::trunc);
-  if(!fileReaderWriter.is_open())
+  std::string numFilePath = m_slamMapsDir + "/num.txt";
+  RCLCPP_INFO(this->get_logger(), numFilePath);
+  std::ifstream fileReader(numFilePath);
+  if(!fileReader.is_open())
   {
     RCLCPP_WARN(this->get_logger(), 
-      "Couldn't open file %s/num.txt, saving in %s",
-       m_mapSavePath);
-    return m_mapSavePath;
+      "Couldn't open file %s, saving in %s",
+       numFilePath, m_slamMapsDir);
+    return m_slamMapsDir;
   }
+  int num;
+  fileReader >> num;
+  fileReader.clear();
+  fileReader.close();
 
-  int32_t num;
-  fileReaderWriter >> num;
-  if(!boost::filesystem::create_directory(m_mapSavePath + std::to_string(++num)))
+  std::string saveDir = m_slamMapsDir + "/" + std::to_string(++num);
+  if(mkdir(saveDir.c_str(), 0777) == -1)
   {
     RCLCPP_WARN(this->get_logger(), 
       "Couldn't create directory %s/%d, saving in %s",
-       m_mapSavePath, num);
-    return m_mapSavePath;
+       m_slamMapsDir, num, m_slamMapsDir);
+    return m_slamMapsDir;
   }
 
-  fileReaderWriter << num;
-  return m_mapSavePath + std::to_string(num);
+  std::ofstream fileWriter(numFilePath);
+  if(!fileWriter.is_open())
+  {
+    RCLCPP_WARN(this->get_logger(), 
+      "Couldn't open file %s for write, saving in %s",
+       numFilePath, m_slamMapsDir);
+    return m_slamMapsDir;
+  }
+  fileWriter << num;
+  fileWriter.flush();
+  fileWriter.close();
+  return saveDir;
 }
 
 bool RosManager::needAllocateShmem()
