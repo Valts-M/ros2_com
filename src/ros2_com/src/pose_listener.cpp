@@ -54,6 +54,8 @@ namespace ros2_com
     m_odomPose.x() = m_odomLidarMsg.transform.translation.x;
     m_odomPose.y() = m_odomLidarMsg.transform.translation.y;
     m_odomPose.yaw() = yaw;
+    RCLCPP_INFO(this->get_logger(), "yaw=%f", m_odomPose.yaw());
+    m_odomPoseProducer->append(m_odomPose, m_ts);
 
     try {
       m_mapLidarMsg = m_mapLidarTfBuffer->lookupTransform(
@@ -67,7 +69,6 @@ namespace ros2_com
     }
 
     // RCLCPP_INFO(this->get_logger(), "Odom: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
-    m_odomPoseProducer->append(m_odomPose, m_ts);
 
     tf2::convert(m_mapLidarMsg.transform.rotation, tempQuat);
     tempMatrix.setRotation(tempQuat);
