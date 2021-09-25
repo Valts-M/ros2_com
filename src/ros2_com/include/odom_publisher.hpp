@@ -22,6 +22,7 @@
 
 #include "kinematics.hpp"
 #include "ros2_com/srv/pause_odom.hpp"
+#include "ros2_com/srv/reset_odom.hpp"
 
 namespace ros2_com
 {
@@ -74,6 +75,11 @@ private:
   rclcpp::Service<ros2_com::srv::PauseOdom>::SharedPtr m_pauseOdomService{nullptr};
 
   /*!
+    * @brief Service for reseting odometry to start pose (0 0 0)
+  */
+  rclcpp::Service<ros2_com::srv::ResetOdom>::SharedPtr m_resetOdomService{nullptr};
+
+  /*!
     * @brief Unique pointer to the shared memory pose consumer
   */
   std::unique_ptr<ShmemPoseConsumer> m_poseConsumer{nullptr};
@@ -92,6 +98,8 @@ private:
 
   void pauseToggle(const std::shared_ptr<ros2_com::srv::PauseOdom::Request> request,
           std::shared_ptr<ros2_com::srv::PauseOdom::Response> response);
+  void resetOdom(const std::shared_ptr<ros2_com::srv::ResetOdom::Request> request,
+          std::shared_ptr<ros2_com::srv::ResetOdom::Response> response);
 
   /*!
     * @brief Stores the ros2 odometry mesage

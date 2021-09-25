@@ -20,6 +20,8 @@ OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
   m_pathPublisher = this->create_publisher<nav_msgs::msg::Path>("ros2_com/path", 10);
   m_pauseOdomService = this->create_service<ros2_com::srv::PauseOdom>("ros2_com/pause_odom", 
     std::bind(&OdometryPublisher::pauseToggle, this, _1, _2));
+  m_resetOdomService = this->create_service<ros2_com::srv::ResetOdom>("ros2_com/reset_odom", 
+    std::bind(&OdometryPublisher::resetOdom, this, _1, _2));
 
   allocateShmem();
   //TODO: get form config
@@ -72,6 +74,18 @@ void OdometryPublisher::pauseToggle(const std::shared_ptr<ros2_com::srv::PauseOd
 {
   m_paused = !m_paused;
   response->paused=m_paused;
+}
+
+void OdometryPublisher::resetOdom(const std::shared_ptr<ros2_com::srv::ResetOdom::Request> request,
+          std::shared_ptr<ros2_com::srv::ResetOdom::Response> response)
+{
+  m_odomMsg.pose.pose.position.x = 0.0;
+  m_odomMsg.pose.pose.position.y = 0.0;
+  m_tfMsg.transform.rotation = geometry_msgs::msg::Quaternion();
+  m_tfMsg.transform.rotation = m_odomMsg.pose.pose.orientation;
+  m_tfMsg.transform.translation.x = m_odomMsg.pose.pose.position.x;
+  m_tfMsg.transform.translation.y = m_odomMsg.pose.pose.position.y;
+  m_pathMsg.poses.clear();
 }
 
 void OdometryPublisher::updateOdom()
