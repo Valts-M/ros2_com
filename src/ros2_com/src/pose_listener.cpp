@@ -47,13 +47,21 @@ namespace ros2_com
 
     tf2::Quaternion tempQuat;
     tf2::convert(m_odomLidarMsg.transform.rotation, tempQuat);
+    // RCLCPP_INFO(this->get_logger(), "x=%f, y=%f, z=%f, w=%f", tempQuat.x(), tempQuat.y(), tempQuat.z(), tempQuat.w());
     tf2::Matrix3x3 tempMatrix(tempQuat);
+    // RCLCPP_INFO(this->get_logger(), "%f %f %f\n%f %f %f\n%f %f %f", 
+    // tempMatrix[0][0], tempMatrix[0][1], tempMatrix[0][2],
+    // tempMatrix[1][0], tempMatrix[1][1], tempMatrix[1][2],
+    // tempMatrix[2][0], tempMatrix[2][1], tempMatrix[2][2]);
     double roll, pitch, yaw;
-    tempMatrix.getEulerYPR(roll, pitch, yaw);
+    tempMatrix.getEulerYPR(yaw, pitch, roll);
 
     m_odomPose.x() = m_odomLidarMsg.transform.translation.x;
     m_odomPose.y() = m_odomLidarMsg.transform.translation.y;
     m_odomPose.yaw() = yaw;
+
+    m_odomPoseProducer->append(m_odomPose, m_ts);
+    // RCLCPP_INFO(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
 
     try {
       m_mapLidarMsg = m_mapLidarTfBuffer->lookupTransform(
@@ -67,11 +75,10 @@ namespace ros2_com
     }
 
     // RCLCPP_INFO(this->get_logger(), "Odom: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
-    m_odomPoseProducer->append(m_odomPose, m_ts);
 
     tf2::convert(m_mapLidarMsg.transform.rotation, tempQuat);
     tempMatrix.setRotation(tempQuat);
-    tempMatrix.getEulerYPR(roll, pitch, yaw);
+    tempMatrix.getEulerYPR(yaw, pitch, roll);
 
     m_mapPose.x() = m_mapLidarMsg.transform.translation.x;
     m_mapPose.y() = m_mapLidarMsg.transform.translation.y;
