@@ -146,6 +146,7 @@ void RosManager::setStateFlag(const processId & t_processId)
         m_flagMap[processId::mapping] = false;
         m_saveMapFlag = true;
         m_sendInitialPose = true;
+        m_resetOdomFlag = true;
       }
       //if mapping set to active, turn off localization, reset odometry
       else if(t_processId == processId::mapping)
@@ -412,7 +413,7 @@ std::string RosManager::initLatestMapPath()
   fileReader.clear();
   fileReader.close();
 
-  return m_slamMapsDir + "/" + std::to_string(num) + "/map.yaml";
+  return "map:=" + m_slamMapsDir + "/" + std::to_string(num) + "/map.yaml";
 }
 
 void RosManager::resetOdom()
@@ -420,37 +421,17 @@ void RosManager::resetOdom()
   if(!isProcessRunning(processId::odom))
   {
     RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Process not active)");
-    m_resetOdomFlag = false;
   }
   else if (!m_odomResetter->wait_for_service())
   {
     RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Service not active)");
-    m_resetOdomFlag = false;
-  }
-  else if(m_resetOdomPending)
-  {
-    RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Pending response)");
   }
   else
   {
-    auto request = std::make_shared<ros2_com::srv::ResetOdom_Request>();
-
-    auto resetOdomServiceCallback = [&](rclcpp::Client<ros2_com::srv::ResetOdom>::SharedFuture future)
-    { 
-      m_resetOdomPending = false;
-      auto result = future.get();
-      if(result->success)
-      {
-        RCLCPP_INFO(this->get_logger(), "Odometry reset: SUCCESS");
-        m_resetOdomFlag = false;
-      }
-      else
-      {
-        RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Unknown error)");
-      }
-    };
-    auto result = m_odomResetter->async_send_request(request, resetOdomServiceCallback);
+    auto result = m_odomResetter->async_send_request(std::make_shared<ros2_com::srv::ResetOdom_Request>());
+    RCLCPP_INFO(this->get_logger(), "Odometry reset: SUCCESS");
   }
+  m_resetOdomFlag = false;
 }
 
 void RosManager::sendInitialPose()

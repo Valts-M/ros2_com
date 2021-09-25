@@ -51,7 +51,6 @@ private:
   bool m_initialPosePending{false};
 
   bool m_resetOdomFlag{false};
-  bool m_resetOdomPending{false};
 
   rclcpp::TimerBase::SharedPtr m_rosTimer;
 

@@ -34,9 +34,7 @@ OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
 
 OdometryPublisher::~OdometryPublisher()
 {
-  RCLCPP_INFO(this->get_logger(), "Destructed");
   deallocateShmem();
-  RCLCPP_INFO(this->get_logger(), "Destructed2");
 }
 
 void OdometryPublisher::initMsgs()
@@ -81,7 +79,8 @@ void OdometryPublisher::resetOdom(const std::shared_ptr<ros2_com::srv::ResetOdom
 {
   m_odomMsg.pose.pose.position.x = 0.0;
   m_odomMsg.pose.pose.position.y = 0.0;
-  m_tfMsg.transform.rotation = geometry_msgs::msg::Quaternion();
+  m_kinematics.m_yaw = 0.0;
+  m_odomMsg.pose.pose.orientation = geometry_msgs::msg::Quaternion();
   m_tfMsg.transform.rotation = m_odomMsg.pose.pose.orientation;
   m_tfMsg.transform.translation.x = m_odomMsg.pose.pose.position.x;
   m_tfMsg.transform.translation.y = m_odomMsg.pose.pose.position.y;
