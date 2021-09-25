@@ -18,7 +18,12 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 {
   allocateShmem();
 
+  m_latestMapsPath = initLatestMapPath();
+
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("ros2_com/save_map");
+  m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("ros2_com/reset_odom");
+  m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("ros2_com/send_initial_pose");
+
   
   m_rosTimer = this->create_wall_timer(
     500ms,
@@ -40,6 +45,10 @@ void RosManager::updateHandler()
     setLocalFlags();
 
   updateProcessStates();
+
+  if(m_resetOdomFlag)
+    resetOdom();
+  
 
   if(m_saveMapFlag)
     saveMap();
@@ -131,15 +140,19 @@ void RosManager::setStateFlag(const processId & t_processId)
       //set to active
       m_flagMap[t_processId] = true;
 
-      //if localization set to active, turn off mapping and save map
+      //if localization set to active, turn off mapping, save map and send initial pose
       if(t_processId == processId::localization)
       {
         m_flagMap[processId::mapping] = false;
         m_saveMapFlag = true;
+        m_sendInitialPose = true;
       }
-      //if mapping set to active, turn off localization
+      //if mapping set to active, turn off localization, reset odometry
       else if(t_processId == processId::mapping)
+      {
         m_flagMap[processId::localization] = false;
+        m_resetOdomFlag = true;
+      }
     }
     else 
     {
@@ -293,17 +306,17 @@ void RosManager::saveMap()
 {
   if(!isProcessRunning(processId::mapping))
   {
-    RCLCPP_WARN(this->get_logger(), "Can't save map, mapper process is not active");
+    RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Process not active)");
     m_saveMapFlag = false;
   }
   else if (!m_mapSaver->wait_for_service())
   {
-    RCLCPP_WARN(this->get_logger(), "Can't save map, service is not active yet");
+    RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Service not active)");
     m_saveMapFlag = false;
   }
   else if(m_mapSavePending)
   {
-    RCLCPP_WARN(this->get_logger(), "Can't save map, a map save is still pending");
+    RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Pending response)");
   }
   else
   {
@@ -321,7 +334,7 @@ void RosManager::saveMap()
       auto result = future.get();
       if(result->success == 1)
       {
-        RCLCPP_INFO(this->get_logger(), "Map saved successacefully!");
+        RCLCPP_INFO(this->get_logger(), "Save map: SUCCESS");
         TextualInfo info{(path + ".bin").c_str()};
         m_slamPathProducer->copyUpdate(info);
         m_latestMapsPath = "map:=" + path + ".yaml";
@@ -331,11 +344,11 @@ void RosManager::saveMap()
       }
       else if(result->success == 0)
       {
-        RCLCPP_WARN(this->get_logger(), "Map saving unsuccessful!");
+        RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Unknown error)");
       }
       else
       {
-        RCLCPP_WARN(this->get_logger(), "Map saving unsuccessful! No map has been created yet!");
+        RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Map hasn't been created)");
         m_saveMapFlag = false;
       }
     };
@@ -346,7 +359,6 @@ void RosManager::saveMap()
 std::string RosManager::createMapSavePath()
 {
   std::string numFilePath = m_slamMapsDir + "/num.txt";
-  RCLCPP_INFO(this->get_logger(), numFilePath);
   std::ifstream fileReader(numFilePath);
   if(!fileReader.is_open())
   {
@@ -381,6 +393,102 @@ std::string RosManager::createMapSavePath()
   fileWriter.flush();
   fileWriter.close();
   return saveDir;
+}
+
+std::string RosManager::initLatestMapPath()
+{
+  std::string numFilePath = m_slamMapsDir + "/num.txt";
+  std::ifstream fileReader(numFilePath);
+  if(!fileReader.is_open())
+  {
+    RCLCPP_WARN(this->get_logger(), 
+      "Couldn't open file %s",
+       numFilePath, m_slamMapsDir);
+    return m_slamMapsDir;
+  }
+
+  int num;
+  fileReader >> num;
+  fileReader.clear();
+  fileReader.close();
+
+  return m_slamMapsDir + "/" + std::to_string(num) + "/map.yaml";
+}
+
+void RosManager::resetOdom()
+{
+  if(!isProcessRunning(processId::odom))
+  {
+    RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Process not active)");
+    m_resetOdomFlag = false;
+  }
+  else if (!m_odomResetter->wait_for_service())
+  {
+    RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Service not active)");
+    m_resetOdomFlag = false;
+  }
+  else if(m_resetOdomPending)
+  {
+    RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Pending response)");
+  }
+  else
+  {
+    auto request = std::make_shared<ros2_com::srv::ResetOdom_Request>();
+
+    auto resetOdomServiceCallback = [&](rclcpp::Client<ros2_com::srv::ResetOdom>::SharedFuture future)
+    { 
+      m_resetOdomPending = false;
+      auto result = future.get();
+      if(result->success)
+      {
+        RCLCPP_INFO(this->get_logger(), "Odometry reset: SUCCESS");
+        m_resetOdomFlag = false;
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Unknown error)");
+      }
+    };
+    auto result = m_odomResetter->async_send_request(request, resetOdomServiceCallback);
+  }
+}
+
+void RosManager::sendInitialPose()
+{
+  if(!isProcessRunning(processId::odom))
+  {
+    RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Process not active)");
+    m_sendInitialPose = false;
+  }
+  else if (!m_odomResetter->wait_for_service())
+  {
+    RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Service not active)");
+    m_sendInitialPose = false;
+  }
+  else if(m_initialPosePending)
+  {
+    RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Pending response)");
+  }
+  else
+  {
+    auto request = std::make_shared<ros2_com::srv::SendInitialPose_Request>();
+
+    auto sendInitialPoseServiceCallback = [&](rclcpp::Client<ros2_com::srv::SendInitialPose>::SharedFuture future)
+    { 
+      m_initialPosePending = false;
+      auto result = future.get();
+      if(result->success)
+      {
+        RCLCPP_INFO(this->get_logger(), "Send initial pose: SUCCESS");
+        m_sendInitialPose = false;
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Unknown error)");
+      }
+    };
+    auto result = m_initialPoseSender->async_send_request(request, sendInitialPoseServiceCallback);
+  }
 }
 
 bool RosManager::needAllocateShmem()

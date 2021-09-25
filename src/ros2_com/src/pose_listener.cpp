@@ -1,7 +1,10 @@
 #include "pose_listener.hpp"
 #include "helper.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2/LinearMath/Quaternion.h"
+
+using namespace std::chrono_literals;
+using std::placeholders::_1;
+using std::placeholders::_2;
 
 namespace ros2_com
 {
@@ -11,14 +14,15 @@ namespace ros2_com
   {
     allocateShmem();
 
-    this->declare_parameter<std::string>("target_frame", "laser_sensor_frame");
+    this->declare_parameter<std::string>("target_frame", "base_footprint");
     this->get_parameter("target_frame", m_target_frame);
 
-    m_mapLidarTfBuffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
-    m_odomLidarTfBuffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+    m_initialPoseService = this->create_service<ros2_com::srv::SendInitialPose>("ros2_com/send_initial_pose", 
+    std::bind(&PoseListener::sendInitialPose, this, _1, _2));
+    m_initialPosePublisher = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose", 10);
 
-    m_mapLidarListener = std::make_shared<tf2_ros::TransformListener>(*m_mapLidarTfBuffer);
-    m_odomLidarListener = std::make_shared<tf2_ros::TransformListener>(*m_odomLidarTfBuffer);
+    m_tfBuffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+    m_tfListener = std::make_shared<tf2_ros::TransformListener>(*m_tfBuffer);
 
     m_timer = this->create_wall_timer(50ms, std::bind(&PoseListener::timerCallback, this));
   }
@@ -28,6 +32,34 @@ namespace ros2_com
     deallocateShmem();
   }
 
+  void PoseListener::sendInitialPose(
+    const std::shared_ptr<ros2_com::srv::SendInitialPose::Request> request,
+    std::shared_ptr<ros2_com::srv::SendInitialPose::Response> response)
+  {
+    try
+    {
+      geometry_msgs::msg::TransformStamped mapBaseLinkTransform = 
+      m_tfBuffer->lookupTransform(m_map_frame, "base_footprint", tf2::TimePointZero);
+
+      geometry_msgs::msg::PoseWithCovarianceStamped msg{};
+      msg.header = mapBaseLinkTransform.header;
+      msg.pose.pose.position.x = mapBaseLinkTransform.transform.translation.x;
+      msg.pose.pose.position.y = mapBaseLinkTransform.transform.translation.y;
+      msg.pose.pose.position.z = mapBaseLinkTransform.transform.translation.z;
+      msg.pose.pose.orientation = mapBaseLinkTransform.transform.rotation;
+
+      m_initialPosePublisher->publish(msg);
+      response->success=true;
+    }
+    catch(const tf2::TransformException & ex)
+    {
+      RCLCPP_WARN(
+        this->get_logger(), "Could not transform %s to base_footprint: %s",
+        m_map_frame.c_str(), ex.what());
+      response->success=false;
+    }
+  }
+
   void PoseListener::timerCallback()
   {
     if(needAllocateShmem())
@@ -35,10 +67,10 @@ namespace ros2_com
     m_ts = Helper::getTimeStamp();
 
     try {
-      m_odomLidarMsg = m_odomLidarTfBuffer->lookupTransform(
+      m_odomLidarMsg = m_tfBuffer->lookupTransform(
         m_odom_frame, m_target_frame,
         tf2::TimePointZero);
-    } catch (tf2::TransformException & ex) {
+    } catch (const tf2::TransformException & ex) {
       // RCLCPP_INFO(
         // this->get_logger(), "Could not transform %s to %s: %s",
         // m_odom_frame.c_str(), m_target_frame.c_str(), ex.what());
@@ -66,10 +98,10 @@ namespace ros2_com
     // RCLCPP_INFO(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
 
     try {
-      m_mapLidarMsg = m_mapLidarTfBuffer->lookupTransform(
+      m_mapLidarMsg = m_tfBuffer->lookupTransform(
         m_map_frame, m_target_frame,
         tf2::TimePointZero);
-    } catch (tf2::TransformException & ex) {
+    } catch (const tf2::TransformException & ex) {
       // RCLCPP_INFO(
         // this->get_logger(), "Could not transform %s to %s: %s",
         // m_map_frame.c_str(), m_target_frame.c_str(), ex.what());

@@ -8,10 +8,12 @@
 #include <vector>
 
 //ros
-#include "rclcpp/rclcpp.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "tf2_ros/transform_listener.h"
+#include <rclcpp/rclcpp.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include "ros2_com/srv/send_initial_pose.hpp"
 
 //robotv3
 #include <shmem/shmem_position_producer.hpp>
@@ -36,9 +38,14 @@ private:
 
   std::unique_ptr<ShmemPoseProducer> m_odomPoseProducer{nullptr};
   std::unique_ptr<ShmemPoseProducer> m_mapPoseProducer{nullptr};
+  rclcpp::Service<ros2_com::srv::SendInitialPose>::SharedPtr m_initialPoseService{nullptr};
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_initialPosePublisher{nullptr};
 
   RobotPose m_odomPose;
   RobotPose m_mapPose;
+
+  void sendInitialPose(const std::shared_ptr<ros2_com::srv::SendInitialPose::Request> request,
+          std::shared_ptr<ros2_com::srv::SendInitialPose::Response> response);
 
   void timerCallback();
 
@@ -53,14 +60,9 @@ private:
   double m_ts{0.0};
 
   /*!
-    * @brief Transform listener for the odom->laser_sensor_frame transform
+    * @brief Transform listener
   */
-  std::shared_ptr<tf2_ros::TransformListener> m_odomLidarListener{nullptr};
-
-  /*!
-    * @brief Transform listener for the map->laser_sensor_frame transform
-  */
-  std::shared_ptr<tf2_ros::TransformListener> m_mapLidarListener{nullptr};
+  std::shared_ptr<tf2_ros::TransformListener> m_tfListener{nullptr};
 
   /*!
     * @brief Transform message for the odom->laser_sensor_frame transform
@@ -74,9 +76,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr m_timer{nullptr};
 
-  std::unique_ptr<tf2_ros::Buffer> m_odomLidarTfBuffer;
-
-  std::unique_ptr<tf2_ros::Buffer> m_mapLidarTfBuffer;
+  std::unique_ptr<tf2_ros::Buffer> m_tfBuffer;
 
   std::string m_map_frame;
 
