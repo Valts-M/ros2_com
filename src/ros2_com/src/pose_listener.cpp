@@ -17,8 +17,12 @@ namespace ros2_com
     this->declare_parameter<std::string>("target_frame", "base_footprint");
     this->get_parameter("target_frame", m_target_frame);
 
-    m_initialPoseService = this->create_service<ros2_com::srv::SendInitialPose>("ros2_com/send_initial_pose", 
+    m_sendPoseService = this->create_service<ros2_com::srv::SendInitialPose>("ros2_com/send_initial_pose", 
     std::bind(&PoseListener::sendInitialPose, this, _1, _2));
+
+    m_savePoseService = this->create_service<ros2_com::srv::SaveInitialPose>("ros2_com/save_initial_pose", 
+    std::bind(&PoseListener::saveInitialPose, this, _1, _2)); 
+
     m_initialPosePublisher = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose", 10);
 
     m_tfBuffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
@@ -36,19 +40,26 @@ namespace ros2_com
     const std::shared_ptr<ros2_com::srv::SendInitialPose::Request> request,
     std::shared_ptr<ros2_com::srv::SendInitialPose::Response> response)
   {
+    m_initialPose.header.stamp = this->now();
+    m_initialPosePublisher->publish(m_initialPose);
+    response->success=true;
+  }
+
+  void PoseListener::saveInitialPose(
+    const std::shared_ptr<ros2_com::srv::SaveInitialPose::Request> request,
+    std::shared_ptr<ros2_com::srv::SaveInitialPose::Response> response)
+  {
     try
     {
       geometry_msgs::msg::TransformStamped mapBaseLinkTransform = 
       m_tfBuffer->lookupTransform(m_map_frame, "base_footprint", tf2::TimePointZero);
 
-      geometry_msgs::msg::PoseWithCovarianceStamped msg{};
-      msg.header = mapBaseLinkTransform.header;
-      msg.pose.pose.position.x = mapBaseLinkTransform.transform.translation.x;
-      msg.pose.pose.position.y = mapBaseLinkTransform.transform.translation.y;
-      msg.pose.pose.position.z = mapBaseLinkTransform.transform.translation.z;
-      msg.pose.pose.orientation = mapBaseLinkTransform.transform.rotation;
+      m_initialPose.header = mapBaseLinkTransform.header;
+      m_initialPose.pose.pose.position.x = mapBaseLinkTransform.transform.translation.x;
+      m_initialPose.pose.pose.position.y = mapBaseLinkTransform.transform.translation.y;
+      m_initialPose.pose.pose.position.z = mapBaseLinkTransform.transform.translation.z;
+      m_initialPose.pose.pose.orientation = mapBaseLinkTransform.transform.rotation;
 
-      m_initialPosePublisher->publish(msg);
       response->success=true;
     }
     catch(const tf2::TransformException & ex)

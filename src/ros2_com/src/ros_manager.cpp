@@ -23,7 +23,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("ros2_com/save_map");
   m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("ros2_com/reset_odom");
   m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("ros2_com/send_initial_pose");
-
+  m_initialPoseSaver = this->create_client<ros2_com::srv::SaveInitialPose>("ros2_com/save_initial_pose");
   
   m_rosTimer = this->create_wall_timer(
     500ms,
@@ -46,12 +46,17 @@ void RosManager::updateHandler()
 
   updateProcessStates();
 
+  if(m_saveInitialPose)
+    saveInitialPose();
+
   if(m_resetOdomFlag)
     resetOdom();
-  
 
   if(m_saveMapFlag)
     saveMap();
+
+  if(m_sendInitialPose)
+    sendInitialPose();
 
   RCLCPP_INFO(this->get_logger(), "\n\n*********************************************************************************************************************\n");
 }
@@ -82,15 +87,6 @@ void RosManager::updateProcessState(const processId & t_processId)
     startProcess(t_processId);
   else
     stopProcess(t_processId);
-}
-
-void RosManager::stopProcess(const processId & t_processId)
-{
-  //TODO: replace with timeout
-  if(m_stopCountMap[t_processId] < 20)
-    sendStop(t_processId);  
-  else
-    sendKill(t_processId);
 }
 
 bool RosManager::getRosFlags()
@@ -145,6 +141,7 @@ void RosManager::setStateFlag(const processId & t_processId)
       {
         m_flagMap[processId::mapping] = false;
         m_saveMapFlag = true;
+        m_saveInitialPose = true;
         m_sendInitialPose = true;
         m_resetOdomFlag = true;
       }
@@ -162,7 +159,10 @@ void RosManager::setStateFlag(const processId & t_processId)
 
       //if shutting down mapping, save map
       if(t_processId == processId::mapping)
+      {
         m_saveMapFlag = true;
+        m_saveInitialPose = true;
+      }
     }
   }
 }
@@ -173,6 +173,15 @@ void RosManager::stopAll()
   {
     sendStop(static_cast<processId>(i));
   }
+}
+
+void RosManager::stopProcess(const processId & t_processId)
+{
+  //TODO: replace with timeout
+  if(m_stopCountMap[t_processId] < 20)
+    sendStop(t_processId);  
+  else
+    sendKill(t_processId);
 }
 
 void RosManager::sendKill(const processId & t_processId)
@@ -273,6 +282,11 @@ void RosManager::sendStop(const processId & t_processId)
   else if(t_processId == processId::mapping && m_saveMapFlag)
   {
     RCLCPP_WARN(this->get_logger(), "Can't stop mapping, map save pending");
+    return;
+  }
+  else if(t_processId == processId::mapping && m_saveInitialPose)
+  {
+    RCLCPP_WARN(this->get_logger(), "Can't stop mapping, save initial pose pending");
     return;
   }
   else
@@ -446,17 +460,22 @@ void RosManager::sendInitialPose()
     RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Service not active)");
     m_sendInitialPose = false;
   }
-  else if(m_initialPosePending)
+  else if(m_saveInitialPose)
+  {
+    RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Pending initial pose save)");
+  }
+  else if(m_sendInitialPosePending)
   {
     RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Pending response)");
   }
   else
   {
     auto request = std::make_shared<ros2_com::srv::SendInitialPose_Request>();
+    m_sendInitialPosePending = true;
 
     auto sendInitialPoseServiceCallback = [&](rclcpp::Client<ros2_com::srv::SendInitialPose>::SharedFuture future)
     { 
-      m_initialPosePending = false;
+      m_sendInitialPosePending = false;
       auto result = future.get();
       if(result->success)
       {
@@ -469,6 +488,45 @@ void RosManager::sendInitialPose()
       }
     };
     auto result = m_initialPoseSender->async_send_request(request, sendInitialPoseServiceCallback);
+  }
+}
+
+void RosManager::saveInitialPose()
+{
+  if(!isProcessRunning(processId::odom))
+  {
+    RCLCPP_WARN(this->get_logger(), "Save initial pose: FAILED (Process not active)");
+    m_saveInitialPose = false;
+  }
+  else if (!m_initialPoseSaver->wait_for_service())
+  {
+    RCLCPP_WARN(this->get_logger(), "Save initial pose: FAILED (Service not active)");
+    m_saveInitialPose = false;
+  }
+  else if(m_saveInitialPosePending)
+  {
+    RCLCPP_WARN(this->get_logger(), "Save initial pose: FAILED (Pending response)");
+  }
+  else
+  {
+    auto request = std::make_shared<ros2_com::srv::SaveInitialPose_Request>();
+    m_saveInitialPosePending = true;
+
+    auto saveInitialPoseServiceCallback = [&](rclcpp::Client<ros2_com::srv::SaveInitialPose>::SharedFuture future)
+    { 
+      m_saveInitialPosePending = false;
+      auto result = future.get();
+      if(result->success)
+      {
+        RCLCPP_INFO(this->get_logger(), "Save initial pose: SUCCESS");
+        m_saveInitialPose = false;
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "Save initial pose: FAILED (Unknown error)");
+      }
+    };
+    auto result = m_initialPoseSaver->async_send_request(request, saveInitialPoseServiceCallback);
   }
 }
 

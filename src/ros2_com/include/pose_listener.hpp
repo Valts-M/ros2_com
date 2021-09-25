@@ -14,6 +14,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include "ros2_com/srv/send_initial_pose.hpp"
+#include "ros2_com/srv/save_initial_pose.hpp"
 
 //robotv3
 #include <shmem/shmem_position_producer.hpp>
@@ -38,14 +39,20 @@ private:
 
   std::unique_ptr<ShmemPoseProducer> m_odomPoseProducer{nullptr};
   std::unique_ptr<ShmemPoseProducer> m_mapPoseProducer{nullptr};
-  rclcpp::Service<ros2_com::srv::SendInitialPose>::SharedPtr m_initialPoseService{nullptr};
+  rclcpp::Service<ros2_com::srv::SendInitialPose>::SharedPtr m_sendPoseService{nullptr};
+  rclcpp::Service<ros2_com::srv::SaveInitialPose>::SharedPtr m_savePoseService{nullptr};
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_initialPosePublisher{nullptr};
+
+  geometry_msgs::msg::PoseWithCovarianceStamped m_initialPose{};
 
   RobotPose m_odomPose;
   RobotPose m_mapPose;
 
   void sendInitialPose(const std::shared_ptr<ros2_com::srv::SendInitialPose::Request> request,
           std::shared_ptr<ros2_com::srv::SendInitialPose::Response> response);
+
+  void saveInitialPose(const std::shared_ptr<ros2_com::srv::SaveInitialPose::Request> request,
+          std::shared_ptr<ros2_com::srv::SaveInitialPose::Response> response);
 
   void timerCallback();
 

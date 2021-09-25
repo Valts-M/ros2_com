@@ -12,6 +12,7 @@
 #include "ros2_com/srv/save_map.hpp"
 #include "ros2_com/srv/reset_odom.hpp"
 #include "ros2_com/srv/send_initial_pose.hpp"
+#include "ros2_com/srv/save_initial_pose.hpp"
 
 //robotv3
 #include <shmem/shmem_cb_consumer.hpp>
@@ -47,8 +48,11 @@ private:
   bool m_saveMapFlag{false};
   bool m_mapSavePending{false};
 
+  bool m_saveInitialPose{false};
+  bool m_saveInitialPosePending{false};
+
   bool m_sendInitialPose{false};
-  bool m_initialPosePending{false};
+  bool m_sendInitialPosePending{false};
 
   bool m_resetOdomFlag{false};
 
@@ -59,6 +63,8 @@ private:
   rclcpp::Client<ros2_com::srv::ResetOdom>::SharedPtr m_odomResetter;
 
   rclcpp::Client<ros2_com::srv::SendInitialPose>::SharedPtr m_initialPoseSender;
+
+  rclcpp::Client<ros2_com::srv::SaveInitialPose>::SharedPtr m_initialPoseSaver;
 
   std::unique_ptr<ShmemFlagConsumer> m_flagConsumer{nullptr};
 
@@ -95,6 +101,8 @@ private:
   void resetOdom();
 
   void sendInitialPose();
+
+  void saveInitialPose();
 
   bool isProcessRunning(const processId & t_processId);
 
