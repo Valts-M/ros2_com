@@ -40,9 +40,14 @@ namespace ros2_com
     const std::shared_ptr<ros2_com::srv::SendInitialPose::Request> request,
     std::shared_ptr<ros2_com::srv::SendInitialPose::Response> response)
   {
-    m_initialPose.header.stamp = this->now();
-    m_initialPosePublisher->publish(m_initialPose);
-    response->success=true;
+    if(m_initialPosePublisher->get_subscription_count() > 0)
+    {
+      m_initialPose.header.stamp = this->now();
+      m_initialPosePublisher->publish(m_initialPose);
+      response->success=true;
+    }
+    else
+      response->success=false;
   }
 
   void PoseListener::saveInitialPose(

@@ -484,7 +484,7 @@ void RosManager::sendInitialPose()
       }
       else
       {
-        RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Unknown error)");
+        RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Localization not fully active yet)");
       }
     };
     auto result = m_initialPoseSender->async_send_request(request, sendInitialPoseServiceCallback);
