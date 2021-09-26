@@ -45,6 +45,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PauseOdom.srv"
   "srv/ResetOdom.srv"
   "srv/SendInitialPose.srv"
+  "srv/SaveInitialPose.srv"
   DEPENDENCIES nav_msgs
  )
 

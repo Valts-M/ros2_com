@@ -165,7 +165,6 @@ void OdometryPublisher::allocateShmem()
       "MsgRawStatus", "MsgRawStatus",
       "MsgRawStatusConsumer");
       startShmem();
-
   }
 }
 

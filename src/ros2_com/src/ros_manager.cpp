@@ -117,6 +117,7 @@ void RosManager::setLocalFlags()
       m_restartMap[id] = true;
       if(id == processId::mapping)
         m_saveMapFlag = true;
+        m_resetOdomFlag = true;
     }
 
     RCLCPP_INFO(this->get_logger(), "Process %d received %d, set to %d", 
