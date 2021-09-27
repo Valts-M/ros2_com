@@ -100,6 +100,9 @@ void OdometryPublisher::updateOdom()
 
 void OdometryPublisher::updatePath()
 {
+  //don't add if robot hasn't moved
+  if(m_pathMsg.poses.back().pose == m_odomMsg.pose.pose)
+    return;
   geometry_msgs::msg::PoseStamped temp;
   temp.header = m_odomMsg.header;
   temp.pose = m_odomMsg.pose.pose;
