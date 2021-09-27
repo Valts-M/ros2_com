@@ -116,7 +116,11 @@ void RosManager::setLocalFlags()
     {
       m_restartMap[id] = true;
       if(id == processId::mapping)
+      {
         m_saveMapFlag = true;
+        m_resetOdomFlag = true;
+      }
+      else if(id == processId::localization)
         m_resetOdomFlag = true;
     }
 
@@ -137,13 +141,10 @@ void RosManager::setStateFlag(const processId & t_processId)
       //set to active
       m_flagMap[t_processId] = true;
 
-      //if localization set to active, turn off mapping, save map and send initial pose
+      //if localization set to active, turn off mapping
       if(t_processId == processId::localization)
       {
-        m_flagMap[processId::mapping] = false;
-        m_saveMapFlag = true;
-        m_saveInitialPose = true;
-        m_sendInitialPose = true;
+        turnOffMapping();
         m_resetOdomFlag = true;
       }
       //if mapping set to active, turn off localization, reset odometry
@@ -161,10 +162,19 @@ void RosManager::setStateFlag(const processId & t_processId)
       //if shutting down mapping, save map
       if(t_processId == processId::mapping)
       {
-        m_saveMapFlag = true;
-        m_saveInitialPose = true;
+        turnOffMapping();
       }
     }
+  }
+}
+
+void RosManager::turnOffMapping()
+{
+  m_flagMap[processId::mapping] = false;
+  if(isProcessRunning(processId::mapping))
+  {
+    m_saveMapFlag = true;
+    m_saveInitialPose = true;
   }
 }
 
@@ -210,7 +220,7 @@ bool RosManager::incompatibleProcesses(const processId & t_processId)
     RCLCPP_WARN(this->get_logger(), 
       "Trying to launch localization while mapping is still active! Shutting down mapping");
 
-    m_flagMap[processId::mapping] = false; //set mapping flag to false to shut down
+    turnOffMapping();
     return true; //shouldn't start localization before mapping has shut down
   }
   else if(t_processId == processId::mapping && isProcessRunning(processId::localization))
@@ -521,6 +531,7 @@ void RosManager::saveInitialPose()
       {
         RCLCPP_INFO(this->get_logger(), "Save initial pose: SUCCESS");
         m_saveInitialPose = false;
+        m_sendInitialPose = true;
       }
       else
       {

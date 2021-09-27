@@ -104,6 +104,8 @@ private:
 
   void saveInitialPose();
 
+  void turnOffMapping();
+
   bool isProcessRunning(const processId & t_processId);
 
   bool incompatibleProcesses(const processId & t_processId);
