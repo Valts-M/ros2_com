@@ -80,6 +80,10 @@ namespace ros2_com
   {
     if(needAllocateShmem())
       allocateShmem();
+      
+    if(!m_odomPoseProducer->isObjectReferenced() || !m_mapPoseProducer->isObjectReferenced())
+      return;
+
     m_ts = Helper::getTimeStamp();
 
     try {
