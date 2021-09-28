@@ -69,9 +69,9 @@ namespace ros2_com
     }
     catch(const tf2::TransformException & ex)
     {
-      RCLCPP_WARN(
-        this->get_logger(), "Could not transform %s to base_footprint: %s",
-        m_map_frame.c_str(), ex.what());
+      // RCLCPP_WARN(
+      //   this->get_logger(), "Could not transform %s to base_footprint: %s",
+      //   m_map_frame.c_str(), ex.what());
       response->success=false;
     }
   }
@@ -91,9 +91,9 @@ namespace ros2_com
         m_odom_frame, m_target_frame,
         tf2::TimePointZero);
     } catch (const tf2::TransformException & ex) {
-      RCLCPP_INFO(
-        this->get_logger(), "Could not transform %s to %s: %s",
-        m_odom_frame.c_str(), m_target_frame.c_str(), ex.what());
+      // RCLCPP_INFO(
+        // this->get_logger(), "Could not transform %s to %s: %s",
+        // m_odom_frame.c_str(), m_target_frame.c_str(), ex.what());
       return;
     }
 
