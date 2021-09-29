@@ -36,6 +36,10 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
   pass.filter(*tmpCloud);
 
   sensor_msgs::msg::PointCloud2 cloud;
+  pcl::toROSMsg(*tmpCloud, cloud);
+  cloud.header.frame_id = "laser_sensor_frame";
+  cloud.header.stamp = this->now();
+  m_publisher->publish(cloud);
 }
 
 }
