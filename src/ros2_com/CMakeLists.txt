@@ -17,16 +17,16 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 
-set(Boost_INCLUDE_DIR "/vcpkg/installed/arm64-linux/include")
-set(Boost_LIBRARY_DIR "/vcpkg/installed/arm64-linux/lib")
+set(Boost_INCLUDE_DIR "/vcpkg/installed/x64-linux/include")
+set(Boost_LIBRARY_DIR "/vcpkg/installed/x64-linux/lib")
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 # include_directories("/code/RobotV3/MainCore/include")
 # link_directories("/code/RobotV3/bin")
 # link_libraries("/code/RobotV3/bin/libMainCore.a")
-include_directories("/code/RobotV3/MainCore/include")
-link_directories("/code/RobotV3/bin")
-link_libraries("/code/RobotV3/bin/libMainCore.a")
+include_directories("/workspaces/RobotV3/MainCore/include")
+link_directories("/workspaces/RobotV3/bin")
+link_libraries("/workspaces/RobotV3/bin/libMainCore.a")
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -39,6 +39,11 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(Boost REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(PCL REQUIRED)
+
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SaveMap.srv"
@@ -70,6 +75,26 @@ target_link_libraries(odom_publisher rt kinematics)
 rosidl_target_interfaces(odom_publisher ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS odom_publisher
+DESTINATION lib/${PROJECT_NAME})
+
+add_executable(point2block src/point2block.cpp)
+ament_target_dependencies(point2block rclcpp tf2 tf2_ros PCL sensor_msgs)
+target_include_directories(point2block PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${PCL_INCLUDE_DIRS})
+target_link_libraries(point2block rt ${PCL_LIBRARIES})
+
+install(TARGETS point2block
+DESTINATION lib/${PROJECT_NAME})
+
+add_executable(tf_filter src/tf_filter.cpp)
+ament_target_dependencies(tf_filter rclcpp tf2 tf2_ros geometry_msgs)
+target_include_directories(tf_filter PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+install(TARGETS tf_filter
   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(ros_manager src/ros_manager.cpp)
