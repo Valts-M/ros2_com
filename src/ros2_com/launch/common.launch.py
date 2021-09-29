@@ -41,6 +41,11 @@ def generate_launch_description():
         executable='map_saver',
         name='map_saver_server'
     )
+    cloud_filter = launch_ros.actions.Node(
+        package='ros2_com',
+        executable='point2block',
+        name='point2block'
+    )
     robot_localization_node = launch_ros.actions.Node(
         package='robot_localization',
         executable='ekf_node',
@@ -141,7 +146,8 @@ def generate_launch_description():
     ouster_node,
     activate_event,
     configure_event,
-    shutdown_event
+    shutdown_event,
+    cloud_filter
     ])
     
     
