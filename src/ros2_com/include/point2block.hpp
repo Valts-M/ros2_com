@@ -15,6 +15,13 @@
 #include <shmem/shmem_position_producer.hpp>
 #include <robot_pose.hpp>
 
+//pcl
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_types.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
+#include <pcl/filters/passthrough.h>
+
 namespace ros2_com
 {
 
@@ -28,11 +35,11 @@ class Point2Block : public rclcpp::Node
 
 public:
   Point2Block();
-  ~Point2Block();
 
 private:
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr m_subscriber{nullptr};
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_publisher{nullptr};
   std::unique_ptr<ShmemPoseProducer> m_odomPoseProducer{nullptr};
 
   void topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
