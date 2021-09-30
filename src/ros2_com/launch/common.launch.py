@@ -147,7 +147,7 @@ def generate_launch_description():
     activate_event,
     configure_event,
     shutdown_event,
-    cloud_filter
+    # cloud_filter
     ])
     
     

@@ -16,17 +16,15 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+list(APPEND CMAKE_PREFIX_PATH 
+  "/vcpkg/installed/arm64-linux" 
+  "/code/RobotV3/bin" 
+  "/code/RobotV3/ros/install/ros2_com")
 
-set(Boost_INCLUDE_DIR "/vcpkg/installed/x64-linux/include")
-set(Boost_LIBRARY_DIR "/vcpkg/installed/x64-linux/lib")
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
-# include_directories("/code/RobotV3/MainCore/include")
-# link_directories("/code/RobotV3/bin")
-# link_libraries("/code/RobotV3/bin/libMainCore.a")
-include_directories("/workspaces/RobotV3/MainCore/include")
-link_directories("/workspaces/RobotV3/bin")
-link_libraries("/workspaces/RobotV3/bin/libMainCore.a")
+include_directories("/code/RobotV3/MainCore/include")
+link_libraries("/code/RobotV3/bin/libMainCore.a")
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -40,10 +38,8 @@ find_package(tf2_ros REQUIRED)
 find_package(Boost REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(PCL REQUIRED)
-
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+find_package(OpenCV REQUIRED)
+find_package(cv_bridge REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SaveMap.srv"
@@ -78,12 +74,12 @@ install(TARGETS odom_publisher
 DESTINATION lib/${PROJECT_NAME})
 
 add_executable(point2block src/point2block.cpp)
-ament_target_dependencies(point2block rclcpp tf2 tf2_ros PCL sensor_msgs)
+ament_target_dependencies(point2block rclcpp tf2 tf2_ros PCL sensor_msgs OpenCV cv_bridge)
 target_include_directories(point2block PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${PCL_INCLUDE_DIRS})
-target_link_libraries(point2block rt ${PCL_LIBRARIES})
+target_link_libraries(point2block rt ${PCL_LIBRARIES} ${OpenCV_LIBS})
 
 install(TARGETS point2block
 DESTINATION lib/${PROJECT_NAME})
