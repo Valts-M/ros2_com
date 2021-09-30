@@ -24,8 +24,9 @@ private:
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_subscriber{nullptr};
   size_t m_count;
   rclcpp::Service<ros2_com::srv::SaveMap>::SharedPtr m_saveMapService{nullptr};
-  void saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> t_request,  
+  void saveMapHandler(const std::shared_ptr<ros2_com::srv::SaveMap::Request> t_request,  
           std::shared_ptr<ros2_com::srv::SaveMap::Response> t_response);
+  int saveMap(const std::string &path, const bool saveImage);
   nav_msgs::msg::OccupancyGrid::SharedPtr m_map{nullptr};
   void topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
 };

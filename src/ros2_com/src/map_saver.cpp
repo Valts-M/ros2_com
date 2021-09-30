@@ -20,38 +20,48 @@ MapSaver::MapSaver() : Node("map_saver_server"), m_count(0)
   m_subscriber = this->create_subscription<nav_msgs::msg::OccupancyGrid>
     ("map", 10, std::bind(&MapSaver::topicCallback, this, _1));
   m_saveMapService = this->create_service<ros2_com::srv::SaveMap>
-    ("ros2_com/save_map", std::bind(&MapSaver::saveMap, this, _1, _2));
+    ("ros2_com/save_map", std::bind(&MapSaver::saveMapHandler, this, _1, _2));
 }
 
 void MapSaver::topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
   m_map = msg;
+  int success = saveMap("/home/RobotV3/slam_maps/tmp/map", false);
+
 }
 
-void MapSaver::saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> request,
+void MapSaver::saveMapHandler(const std::shared_ptr<ros2_com::srv::SaveMap::Request> request,
           std::shared_ptr<ros2_com::srv::SaveMap::Response> response)
+{
+  response->success = saveMap(request->filename, true);
+}
+
+int MapSaver::saveMap(const std::string &path, const bool saveImage)
 {
   if(m_map == nullptr)
   {
     RCLCPP_WARN(
       this->get_logger(),
-      "ros2_com: Haven't gotten any map data yet");
-    response->success=-1;
-    return;
+      "Haven't gotten any map data yet");
+    return -1;
   }
 
-  std::string path = request->filename;
-  if(path.empty() || path == "") path = "/home/RobotV3/slam_maps/map";
+  if(path.empty() || path == "")
+  {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "No map save path specified");
+    return 0;
+  }
 
   std::ofstream wf(path + ".bin", std::ios::out | std::ios::binary);
   if(!wf) 
   {
     RCLCPP_WARN(
       this->get_logger(),
-      "ros2_com: Failed to save map as %s.bin, can't open/create file",
+      "Failed to save map as %s.bin, can't open/create file",
       path.c_str());
-      response->success=0;
-      return;
+      return 0;
   }
 
   wf.write((char *) &m_map->info, sizeof(m_map->info));
@@ -67,15 +77,19 @@ void MapSaver::saveMap(const std::shared_ptr<ros2_com::srv::SaveMap::Request> re
   else
   {
     RCLCPP_WARN(this->get_logger(), "Error while saving map");
-    response->success=0;
-    return;
+    return 0;
   }
 
-  RCLCPP_INFO(this->get_logger(), "ros2_com: Saving map as %s.", path.c_str());
-  int rc = system(("ros2 run nav2_map_server map_saver_cli -f " + path  + " --ros-args -p map_subscribe_transient_local:=true").c_str());
-  rclcpp::sleep_for(std::chrono::seconds(1));
-  response->success=1;
+  if(saveImage)
+  {
+    RCLCPP_INFO(this->get_logger(), "Saving map as %s.pgm", path.c_str());
+    int rc = system(("ros2 run nav2_map_server map_saver_cli -f " + path  + " --ros-args -p map_subscribe_transient_local:=true").c_str());
+    rclcpp::sleep_for(std::chrono::seconds(1));
+  }
+  
+  return 1;
 }
+
 }
 
 int main(int argc, char * argv[])
