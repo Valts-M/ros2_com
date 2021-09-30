@@ -7,7 +7,7 @@
                 "${workspaceFolder}/",
                 "/opt/ros/foxy/include/**",
                 "/opt/ros/foxy/include",
-                "/vcpkg/installed/arn64-linux/include",
+                "/vcpkg/installed/arm64-linux/include",
                 "/code/RobotV3/MainCore/include",
                 "/usr/include/pcl-1.10"
             ],
