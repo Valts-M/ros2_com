@@ -41,6 +41,9 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr m_subscriber{nullptr};
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_publisher{nullptr};
   std::unique_ptr<ShmemPoseProducer> m_odomPoseProducer{nullptr};
+  pcl::PointCloud<pcl::PointXYZ>::Ptr m_unfilteredCloud;
+  sensor_msgs::msg::PointCloud2 m_filteredCloud;
+  pcl::PassThrough<pcl::PointXYZ> m_filter;
 
   void topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
 

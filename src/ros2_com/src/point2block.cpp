@@ -15,7 +15,7 @@ using namespace std::chrono_literals;
 
 namespace ros2_com
 {
-Point2Block::Point2Block() : Node("point2block"), m_count(0)
+Point2Block::Point2Block() : Node("point2block"), m_count(0), m_unfilteredCloud(new pcl::PointCloud<pcl::PointXYZ>)
 {
 
   m_subscriber = this->create_subscription<sensor_msgs::msg::PointCloud2>
@@ -25,21 +25,21 @@ Point2Block::Point2Block() : Node("point2block"), m_count(0)
 
 void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-  pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> tmpCloud;
-  pcl::fromROSMsg(*msg, *tmpCloud);
-  pcl::PassThrough<pcl::PointXYZ> pass;
-  pass.setInputCloud(tmpCloud);
-  pass.setFilterFieldName ("x");
-  pass.setFilterLimits (-3.0, 3.0);
-  pass.filter (*tmpCloud);
-  pass.setFilterFieldName ("y");
-  pass.filter(*tmpCloud);
+  pcl::fromROSMsg(*msg, *m_unfilteredCloud);
 
-  sensor_msgs::msg::PointCloud2 cloud;
-  pcl::toROSMsg(*tmpCloud, cloud);
-  cloud.header.frame_id = "laser_sensor_frame";
-  cloud.header.stamp = this->now();
-  m_publisher->publish(cloud);
+  m_filter.setInputCloud(m_unfilteredCloud);
+  m_filter.setFilterFieldName ("x");
+  m_filter.setFilterLimits (-3.0, 3.0);
+  m_filter.filter (*m_unfilteredCloud);
+  m_filter.setFilterFieldName ("y");
+  m_filter.filter(*m_unfilteredCloud);
+
+  
+
+  pcl::toROSMsg(*m_unfilteredCloud, m_filteredCloud);
+  m_filteredCloud.header.frame_id = msg->header.frame_id;
+  m_filteredCloud.header.stamp = this->now();
+  m_publisher->publish(m_filteredCloud);
 }
 
 }
