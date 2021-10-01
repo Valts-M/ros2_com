@@ -25,7 +25,6 @@ OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
 
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_MsgRawStatus});
   m_shmemUtil->start();
-  //allocateShmem();
   //TODO: get form config
   initMsgs();
   
@@ -38,7 +37,6 @@ OdometryPublisher::~OdometryPublisher()
 {
   m_shmemUtil->stop();
   m_shmemUtil.reset();
-  //deallocateShmem();
 }
 
 void OdometryPublisher::initMsgs()
@@ -116,9 +114,11 @@ void OdometryPublisher::updatePath()
 
 void OdometryPublisher::updateHandler()
 {
-  //if (needAllocateShmem()) {allocateShmem();}
-  if(!getPoseAndVelocity()) return;
-
+  if(!getPoseAndVelocity()) 
+  {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "NO REACTD DATA FROM SHMEM");
+    return;
+  }
   if(!m_paused)
   {
     updateOdom();
@@ -147,52 +147,10 @@ bool OdometryPublisher::getPoseAndVelocity()
   } 
   catch (std::exception & e) 
   {
-    std::cout << std::flush << "Failed to get data: " << e.what() << '\n';
     return false;
   }
   return true;
 }
-
-// bool OdometryPublisher::needAllocateShmem()
-// {
-//   // return !m_poseConsumer.get();
-//   bool needAllocate = false;
-//   if(!m_poseConsumer) needAllocate = true;
-//   else if (m_poseConsumer->isInternalError())
-//   {
-//     needAllocate = true;
-//     m_poseConsumer->stop();
-//     m_poseConsumer.reset();
-//   }
-//   return needAllocate;
-// }
-
-// void OdometryPublisher::allocateShmem()
-// {
-//   if (!m_poseConsumer.get()) {
-//     //TODO: get from config
-//     m_poseConsumer = std::make_unique<ShmemRawStatusConsumer>(
-//       "MsgRawStatus", "MsgRawStatus",
-//       "MsgRawStatusConsumer");
-//       startShmem();
-//   }
-// }
-
-// void OdometryPublisher::deallocateShmem()
-// {
-//   stopShmem();
-//   m_poseConsumer.reset();
-// }
-
-// void OdometryPublisher::stopShmem()
-// {
-//   if (m_poseConsumer.get()) {m_poseConsumer->stop();}
-// }
-
-// void OdometryPublisher::startShmem()
-// {
-//   if (m_poseConsumer.get()) {m_poseConsumer->start();}
-// }
 
 }
 

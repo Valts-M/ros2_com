@@ -15,7 +15,6 @@ namespace ros2_com
     
     m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPose, ConsProdNames::p_OdomPose});
     m_shmemUtil->start();
-    //allocateShmem();
 
     this->declare_parameter<std::string>("target_frame", "base_footprint");
     this->get_parameter("target_frame", m_target_frame);
@@ -38,7 +37,6 @@ namespace ros2_com
   {
     m_shmemUtil->stop();
     m_shmemUtil.reset();
-    // deallocateShmem();
   }
 
   void PoseListener::sendInitialPose(
@@ -74,9 +72,9 @@ namespace ros2_com
     }
     catch(const tf2::TransformException & ex)
     {
-      // RCLCPP_WARN(
-      //   this->get_logger(), "Could not transform %s to base_footprint: %s",
-      //   m_map_frame.c_str(), ex.what());
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 1000, "Could not transform %s to base_footprint: %s",
+        m_map_frame.c_str(), ex.what());
       response->success=false;
     }
   }
@@ -97,9 +95,9 @@ namespace ros2_com
         m_odom_frame, m_target_frame,
         tf2::TimePointZero);
     } catch (const tf2::TransformException & ex) {
-      // RCLCPP_INFO(
-        // this->get_logger(), "Could not transform %s to %s: %s",
-        // m_odom_frame.c_str(), m_target_frame.c_str(), ex.what());
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 1000, "Could not transform %s to base_footprint: %s",
+        m_map_frame.c_str(), ex.what());
       return;
     }
 
@@ -119,8 +117,8 @@ namespace ros2_com
     m_odomPose.yaw() = yaw;
     m_odomPoseProducer->append(m_odomPose, m_ts);
 
-    // RCLCPP_INFO(this->get_logger(), "Odom: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
-    // RCLCPP_INFO(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
+    RCLCPP_DEBUG(this->get_logger(), "Odom: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
+    RCLCPP_DEBUG(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
     if (!m_mapPoseProducer ) return;
     if (!m_mapPoseProducer->isObjectReferenced()) return;
     try {
@@ -128,9 +126,9 @@ namespace ros2_com
         m_map_frame, m_target_frame,
         tf2::TimePointZero);
     } catch (const tf2::TransformException & ex) {
-      RCLCPP_INFO(
-        this->get_logger(), "Could not transform %s to %s: %s",
-        m_map_frame.c_str(), m_target_frame.c_str(), ex.what());
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 1000, "Could not transform %s to base_footprint: %s",
+        m_map_frame.c_str(), ex.what());
       return;
     }
 
@@ -142,7 +140,8 @@ namespace ros2_com
     m_mapPose.y() = m_mapLidarMsg.transform.translation.y;
     m_mapPose.yaw() = yaw;
 
-    // RCLCPP_INFO(this->get_logger(), "Map: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
+    RCLCPP_DEBUG(this->get_logger(), "Map: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
+    RCLCPP_DEBUG(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
     m_mapPoseProducer->append(m_mapPose, m_ts);
   }
 
