@@ -14,7 +14,7 @@ namespace ros2_com
   {
     allocateShmem();
 
-    this->declare_parameter<std::string>("target_frame", "base_footprint");
+    this->declare_parameter<std::string>("target_frame", "laser_sensor_frame");
     this->get_parameter("target_frame", m_target_frame);
 
     m_sendPoseService = this->create_service<ros2_com::srv::SendInitialPose>("ros2_com/send_initial_pose", 
@@ -121,9 +121,9 @@ namespace ros2_com
         m_map_frame, m_target_frame,
         tf2::TimePointZero);
     } catch (const tf2::TransformException & ex) {
-      RCLCPP_INFO(
-        this->get_logger(), "Could not transform %s to %s: %s",
-        m_map_frame.c_str(), m_target_frame.c_str(), ex.what());
+      // RCLCPP_INFO(
+      //   this->get_logger(), "Could not transform %s to %s: %s",
+      //   m_map_frame.c_str(), m_target_frame.c_str(), ex.what());
       return;
     }
 

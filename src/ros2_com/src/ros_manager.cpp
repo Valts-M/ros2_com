@@ -220,7 +220,7 @@ bool RosManager::incompatibleProcesses(const processId & t_processId)
     RCLCPP_WARN(this->get_logger(), 
       "Trying to launch localization while mapping is still active! Shutting down mapping");
 
-    turnOffMapping();
+    m_flagMap[processId::mapping] = false;
     return true; //shouldn't start localization before mapping has shut down
   }
   else if(t_processId == processId::mapping && isProcessRunning(processId::localization))
