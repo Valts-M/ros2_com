@@ -33,8 +33,7 @@ MapSaver::~MapSaver()
 void MapSaver::topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
   m_map = msg;
-  int success = saveMap("/home/RobotV3/slam_maps/tmp/map", false);
-
+  saveMap("/home/RobotV3/slam_maps/tmp/map", false);
 }
 
 void MapSaver::saveMapHandler(const std::shared_ptr<ros2_com::srv::SaveMap::Request> request,
@@ -47,7 +46,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
 {
   if(m_map == nullptr)
   {
-    RCLCPP_WARN(
+    RCLCPP_ERROR(
       this->get_logger(),
       "Haven't gotten any map data yet");
     return -1;
@@ -55,7 +54,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
 
   if(path.empty() || path == "")
   {
-    RCLCPP_WARN(
+    RCLCPP_ERROR(
       this->get_logger(),
       "No map save path specified");
     return 0;
@@ -64,7 +63,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
   std::ofstream wf(path + ".bin", std::ios::out | std::ios::binary);
   if(!wf) 
   {
-    RCLCPP_WARN(
+    RCLCPP_ERROR(
       this->get_logger(),
       "Failed to save map as %s.bin, can't open/create file",
       path.c_str());
@@ -83,7 +82,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
     RCLCPP_INFO(this->get_logger(), "Map bin file Saved");
   else
   {
-    RCLCPP_WARN(this->get_logger(), "Error while saving map");
+    RCLCPP_ERROR(this->get_logger(), "Error while saving map");
     return 0;
   }
 
@@ -91,20 +90,21 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
   {
     RCLCPP_INFO(this->get_logger(), "Saving map as %s.pgm", path.c_str());
     int rc = system(("ros2 run nav2_map_server map_saver_cli -f " + path  + " --ros-args -p map_subscribe_transient_local:=true").c_str());
-    rclcpp::sleep_for(std::chrono::seconds(1));
+    // rclcpp::sleep_for(std::chrono::seconds(1));
   }
   
-		auto p = m_shmemUtil->getShmem<RawProducer<TextualInfo>>(ConsProdNames::p_MapPath);
-    if(!p) return -2;
-    try
-    {
-      if (!p->isObjectReferenced()) return -2;
-      p->copyUpdate(TextualInfo{(path + ".bin").c_str()});
-    }
-    catch(const std::exception& e)
-    {
-      return -2;
-    }
+  auto p = m_shmemUtil->getShmem<RawProducer<TextualInfo>>(ConsProdNames::p_MapPath);
+  if(!p) return -2;
+  try
+  {
+    if (!p->isObjectReferenced()) return -2;
+    p->copyUpdate(TextualInfo{(path + ".bin").c_str()});
+  }
+  catch(const std::exception& e)
+  {
+    RCLCPP_ERROR(this->get_logger(), "Shmem not working");
+    return -2;
+  }
     
   return 1;
 }
