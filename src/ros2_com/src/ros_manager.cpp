@@ -16,8 +16,9 @@ RosManager::RosManager() : RosManager(rclcpp::NodeOptions()){}
 RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 : Node("ros_manager", t_options)
 {
-  allocateShmem();
-
+  //allocateShmem();
+  m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
+  m_shmemUtil->start();
   m_latestMapsPath = initLatestMapPath();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("ros2_com/save_map");
@@ -32,14 +33,16 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 
 RosManager::~RosManager()
 {
-  deallocateShmem();
+  //deallocateShmem();
+  m_shmemUtil->stop();
+  m_shmemUtil.reset();
   stopAll();
   RCLCPP_INFO(this->get_logger(), "Destructed");
 }
 
 void RosManager::updateHandler()
 {
-  if (needAllocateShmem()) allocateShmem();
+  //if (needAllocateShmem()) allocateShmem();
 
   if(getRosFlags())
     setLocalFlags();
@@ -91,10 +94,14 @@ void RosManager::updateProcessState(const processId & t_processId)
 
 bool RosManager::getRosFlags()
 {
+  auto m_flagConsumer = m_shmemUtil->getShmem<CBConsumer<RosFlags>>(ConsProdNames::c_RosFlags);
+  if(!m_flagConsumer) return false;
   try 
   {
+    RCLCPP_INFO(this->get_logger(), "In get ros flags");
     if (!m_flagConsumer->consumerSize()) return false;
     m_latestFlags = m_flagConsumer->getAndPop();
+    RCLCPP_INFO(this->get_logger(), "Got ros flags");
 
     return true;
   } 
@@ -362,7 +369,7 @@ void RosManager::saveMap()
       {
         RCLCPP_INFO(this->get_logger(), "Save map: SUCCESS");
         TextualInfo info{(path + ".bin").c_str()};
-        m_slamPathProducer->copyUpdate(info);
+        //m_slamPathProducer->copyUpdate(info);
         m_latestMapsPath = "map:=" + path + ".yaml";
         RCLCPP_INFO(this->get_logger(), m_latestMapsPath);
 
@@ -542,42 +549,42 @@ void RosManager::saveInitialPose()
   }
 }
 
-bool RosManager::needAllocateShmem()
-{
-  return !m_flagConsumer || !m_slamPathProducer;
-}
+// bool RosManager::needAllocateShmem()
+// {
+//   return !m_flagConsumer || !m_slamPathProducer;
+// }
 
-void RosManager::allocateShmem()
-{
-  if (!m_flagConsumer) {
-    //TODO: get from config
-    m_flagConsumer = std::make_unique<ShmemFlagConsumer>("RosFlags", "RosFlags", "RosFlagConsumer");
-  }
-  if(!m_slamPathProducer)
-  {
-    m_slamPathProducer = std::make_unique<ShmemSlamMapPathProducer>("SlamMapPath", "SlamMapPath", 1024U * 10U);
-  }
-  startShmem();
-}
+// void RosManager::allocateShmem()
+// {
+//   if (!m_flagConsumer) {
+//     //TODO: get from config
+//     m_flagConsumer = std::make_unique<ShmemFlagConsumer>("RosFlags", "RosFlags", "RosFlagConsumer");
+//   }
+//   if(!m_slamPathProducer)
+//   {
+//     m_slamPathProducer = std::make_unique<ShmemSlamMapPathProducer>("SlamMapPath", "SlamMapPath", 1024U * 10U);
+//   }
+//   startShmem();
+// }
 
-void RosManager::deallocateShmem()
-{
-  stopShmem();
-  m_flagConsumer.reset();
-  m_slamPathProducer.reset();
-}
+// void RosManager::deallocateShmem()
+// {
+//   stopShmem();
+//   m_flagConsumer.reset();
+//   m_slamPathProducer.reset();
+// }
 
-void RosManager::stopShmem()
-{
-  if (m_flagConsumer.get()) {m_flagConsumer->stop();}
-  if (m_slamPathProducer.get()) {m_slamPathProducer->stop();}
-}
+// void RosManager::stopShmem()
+// {
+//   if (m_flagConsumer.get()) {m_flagConsumer->stop();}
+//   if (m_slamPathProducer.get()) {m_slamPathProducer->stop();}
+// }
 
-void RosManager::startShmem()
-{
-  if (m_flagConsumer.get()) {m_flagConsumer->start();}
-  if (m_slamPathProducer.get()) {m_slamPathProducer->start();}
-}
+// void RosManager::startShmem()
+// {
+//   if (m_flagConsumer.get()) {m_flagConsumer->start();}
+//   if (m_slamPathProducer.get()) {m_slamPathProducer->start();}
+// }
 
 }
 

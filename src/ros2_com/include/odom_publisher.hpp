@@ -23,6 +23,7 @@
 #include "kinematics.hpp"
 #include "ros2_com/srv/pause_odom.hpp"
 #include "ros2_com/srv/reset_odom.hpp"
+#include "shmem_util.hpp"
 
 namespace ros2_com
 {
@@ -32,15 +33,13 @@ using namespace zbot;
 class OdometryPublisher : public rclcpp::Node
 {
 
-  using Storage = boost::interprocess::managed_shared_memory;
-  using ShmemPoseConsumer = shmem::ShmemCBConsumer<MsgRawStatus, shmem::PolicyFifo, Storage>;
-
 public:
   OdometryPublisher();
   OdometryPublisher(const rclcpp::NodeOptions & options);
   ~OdometryPublisher();
 
 private:
+  std::unique_ptr<ShmemUtility> m_shmemUtil;
 
   void initMsgs();
 
@@ -58,6 +57,7 @@ private:
     * @brief Updates the travelled path in the odom frame
   */
   void updatePath();
+
 
   /*!
     * @brief Shared pointer to the ros odometry message publisher
@@ -82,7 +82,7 @@ private:
   /*!
     * @brief Unique pointer to the shared memory pose consumer
   */
-  std::unique_ptr<ShmemPoseConsumer> m_poseConsumer{nullptr};
+  //std::unique_ptr<ShmemRawStatusConsumer> m_poseConsumer{nullptr};
 
   /*!
     * @brief Stores how many ros messages have been published
@@ -162,23 +162,23 @@ private:
   /*!
     * @brief Allocates and starts the shmem smart pointers
   */
-  void allocateShmem();
+  //void allocateShmem();
   /*!
     * @brief Deallocates the shmem smart pointers
   */
-  void deallocateShmem();
+  //void deallocateShmem();
   /*!
     * @brief Starts the shmem smart pointers
   */
-  void startShmem();
+ // void startShmem();
   /*!
     * @brief Stops the shmem smart pointers
   */
-  void stopShmem();
+  //void stopShmem();
   /*!
     * @brief Checks if the shemem smart pointers are allocated
   */
-  bool needAllocateShmem();
+  //bool needAllocateShmem();
 
 };
 }

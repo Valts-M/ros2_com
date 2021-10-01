@@ -12,7 +12,10 @@ namespace ros2_com
     m_count(0), m_map_frame("map"), m_odom_frame("odom"),
     m_mapPose(0.0, 0.0, 0.0), m_odomPose(0.0, 0.0, 0.0)
   {
-    allocateShmem();
+    
+    m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPose, ConsProdNames::p_OdomPose});
+    m_shmemUtil->start();
+    //allocateShmem();
 
     this->declare_parameter<std::string>("target_frame", "base_footprint");
     this->get_parameter("target_frame", m_target_frame);
@@ -33,7 +36,9 @@ namespace ros2_com
   
   PoseListener::~PoseListener()
   {
-    deallocateShmem();
+    m_shmemUtil->stop();
+    m_shmemUtil.reset();
+    // deallocateShmem();
   }
 
   void PoseListener::sendInitialPose(
@@ -78,12 +83,13 @@ namespace ros2_com
 
   void PoseListener::timerCallback()
   {
-    if(needAllocateShmem())
-      allocateShmem();
-      
-    if(!m_odomPoseProducer->isObjectReferenced() || !m_mapPoseProducer->isObjectReferenced())
-      return;
-
+    // if(needAllocateShmem())
+    //   allocateShmem();
+      auto m_odomPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_OdomPose);
+      auto m_mapPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_MapPose);
+    
+    if (!m_odomPoseProducer ) return;
+    if (!m_odomPoseProducer->isObjectReferenced()) return;
     m_ts = Helper::getTimeStamp();
 
     try {
@@ -115,7 +121,8 @@ namespace ros2_com
 
     // RCLCPP_INFO(this->get_logger(), "Odom: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
     // RCLCPP_INFO(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
-
+    if (!m_mapPoseProducer ) return;
+    if (!m_mapPoseProducer->isObjectReferenced()) return;
     try {
       m_mapLidarMsg = m_tfBuffer->lookupTransform(
         m_map_frame, m_target_frame,
@@ -139,58 +146,58 @@ namespace ros2_com
     m_mapPoseProducer->append(m_mapPose, m_ts);
   }
 
-bool PoseListener::needAllocateShmem()
-{
-  if(!m_odomPoseProducer || !m_mapPoseProducer)
-    return true;
-  if(m_odomPoseProducer->isInternalError())
-  {
-    m_odomPoseProducer->stop();
-    m_odomPoseProducer.reset();
-    return true;
-  }
-  if(m_mapPoseProducer->isInternalError())
-  {
-    m_mapPoseProducer->stop();
-    m_mapPoseProducer.reset();
-    return true;
-  }
-  return false;
-}
+// bool PoseListener::needAllocateShmem()
+// {
+//   if(!m_odomPoseProducer || !m_mapPoseProducer)
+//     return true;
+//   if(m_odomPoseProducer->isInternalError())
+//   {
+//     m_odomPoseProducer->stop();
+//     m_odomPoseProducer.reset();
+//     return true;
+//   }
+//   if(m_mapPoseProducer->isInternalError())
+//   {
+//     m_mapPoseProducer->stop();
+//     m_mapPoseProducer.reset();
+//     return true;
+//   }
+//   return false;
+// }
 
-void PoseListener::allocateShmem()
-{
-  if (!m_odomPoseProducer) {
-    //TODO: get from config
-    m_odomPoseProducer = std::make_unique<ShmemPoseProducer>("RosOdomPoses", "RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U);
-  }
-  if (!m_mapPoseProducer) {
-    //TODO: get from config
-    m_mapPoseProducer = std::make_unique<ShmemPoseProducer>("RosMapPoses", "RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U);
-  }
-  startShmem();
-}
+// void PoseListener::allocateShmem()
+// {
+//   if (!m_odomPoseProducer) {
+//     //TODO: get from config
+//     m_odomPoseProducer = std::make_unique<ShmemPoseProducer>("RosOdomPoses", "RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U);
+//   }
+//   if (!m_mapPoseProducer) {
+//     //TODO: get from config
+//     m_mapPoseProducer = std::make_unique<ShmemPoseProducer>("RosMapPoses", "RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U);
+//   }
+//   startShmem();
+// }
 
-void PoseListener::deallocateShmem()
-{
-  stopShmem();
-  m_odomPoseProducer.reset();
-  m_mapPoseProducer.reset();
-  RCLCPP_INFO(this->get_logger(), "Destructed");
-}
+// void PoseListener::deallocateShmem()
+// {
+//   stopShmem();
+//   m_odomPoseProducer.reset();
+//   m_mapPoseProducer.reset();
+//   RCLCPP_INFO(this->get_logger(), "Destructed");
+// }
 
-void PoseListener::stopShmem()
-{
-  if (m_odomPoseProducer) {m_odomPoseProducer->stop();}
-  if (m_mapPoseProducer) {m_mapPoseProducer->stop();}
-}
+// void PoseListener::stopShmem()
+// {
+//   if (m_odomPoseProducer) {m_odomPoseProducer->stop();}
+//   if (m_mapPoseProducer) {m_mapPoseProducer->stop();}
+// }
 
-void PoseListener::startShmem()
-{
-  if (m_odomPoseProducer && !m_odomPoseProducer->isInternalError()) {m_odomPoseProducer->start();}
-  if (m_mapPoseProducer&& !m_mapPoseProducer->isInternalError()) {m_mapPoseProducer->start();}
-}
-}
+// void PoseListener::startShmem()
+// {
+//   if (m_odomPoseProducer && !m_odomPoseProducer->isInternalError()) {m_odomPoseProducer->start();}
+//   if (m_mapPoseProducer&& !m_mapPoseProducer->isInternalError()) {m_mapPoseProducer->start();}
+// }
+ }
 
 int main(int argc, char * argv[])
 {

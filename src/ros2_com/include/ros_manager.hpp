@@ -15,12 +15,11 @@
 #include "ros2_com/srv/save_initial_pose.hpp"
 
 //robotv3
-#include <shmem/shmem_cb_consumer.hpp>
-#include <shmem/shmem_raw_producer.hpp>
 #include <robot_pose.hpp>
 #include <data_structures/common_data_structures.hpp>
 
 #include "ros_manager_maps.hpp"
+#include "shmem_util.hpp"
 
 namespace ros2_com
 {
@@ -29,9 +28,9 @@ using namespace zbot;
 
 class RosManager : public rclcpp::Node
 {
-  using Storage = boost::interprocess::managed_shared_memory;
-  using ShmemFlagConsumer = shmem::ShmemCBConsumer<RosFlags, shmem::PolicyFifo, Storage>;
-  using ShmemSlamMapPathProducer = shmem::ShmemRawProducer<TextualInfo, Storage>;
+  // using Storage = boost::interprocess::managed_shared_memory;
+  // using ShmemFlagConsumer = shmem::ShmemCBConsumer<RosFlags, shmem::PolicyFifo, Storage>;
+  // using ShmemSlamMapPathProducer = shmem::ShmemRawProducer<TextualInfo, Storage>;
 
 public:
   RosManager();
@@ -44,6 +43,8 @@ private:
   std::string m_latestMapsPath;
 
   RosFlags m_latestFlags;
+
+  std::unique_ptr<ShmemUtility> m_shmemUtil;
 
   bool m_saveMapFlag{false};
   bool m_mapSavePending{false};
@@ -66,9 +67,9 @@ private:
 
   rclcpp::Client<ros2_com::srv::SaveInitialPose>::SharedPtr m_initialPoseSaver;
 
-  std::unique_ptr<ShmemFlagConsumer> m_flagConsumer{nullptr};
+  // std::unique_ptr<ShmemFlagConsumer> m_flagConsumer{nullptr};
 
-  std::unique_ptr<ShmemSlamMapPathProducer> m_slamPathProducer{nullptr};
+  // std::unique_ptr<ShmemSlamMapPathProducer> m_slamPathProducer{nullptr};
 
   bool getRosFlags();
 
@@ -113,23 +114,23 @@ private:
   /*!
     * @brief Allocates and starts the shmem smart pointers
   */
-  void allocateShmem();
+  //void allocateShmem();
   /*!
     * @brief Deallocates the shmem smart pointers
   */
-  void deallocateShmem();
+  //void deallocateShmem();
   /*!
     * @brief Starts the shmem smart pointers
   */
-  void startShmem();
+  //void startShmem();
   /*!
     * @brief Stops the shmem smart pointers
   */
-  void stopShmem();
+  //void stopShmem();
   /*!
     * @brief Checks if the shemem smart pointers are allocated
   */
-  bool needAllocateShmem();
+  //bool needAllocateShmem();
 
 };
 }

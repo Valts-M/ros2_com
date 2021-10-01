@@ -21,6 +21,13 @@ MapSaver::MapSaver() : Node("map_saver_server"), m_count(0)
     ("map", 10, std::bind(&MapSaver::topicCallback, this, _1));
   m_saveMapService = this->create_service<ros2_com::srv::SaveMap>
     ("ros2_com/save_map", std::bind(&MapSaver::saveMapHandler, this, _1, _2));
+  m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_MsgRawStatus});
+  m_shmemUtil->start();
+}
+MapSaver::~MapSaver()
+{
+  m_shmemUtil->stop();
+  m_shmemUtil.reset();
 }
 
 void MapSaver::topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
@@ -87,6 +94,18 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
     rclcpp::sleep_for(std::chrono::seconds(1));
   }
   
+		auto p = m_shmemUtil->getShmem<RawProducer<TextualInfo>>(ConsProdNames::p_MapPath);
+    if(!p) return -2;
+    try
+    {
+      if (!p->isObjectReferenced()) return -2;
+      p->copyUpdate(TextualInfo{(path + ".bin").c_str()});
+    }
+    catch(const std::exception& e)
+    {
+      return -2;
+    }
+    
   return 1;
 }
 
