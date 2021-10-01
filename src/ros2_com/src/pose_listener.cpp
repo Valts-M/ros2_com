@@ -16,7 +16,7 @@ namespace ros2_com
     m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPose, ConsProdNames::p_OdomPose});
     m_shmemUtil->start();
 
-    this->declare_parameter<std::string>("target_frame", "base_footprint");
+    this->declare_parameter<std::string>("target_frame", "laser_sensor_frame");
     this->get_parameter("target_frame", m_target_frame);
 
     m_sendPoseService = this->create_service<ros2_com::srv::SendInitialPose>("ros2_com/send_initial_pose", 
