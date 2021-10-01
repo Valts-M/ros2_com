@@ -12,6 +12,7 @@
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "ros2_com/srv/save_map.hpp"
 
+#include "shmem_util.hpp"
 namespace ros2_com
 {
 
@@ -19,11 +20,14 @@ class MapSaver : public rclcpp::Node
 {
 public:
   MapSaver();
+  ~MapSaver();
 
 private:
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_subscriber{nullptr};
   size_t m_count;
   rclcpp::Service<ros2_com::srv::SaveMap>::SharedPtr m_saveMapService{nullptr};
+  std::unique_ptr<ShmemUtility> m_shmemUtil;
+
   void saveMapHandler(const std::shared_ptr<ros2_com::srv::SaveMap::Request> t_request,  
           std::shared_ptr<ros2_com::srv::SaveMap::Response> t_response);
   int saveMap(const std::string &path, const bool saveImage);

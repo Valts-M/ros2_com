@@ -18,13 +18,13 @@ endif()
 
 list(APPEND CMAKE_PREFIX_PATH 
   "/vcpkg/installed/arm64-linux" 
-  "/code/RobotV3/bin" 
+  "/code/RobotV3/bin"
   "/code/RobotV3/ros/install/ros2_com")
 
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 include_directories("/code/RobotV3/MainCore/include")
-link_libraries("/code/RobotV3/bin/libMainCore.a")
+link_libraries("/code/RobotV3/bin/libMainCore.a" rt uuid)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -54,35 +54,37 @@ ament_export_dependencies(rosidl_default_runtime)
 
 include_directories(include)
 
-add_library(lidar_log_reader SHARED src/lidar_log_reader.cpp)
-add_library(kinematics SHARED src/kinematics.cpp)
+add_library(lidar_log_reader STATIC src/lidar_log_reader.cpp)
+add_library(kinematics STATIC src/kinematics.cpp)
+add_library(shmem_util STATIC src/shmem_util.cpp)
 ament_target_dependencies(kinematics sensor_msgs)
 
 set(libraries 
     lidar_log_reader
-    kinematics)
+    kinematics
+    shmem_util)
 
 add_executable(odom_publisher src/odom_publisher.cpp)
 ament_target_dependencies(odom_publisher rclcpp tf2 tf2_ros geometry_msgs nav_msgs)
 target_include_directories(odom_publisher PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(odom_publisher rt kinematics)
+target_link_libraries(odom_publisher shmem_util kinematics)
 rosidl_target_interfaces(odom_publisher ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS odom_publisher
 DESTINATION lib/${PROJECT_NAME})
 
-add_executable(point2block src/point2block.cpp)
-ament_target_dependencies(point2block rclcpp tf2 tf2_ros PCL sensor_msgs OpenCV cv_bridge)
-target_include_directories(point2block PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-  ${PCL_INCLUDE_DIRS})
-target_link_libraries(point2block rt ${PCL_LIBRARIES} ${OpenCV_LIBS})
+# add_executable(point2block src/point2block.cpp)
+# ament_target_dependencies(point2block rclcpp tf2 tf2_ros PCL sensor_msgs OpenCV cv_bridge)
+# target_include_directories(point2block PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>
+#   ${PCL_INCLUDE_DIRS})
+# target_link_libraries(point2block ${PCL_LIBRARIES} ${OpenCV_LIBS})
 
-install(TARGETS point2block
-DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS point2block
+# DESTINATION lib/${PROJECT_NAME})
 
 add_executable(tf_filter src/tf_filter.cpp)
 ament_target_dependencies(tf_filter rclcpp tf2 tf2_ros geometry_msgs)
@@ -98,7 +100,7 @@ ament_target_dependencies(ros_manager rclcpp)
 target_include_directories(ros_manager PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(ros_manager rt)
+target_link_libraries(ros_manager shmem_util)
 rosidl_target_interfaces(ros_manager ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS ros_manager
@@ -109,7 +111,7 @@ ament_target_dependencies(pose_listener rclcpp tf2 tf2_ros geometry_msgs)
 target_include_directories(pose_listener PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(pose_listener rt)
+target_link_libraries(pose_listener shmem_util)
 rosidl_target_interfaces(pose_listener ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS pose_listener
@@ -148,7 +150,7 @@ ament_target_dependencies(map_saver rclcpp nav_msgs)
 target_include_directories(map_saver PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(map_saver rt)
+target_link_libraries(map_saver shmem_util)
 rosidl_target_interfaces(map_saver ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS map_saver

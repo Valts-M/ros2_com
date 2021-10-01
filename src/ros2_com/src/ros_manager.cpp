@@ -16,8 +16,9 @@ RosManager::RosManager() : RosManager(rclcpp::NodeOptions()){}
 RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 : Node("ros_manager", t_options)
 {
-  allocateShmem();
-
+  //allocateShmem();
+  m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
+  m_shmemUtil->start();
   m_latestMapsPath = initLatestMapPath();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("ros2_com/save_map");
@@ -32,14 +33,16 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 
 RosManager::~RosManager()
 {
-  deallocateShmem();
+  //deallocateShmem();
+  m_shmemUtil->stop();
+  m_shmemUtil.reset();
   stopAll();
   RCLCPP_INFO(this->get_logger(), "Destructed");
 }
 
 void RosManager::updateHandler()
 {
-  if (needAllocateShmem()) allocateShmem();
+  //if (needAllocateShmem()) allocateShmem();
 
   if(getRosFlags())
     setLocalFlags();
@@ -91,6 +94,8 @@ void RosManager::updateProcessState(const processId & t_processId)
 
 bool RosManager::getRosFlags()
 {
+  auto m_flagConsumer = m_shmemUtil->getShmem<CBConsumer<RosFlags>>(ConsProdNames::c_RosFlags);
+  if(!m_flagConsumer) return false;
   try 
   {
     if (!m_flagConsumer->consumerSize()) return false;
@@ -124,7 +129,7 @@ void RosManager::setLocalFlags()
         m_resetOdomFlag = true;
     }
 
-    RCLCPP_INFO(this->get_logger(), "Process %d received %d, set to %d", 
+    RCLCPP_INFO(this->get_logger(), "PROCESS %d RECEIVED: %d; SET TO %d", 
       id, m_latestFlags.flagMap[id].second, m_flagMap[id]);
   }
   if(m_latestFlags.saveMap)
@@ -251,7 +256,7 @@ void RosManager::startProcess(const processId & t_processId)
 
     if (m_pidMap[t_processId] < 0) 
     {
-      RCLCPP_INFO(this->get_logger(), "Failed to fork process %d, trying again", t_processId);
+      RCLCPP_WARN(this->get_logger(), "Failed to fork process %d, trying again", t_processId);
     } 
     else if (m_pidMap[t_processId] == 0) 
     {
@@ -332,17 +337,17 @@ void RosManager::saveMap()
 {
   if(!isProcessRunning(processId::mapping))
   {
-    RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Process not active)");
+    RCLCPP_ERROR(this->get_logger(), "Save map: FAILED (Process not active)");
     m_saveMapFlag = false;
   }
   else if (!m_mapSaver->wait_for_service())
   {
-    RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Service not active)");
+    RCLCPP_ERROR(this->get_logger(), "Save map: FAILED (Service not active)");
     m_saveMapFlag = false;
   }
   else if(m_mapSavePending)
   {
-    RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Pending response)");
+    RCLCPP_WARN(this->get_logger(), "Save map: PENDING");
   }
   else
   {
@@ -362,7 +367,7 @@ void RosManager::saveMap()
       {
         RCLCPP_INFO(this->get_logger(), "Save map: SUCCESS");
         TextualInfo info{(path + ".bin").c_str()};
-        m_slamPathProducer->copyUpdate(info);
+        //m_slamPathProducer->copyUpdate(info);
         m_latestMapsPath = "map:=" + path + ".yaml";
         RCLCPP_INFO(this->get_logger(), m_latestMapsPath);
 
@@ -370,11 +375,16 @@ void RosManager::saveMap()
       }
       else if(result->success == 0)
       {
-        RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Unknown error)");
+        RCLCPP_ERROR(this->get_logger(), "Save map: FAILED (Unknown error)");
+      }
+      else if (result->success == -1)
+      {
+        RCLCPP_ERROR(this->get_logger(), "Save map: FAILED (Map hasn't been created)");
+        m_saveMapFlag = false;
       }
       else
       {
-        RCLCPP_WARN(this->get_logger(), "Save map: FAILED (Map hasn't been created)");
+        RCLCPP_ERROR(this->get_logger(), "Save map: FAILED (Shmem not working)");
         m_saveMapFlag = false;
       }
     };
@@ -445,11 +455,11 @@ void RosManager::resetOdom()
 {
   if(!isProcessRunning(processId::odom))
   {
-    RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Process not active)");
+    RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Process not active)");
   }
   else if (!m_odomResetter->wait_for_service())
   {
-    RCLCPP_WARN(this->get_logger(), "Odometry reset: FAILED (Service not active)");
+    RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Service not active)");
   }
   else
   {
@@ -463,21 +473,21 @@ void RosManager::sendInitialPose()
 {
   if(!isProcessRunning(processId::odom))
   {
-    RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Process not active)");
+    RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Process not active)");
     m_sendInitialPose = false;
   }
   else if (!m_odomResetter->wait_for_service())
   {
-    RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Service not active)");
+    RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Service not active)");
     m_sendInitialPose = false;
   }
   else if(m_saveInitialPose)
   {
-    RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Pending initial pose save)");
+    RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING");
   }
   else if(m_sendInitialPosePending)
   {
-    RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Pending response)");
+    RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING");
   }
   else
   {
@@ -495,7 +505,7 @@ void RosManager::sendInitialPose()
       }
       else
       {
-        RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Localization not fully active yet)");
+        RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Localization not fully active yet)");
       }
     };
     auto result = m_initialPoseSender->async_send_request(request, sendInitialPoseServiceCallback);
@@ -506,17 +516,17 @@ void RosManager::saveInitialPose()
 {
   if(!isProcessRunning(processId::odom))
   {
-    RCLCPP_WARN(this->get_logger(), "Save initial pose: FAILED (Process not active)");
+    RCLCPP_ERROR(this->get_logger(), "Save initial pose: FAILED (Process not active)");
     m_saveInitialPose = false;
   }
   else if (!m_initialPoseSaver->wait_for_service())
   {
-    RCLCPP_WARN(this->get_logger(), "Save initial pose: FAILED (Service not active)");
+    RCLCPP_ERROR(this->get_logger(), "Save initial pose: FAILED (Service not active)");
     m_saveInitialPose = false;
   }
   else if(m_saveInitialPosePending)
   {
-    RCLCPP_WARN(this->get_logger(), "Save initial pose: FAILED (Pending response)");
+    RCLCPP_WARN(this->get_logger(), "Save initial pose: PENDING");
   }
   else
   {
@@ -535,48 +545,11 @@ void RosManager::saveInitialPose()
       }
       else
       {
-        RCLCPP_WARN(this->get_logger(), "Save initial pose: FAILED (Unknown error)");
+        RCLCPP_ERROR(this->get_logger(), "Save initial pose: FAILED (Unknown error)");
       }
     };
     auto result = m_initialPoseSaver->async_send_request(request, saveInitialPoseServiceCallback);
   }
-}
-
-bool RosManager::needAllocateShmem()
-{
-  return !m_flagConsumer || !m_slamPathProducer;
-}
-
-void RosManager::allocateShmem()
-{
-  if (!m_flagConsumer) {
-    //TODO: get from config
-    m_flagConsumer = std::make_unique<ShmemFlagConsumer>("RosFlags", "RosFlags", "RosFlagConsumer");
-  }
-  if(!m_slamPathProducer)
-  {
-    m_slamPathProducer = std::make_unique<ShmemSlamMapPathProducer>("SlamMapPath", "SlamMapPath", 1024U * 10U);
-  }
-  startShmem();
-}
-
-void RosManager::deallocateShmem()
-{
-  stopShmem();
-  m_flagConsumer.reset();
-  m_slamPathProducer.reset();
-}
-
-void RosManager::stopShmem()
-{
-  if (m_flagConsumer.get()) {m_flagConsumer->stop();}
-  if (m_slamPathProducer.get()) {m_slamPathProducer->stop();}
-}
-
-void RosManager::startShmem()
-{
-  if (m_flagConsumer.get()) {m_flagConsumer->start();}
-  if (m_slamPathProducer.get()) {m_slamPathProducer->start();}
 }
 
 }
