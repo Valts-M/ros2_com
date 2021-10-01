@@ -142,11 +142,21 @@ bool OdometryPublisher::getPoseAndVelocity()
 
   try 
   {
-    if (!m_poseConsumer->isConsumerReferenced() || !m_poseConsumer->consumerSize()) {return false;}
+    if (!m_poseConsumer->isConsumerReferenced()) 
+    {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
+      return false;
+    }
+    if( !m_poseConsumer->consumerSize()) 
+    {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "BUFFER EMPTY");
+      return false;
+    }
     m_reactdLog = m_poseConsumer->getAndPop();
   } 
   catch (std::exception & e) 
   {
+    RCLCPP_ERROR(this->get_logger(), e.what());
     return false;
   }
   return true;
