@@ -83,7 +83,8 @@
         "geometry": "cpp",
         "unordered_set": "cpp",
         "forward_list": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "any": "cpp"
     },
     // Autocomplete from ros python packages
     "python.autoComplete.extraPaths": [
