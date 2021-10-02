@@ -116,7 +116,7 @@ void OdometryPublisher::updateHandler()
 {
   if(!getPoseAndVelocity()) 
   {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "NO REACTD DATA FROM SHMEM");
+    // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "NO REACTD DATA FROM SHMEM");
     return;
   }
   if(!m_paused)
