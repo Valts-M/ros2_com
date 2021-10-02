@@ -149,7 +149,7 @@ bool OdometryPublisher::getPoseAndVelocity()
     }
     if( !m_poseConsumer->consumerSize()) 
     {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "BUFFER EMPTY");
+    //RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "BUFFER EMPTY");
       return false;
     }
     m_reactdLog = m_poseConsumer->getAndPop();

@@ -39,7 +39,7 @@ find_package(Boost REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(PCL REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(cv_bridge REQUIRED)
+# find_package(cv_bridge REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SaveMap.srv"
