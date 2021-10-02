@@ -20,7 +20,7 @@ MapSaver::MapSaver() : Node("map_saver_server"), m_count(0)
   m_subscriber = this->create_subscription<nav_msgs::msg::OccupancyGrid>
     ("map", 10, std::bind(&MapSaver::topicCallback, this, _1));
   m_saveMapService = this->create_service<ros2_com::srv::SaveMap>
-    ("ros2_com/save_map", std::bind(&MapSaver::saveMapHandler, this, _1, _2));
+    ("map_saver/save_map", std::bind(&MapSaver::saveMapHandler, this, _1, _2));
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPath});
   m_shmemUtil->start();
 }

@@ -4,6 +4,14 @@
 
 namespace ros2_com
 { 
+
+  Kinematics::Kinematics() : Kinematics::Kinematics(RobotConfig()){}
+
+  Kinematics::Kinematics(const RobotConfig& config) : m_leftEncScale(config.leftEncScale), 
+    m_rightEncScale(config.rightEncScale), 
+    m_leftGyroScale(config.leftGyroScale), 
+    m_rightGyroScale(config.RightGyroScale){}
+
   void Kinematics::calcPosAndVelocity(zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output)
   {
     const double leftDistance{input.encoders[0] * m_leftEncScale};

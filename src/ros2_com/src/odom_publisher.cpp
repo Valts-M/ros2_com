@@ -12,15 +12,15 @@ namespace ros2_com
 OdometryPublisher::OdometryPublisher() : OdometryPublisher(rclcpp::NodeOptions()){}
 
 OdometryPublisher::OdometryPublisher(const rclcpp::NodeOptions & options)
-: Node("ros2_com", options), m_count(0), m_tfBroadcaster(this)
+: Node("odom_publisher", options), m_count(0), m_tfBroadcaster(this), m_kinematics(getRobotConfig())
 {
-  m_paused = this->declare_parameter(
-    "/ros2_com/paused_new_measurements", m_paused);
-  m_odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>("ros2_com/odom", 10);
-  m_pathPublisher = this->create_publisher<nav_msgs::msg::Path>("ros2_com/path", 10);
-  m_pauseOdomService = this->create_service<ros2_com::srv::PauseOdom>("ros2_com/pause_odom", 
+  m_paused = this->declare_parameter("/odom_publisher/paused_new_measurements", m_paused);
+
+  m_odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>("odom_publisher/odom", 10);
+  m_pathPublisher = this->create_publisher<nav_msgs::msg::Path>("odom_publisher/path", 10);
+  m_pauseOdomService = this->create_service<ros2_com::srv::PauseOdom>("odom_publisher/pause_odom", 
     std::bind(&OdometryPublisher::pauseToggle, this, _1, _2));
-  m_resetOdomService = this->create_service<ros2_com::srv::ResetOdom>("ros2_com/reset_odom", 
+  m_resetOdomService = this->create_service<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom", 
     std::bind(&OdometryPublisher::resetOdom, this, _1, _2));
 
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_MsgRawStatus});
@@ -37,6 +37,25 @@ OdometryPublisher::~OdometryPublisher()
 {
   m_shmemUtil->stop();
   m_shmemUtil.reset();
+}
+
+RobotConfig OdometryPublisher::getRobotConfig()
+{
+  this->declare_parameter("leftEncScale");
+  this->declare_parameter("rightEncScale");
+  this->declare_parameter("leftGyroScale");
+  this->declare_parameter("rightGyroScale");
+
+  RobotConfig config{};
+  config.leftEncScale = get_parameter("leftEncScale").as_double();
+  config.rightEncScale = get_parameter("rightEncScale").as_double();
+  config.leftGyroScale = get_parameter("leftGyroScale").as_double();
+  config.RightGyroScale = get_parameter("rightGyroScale").as_double();
+
+  RCLCPP_INFO(this->get_logger(), "le: %f, re: %f, lg: %f, rg: %f",
+   config.leftEncScale, config.rightEncScale, config.leftGyroScale, config.RightGyroScale);
+
+  return config;
 }
 
 void OdometryPublisher::initMsgs()

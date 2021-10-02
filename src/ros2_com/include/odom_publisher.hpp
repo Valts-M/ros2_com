@@ -41,6 +41,8 @@ public:
 private:
   std::unique_ptr<ShmemUtility> m_shmemUtil;
 
+  RobotConfig getRobotConfig();
+
   void initMsgs();
 
   /*!

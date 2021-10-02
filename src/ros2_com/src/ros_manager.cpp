@@ -20,10 +20,10 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   m_shmemUtil->start();
   m_latestMapsPath = initLatestMapPath();
 
-  m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("ros2_com/save_map");
-  m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("ros2_com/reset_odom");
-  m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("ros2_com/send_initial_pose");
-  m_initialPoseSaver = this->create_client<ros2_com::srv::SaveInitialPose>("ros2_com/save_initial_pose");
+  m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
+  m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
+  m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("pose_listener/send_initial_pose");
+  m_initialPoseSaver = this->create_client<ros2_com::srv::SaveInitialPose>("pose_listener/save_initial_pose");
   
   m_rosTimer = this->create_wall_timer(
     500ms,

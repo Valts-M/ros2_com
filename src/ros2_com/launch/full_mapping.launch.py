@@ -71,7 +71,8 @@ def generate_launch_description():
         executable='odom_publisher',
         name='odom_publisher',
         output='screen',
-        parameters=[{'use_sim_time': use_sim_time}]
+        parameters=[os.path.join(pkg_share, 'config/robot_config.yaml'),
+            {'use_sim_time': use_sim_time}],
     )
 
     pose_listener_node = launch_ros.actions.Node(

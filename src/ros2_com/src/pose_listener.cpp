@@ -19,10 +19,10 @@ namespace ros2_com
     this->declare_parameter<std::string>("target_frame", "laser_sensor_frame");
     this->get_parameter("target_frame", m_target_frame);
 
-    m_sendPoseService = this->create_service<ros2_com::srv::SendInitialPose>("ros2_com/send_initial_pose", 
+    m_sendPoseService = this->create_service<ros2_com::srv::SendInitialPose>("pose_listener/send_initial_pose", 
     std::bind(&PoseListener::sendInitialPose, this, _1, _2));
 
-    m_savePoseService = this->create_service<ros2_com::srv::SaveInitialPose>("ros2_com/save_initial_pose", 
+    m_savePoseService = this->create_service<ros2_com::srv::SaveInitialPose>("pose_listener/save_initial_pose", 
     std::bind(&PoseListener::saveInitialPose, this, _1, _2)); 
 
     m_initialPosePublisher = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose", 10);
@@ -81,8 +81,6 @@ namespace ros2_com
 
   void PoseListener::timerCallback()
   {
-    // if(needAllocateShmem())
-    //   allocateShmem();
       auto m_odomPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_OdomPose);
       auto m_mapPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_MapPose);
     

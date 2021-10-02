@@ -6,10 +6,9 @@
 namespace ros2_com
 {
 LidarPublisher::LidarPublisher()
-: Node("lidar_publisher"), count_(0)
+: Node("lidar_publisher"), count_(0), log_reader_("/workspaces/ros2_com/test/os1log_lidar_1")
 {
   publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
-  log_reader_.init("/workspaces/ros2_com/test/os1log_lidar_1");
   timer_ = this->create_wall_timer(
     100ms, std::bind(&LidarPublisher::timer_callback, this));
 }
