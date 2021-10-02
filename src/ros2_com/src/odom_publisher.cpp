@@ -116,7 +116,6 @@ void OdometryPublisher::updateHandler()
 {
   if(!getPoseAndVelocity()) 
   {
-    // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "NO REACTD DATA FROM SHMEM");
     return;
   }
   if(!m_paused)
@@ -127,7 +126,7 @@ void OdometryPublisher::updateHandler()
     m_odomPublisher->publish(m_odomMsg);
     m_pathPublisher->publish(m_pathMsg);
     m_tfBroadcaster.sendTransform(m_tfMsg);
-    // std::cout << m_odomMsg.pose.pose.position.x << "\t" << m_odomMsg.pose.pose.position.y << '\t' << m_kinematics.m_yaw << '\n';
+
     RCLCPP_DEBUG(this->get_logger(), 
       "x=%f, y=%f, yaw=%f", 
       m_odomMsg.pose.pose.position.x, 

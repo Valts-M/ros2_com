@@ -79,10 +79,6 @@ private:
   */
   rclcpp::Service<ros2_com::srv::ResetOdom>::SharedPtr m_resetOdomService{nullptr};
 
-  /*!
-    * @brief Unique pointer to the shared memory pose consumer
-  */
-  //std::unique_ptr<ShmemRawStatusConsumer> m_poseConsumer{nullptr};
 
   /*!
     * @brief Stores how many ros messages have been published
@@ -158,27 +154,6 @@ private:
     * @return True if the data was successfully recieved, otherwise returns false
   */
   bool getPoseAndVelocity();
-
-  /*!
-    * @brief Allocates and starts the shmem smart pointers
-  */
-  //void allocateShmem();
-  /*!
-    * @brief Deallocates the shmem smart pointers
-  */
-  //void deallocateShmem();
-  /*!
-    * @brief Starts the shmem smart pointers
-  */
- // void startShmem();
-  /*!
-    * @brief Stops the shmem smart pointers
-  */
-  //void stopShmem();
-  /*!
-    * @brief Checks if the shemem smart pointers are allocated
-  */
-  //bool needAllocateShmem();
 
 };
 }

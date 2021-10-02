@@ -28,9 +28,6 @@ using namespace zbot;
 
 class RosManager : public rclcpp::Node
 {
-  // using Storage = boost::interprocess::managed_shared_memory;
-  // using ShmemFlagConsumer = shmem::ShmemCBConsumer<RosFlags, shmem::PolicyFifo, Storage>;
-  // using ShmemSlamMapPathProducer = shmem::ShmemRawProducer<TextualInfo, Storage>;
 
 public:
   RosManager();
@@ -66,10 +63,6 @@ private:
   rclcpp::Client<ros2_com::srv::SendInitialPose>::SharedPtr m_initialPoseSender;
 
   rclcpp::Client<ros2_com::srv::SaveInitialPose>::SharedPtr m_initialPoseSaver;
-
-  // std::unique_ptr<ShmemFlagConsumer> m_flagConsumer{nullptr};
-
-  // std::unique_ptr<ShmemSlamMapPathProducer> m_slamPathProducer{nullptr};
 
   bool getRosFlags();
 
@@ -110,27 +103,6 @@ private:
   bool isProcessRunning(const processId & t_processId);
 
   bool incompatibleProcesses(const processId & t_processId);
-
-  /*!
-    * @brief Allocates and starts the shmem smart pointers
-  */
-  //void allocateShmem();
-  /*!
-    * @brief Deallocates the shmem smart pointers
-  */
-  //void deallocateShmem();
-  /*!
-    * @brief Starts the shmem smart pointers
-  */
-  //void startShmem();
-  /*!
-    * @brief Stops the shmem smart pointers
-  */
-  //void stopShmem();
-  /*!
-    * @brief Checks if the shemem smart pointers are allocated
-  */
-  //bool needAllocateShmem();
 
 };
 }

@@ -145,57 +145,6 @@ namespace ros2_com
     m_mapPoseProducer->append(m_mapPose, m_ts);
   }
 
-// bool PoseListener::needAllocateShmem()
-// {
-//   if(!m_odomPoseProducer || !m_mapPoseProducer)
-//     return true;
-//   if(m_odomPoseProducer->isInternalError())
-//   {
-//     m_odomPoseProducer->stop();
-//     m_odomPoseProducer.reset();
-//     return true;
-//   }
-//   if(m_mapPoseProducer->isInternalError())
-//   {
-//     m_mapPoseProducer->stop();
-//     m_mapPoseProducer.reset();
-//     return true;
-//   }
-//   return false;
-// }
-
-// void PoseListener::allocateShmem()
-// {
-//   if (!m_odomPoseProducer) {
-//     //TODO: get from config
-//     m_odomPoseProducer = std::make_unique<ShmemPoseProducer>("RosOdomPoses", "RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U);
-//   }
-//   if (!m_mapPoseProducer) {
-//     //TODO: get from config
-//     m_mapPoseProducer = std::make_unique<ShmemPoseProducer>("RosMapPoses", "RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U);
-//   }
-//   startShmem();
-// }
-
-// void PoseListener::deallocateShmem()
-// {
-//   stopShmem();
-//   m_odomPoseProducer.reset();
-//   m_mapPoseProducer.reset();
-//   RCLCPP_INFO(this->get_logger(), "Destructed");
-// }
-
-// void PoseListener::stopShmem()
-// {
-//   if (m_odomPoseProducer) {m_odomPoseProducer->stop();}
-//   if (m_mapPoseProducer) {m_mapPoseProducer->stop();}
-// }
-
-// void PoseListener::startShmem()
-// {
-//   if (m_odomPoseProducer && !m_odomPoseProducer->isInternalError()) {m_odomPoseProducer->start();}
-//   if (m_mapPoseProducer&& !m_mapPoseProducer->isInternalError()) {m_mapPoseProducer->start();}
-// }
  }
 
 int main(int argc, char * argv[])

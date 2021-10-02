@@ -16,7 +16,6 @@ RosManager::RosManager() : RosManager(rclcpp::NodeOptions()){}
 RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 : Node("ros_manager", t_options)
 {
-  //allocateShmem();
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
   m_shmemUtil->start();
   m_latestMapsPath = initLatestMapPath();
@@ -33,7 +32,6 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 
 RosManager::~RosManager()
 {
-  //deallocateShmem();
   m_shmemUtil->stop();
   m_shmemUtil.reset();
   stopAll();
@@ -42,8 +40,6 @@ RosManager::~RosManager()
 
 void RosManager::updateHandler()
 {
-  //if (needAllocateShmem()) allocateShmem();
-
   if(getRosFlags())
     setLocalFlags();
 
