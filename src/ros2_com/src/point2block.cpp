@@ -15,7 +15,9 @@ using namespace std::chrono_literals;
 
 namespace ros2_com
 {
-Point2Block::Point2Block() : Node("point2block"), m_count(0), m_unfilteredCloud(new pcl::PointCloud<pcl::PointXYZ>)
+Point2Block::Point2Block() : Node("point2block"), m_count(0), 
+m_unfilteredCloud(new pcl::PointCloud<pcl::PointXYZ>),
+m_filteredCloud(new pcl::PointCloud<pcl::PointXYZ>)
 {
   m_image = cv::Mat::zeros(120, 120, CV_8U);
   m_subscriber = this->create_subscription<sensor_msgs::msg::PointCloud2>
@@ -28,35 +30,43 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
 {
   pcl::fromROSMsg(*msg, *m_unfilteredCloud);
 
-  m_filter.setInputCloud(m_unfilteredCloud);
-  m_filter.setFilterFieldName ("x");
-  m_filter.setFilterLimits (-3.0, 3.0);
-  m_filter.filter (*m_unfilteredCloud);
-  m_filter.setFilterFieldName ("y");
-  m_filter.filter(*m_unfilteredCloud);
+  for(size_t i = 0; i < m_unfilteredCloud->points.size(); ++i)
+  {
+    if(std::abs(m_unfilteredCloud->points.at(i).x) < 3.0)
+        if(std::abs(m_unfilteredCloud->points.at(i).y) <3)
+          m_filteredCloud->points.push_back(m_unfilteredCloud->points.at(i));
+  }
 
-  pcl::toROSMsg(*m_unfilteredCloud, m_filteredCloud);
-  m_filteredCloud.header.frame_id = msg->header.frame_id;
-  m_filteredCloud.header.stamp = this->now();
-  m_publisher->publish(m_filteredCloud);
+  // m_filter.setInputCloud(m_unfilteredCloud);
+  // m_filter.setFilterFieldName ("x");
+  // m_filter.setFilterLimits (-3.0, 3.0);
+  // m_filter.filter (*m_unfilteredCloud);
+  // m_filter.setFilterFieldName ("y");
+  // m_filter.filter(*m_unfilteredCloud);
+
+  pcl::toROSMsg(*m_filteredCloud, m_filteredCloudMsg);
+  m_filteredCloudMsg.header.frame_id = msg->header.frame_id;
+  m_filteredCloudMsg.header.stamp = this->now();
+  m_publisher->publish(m_filteredCloudMsg);
 
   makeImage();
   // cv::imwrite("map.png", m_image);
 
   m_image = cv::Mat::zeros(120, 120, CV_8U);
+  m_filteredCloud->clear();
 }
 
 void Point2Block::makeImage()
 {
   RCLCPP_INFO(this->get_logger(), "points: %d, x: %f, idx: %d", 
   m_unfilteredCloud->points.size(), m_unfilteredCloud->points.at(20), static_cast<int>(m_unfilteredCloud->points.at(20).x));
-  // for(size_t i = 0; i < m_unfilteredCloud->points.size(); ++i)
-  // {
-  //   int idx_x = static_cast<int>(m_unfilteredCloud->points.at(i).x * 100 + 300) % 5;
-  //   int idx_y = static_cast<int>(m_unfilteredCloud->points.at(i).y * 100 + 300) % 5;
-  //   //RCLCPP_INFO(this->get_logger(), "%d, %d", idx_x, idx_y);
-  //   m_image.at<unsigned char>(idx_x, idx_y) = 255;
-  // }
+  for(size_t i = 0; i < m_unfilteredCloud->points.size(); ++i)
+  {
+    int idx_x = static_cast<int>(m_unfilteredCloud->points.at(i).x * 100 + 300) % 5;
+    int idx_y = static_cast<int>(m_unfilteredCloud->points.at(i).y * 100 + 300) % 5;
+    //RCLCPP_INFO(this->get_logger(), "%d, %d", idx_x, idx_y);
+    m_image.at<unsigned char>(idx_x, idx_y) = 255;
+  }
 }
 
 }
