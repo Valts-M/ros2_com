@@ -30,6 +30,15 @@ namespace ros2_com
     m_tfBuffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     m_tfListener = std::make_shared<tf2_ros::TransformListener>(*m_tfBuffer);
 
+    m_initialPose.pose.covariance =
+    {
+    0.08, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.08, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.08, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.08, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.08, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.008 };
+
     m_timer = this->create_wall_timer(50ms, std::bind(&PoseListener::timerCallback, this));
   }
   
