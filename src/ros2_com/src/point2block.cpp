@@ -50,7 +50,7 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
   m_publisher->publish(m_filteredCloudMsg);
 
   makeImage();
-  // cv::imwrite("map.png", m_image);
+  cv::imwrite("map.png", m_image);
 
   m_image = cv::Mat::zeros(120, 120, CV_8U);
   m_filteredCloud->clear();
@@ -58,13 +58,11 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
 
 void Point2Block::makeImage()
 {
-  RCLCPP_INFO(this->get_logger(), "points: %d, x: %f, idx: %d", 
-  m_unfilteredCloud->points.size(), m_unfilteredCloud->points.at(20), static_cast<int>(m_unfilteredCloud->points.at(20).x));
   for(size_t i = 0; i < m_unfilteredCloud->points.size(); ++i)
   {
-    int idx_x = static_cast<int>(m_unfilteredCloud->points.at(i).x * 100 + 300) % 5;
-    int idx_y = static_cast<int>(m_unfilteredCloud->points.at(i).y * 100 + 300) % 5;
-    //RCLCPP_INFO(this->get_logger(), "%d, %d", idx_x, idx_y);
+    int idx_x = static_cast<int>(m_filteredCloud->points.at(i).x * 100 + 300) % 5;
+    int idx_y = static_cast<int>(m_filteredCloud->points.at(i).y * 100 + 300) % 5;
+    RCLCPP_INFO(this->get_logger(), "%d, %d", idx_x, idx_y);
     m_image.at<unsigned char>(idx_x, idx_y) = 255;
   }
 }
