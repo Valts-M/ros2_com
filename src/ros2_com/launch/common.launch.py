@@ -159,6 +159,13 @@ def generate_launch_description():
         output='screen'
     )
 
+    point2block_node = launch_ros.actions.Node(
+        package='ros2_com',
+        executable='point2block',
+        name='point2block',
+        output='screen'
+    )
+
     urdf_model = DeclareLaunchArgument(name='model', default_value=default_model_path,
                                         description='Absolute path to robot urdf file')
 
@@ -170,8 +177,9 @@ def generate_launch_description():
     ld.add_action(urdf_model)
     ld.add_action(use_sim_time_arg)
     ld.add_action(robot_state_publisher_node)
-    ld.add_action(pose_listener_node)
-    ld.add_action(odom_publisher_node)
+    # ld.add_action(pose_listener_node)
+    # ld.add_action(odom_publisher_node)
+    ld.add_action(point2block_node)
 
     robot_config = os.path.join(pkg_share, 'config', 'robot_config.yaml')
     with open(robot_config, 'r') as f:

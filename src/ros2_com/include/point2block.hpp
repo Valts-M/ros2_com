@@ -24,7 +24,6 @@
 #include <pcl/filters/passthrough.h>
 
 #include <opencv2/opencv.hpp>
-#include <cv_bridge/cv_bridge.h>
 
 namespace ros2_com
 {
@@ -48,7 +47,6 @@ private:
   sensor_msgs::msg::PointCloud2 m_filteredCloudMsg;
   pcl::PassThrough<pcl::PointXYZ> m_filter;
   cv::Mat m_image;
-  cv_bridge::CvImage img_bridge;
   sensor_msgs::msg::Image img_msg; // >> message to be sent
 
   void topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
