@@ -10,8 +10,7 @@
 //ros
 #include "rclcpp/rclcpp.hpp"
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/msg/image.hpp>
-#include <sensor_msgs/image_encodings.hpp>
+#include <tf2_ros/transform_listener.h>
 
 //robotv3
 #include <robot_pose.hpp>
@@ -21,7 +20,6 @@
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/conversions.h>
-#include <pcl/filters/passthrough.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -40,18 +38,31 @@ private:
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr m_subscriber{nullptr};
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_publisher{nullptr};
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr m_imgPublisher{nullptr};
+  sensor_msgs::msg::PointCloud2 m_filteredCloudMsg;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr m_unfilteredCloud;
   pcl::PointCloud<pcl::PointXYZ>::Ptr m_filteredCloud;
-  sensor_msgs::msg::PointCloud2 m_filteredCloudMsg;
-  pcl::PassThrough<pcl::PointXYZ> m_filter;
-  cv::Mat m_image;
-  sensor_msgs::msg::Image img_msg; // >> message to be sent
+  pcl::PointCloud<pcl::PointXYZ>::Ptr m_rotatedCloud;
+  
+  std::shared_ptr<tf2_ros::TransformListener> m_tfListener{nullptr};
+  geometry_msgs::msg::TransformStamped m_mapLidarMsg;
+  std::unique_ptr<tf2_ros::Buffer> m_tfBuffer;
+
+  cv::Mat m_clearMap;
+  cv::Mat m_obstacleMap;
+
+  double m_lidarHeight{0.345};
+  double m_robotHeight{1.2};
+  double m_lidarTolerance{0.1};
+  double m_floorTolerance{0.5};
+  double m_robotHeightTolerance{0.1};
+
+  int m_rows{120};
+  int m_cols{120};
 
   void topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
-
-  void makeImage();
+  void updateClearImage(const pcl::PointXYZ& t_point);
+  void updateObstacleImage(const pcl::PointXYZ& t_point);
 
   /*!
     * @brief Stores how many ros messages have been published
