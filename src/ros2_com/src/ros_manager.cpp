@@ -149,7 +149,7 @@ void RosManager::setStateFlag(const processId & t_processId)
         m_resetOdomFlag = true;
       }
       //if mapping set to active, turn off localization, reset odometry
-      else if(t_processId == processId::mapping)
+      else if(t_processId == processId::mapping && !isProcessRunning(processId::mapping))
       {
         m_flagMap[processId::localization] = false;
         m_resetOdomFlag = true;
