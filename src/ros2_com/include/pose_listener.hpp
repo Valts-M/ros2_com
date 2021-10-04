@@ -17,9 +17,7 @@
 #include "ros2_com/srv/save_initial_pose.hpp"
 
 //robotv3
-#include <shmem/shmem_position_producer.hpp>
 #include <robot_pose.hpp>
-
 #include "shmem_util.hpp"
 
 namespace ros2_com

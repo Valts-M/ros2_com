@@ -90,8 +90,8 @@ namespace ros2_com
 
   void PoseListener::timerCallback()
   {
-      auto m_odomPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_OdomPose);
-      auto m_mapPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_MapPose);
+    auto m_odomPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_OdomPose);
+    auto m_mapPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_MapPose);
     
     if (!m_odomPoseProducer ) return;
     if (!m_odomPoseProducer->isObjectReferenced()) return;
