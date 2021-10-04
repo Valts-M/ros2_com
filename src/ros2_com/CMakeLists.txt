@@ -75,16 +75,16 @@ rosidl_target_interfaces(odom_publisher ${PROJECT_NAME} "rosidl_typesupport_cpp"
 install(TARGETS odom_publisher
 DESTINATION lib/${PROJECT_NAME})
 
-# add_executable(point2block src/point2block.cpp)
-# ament_target_dependencies(point2block rclcpp tf2 tf2_ros PCL sensor_msgs OpenCV cv_bridge)
-# target_include_directories(point2block PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   $<INSTALL_INTERFACE:include>
-#   ${PCL_INCLUDE_DIRS})
-# target_link_libraries(point2block ${PCL_LIBRARIES} ${OpenCV_LIBS})
+add_executable(point2block src/point2block.cpp)
+ament_target_dependencies(point2block rclcpp tf2 tf2_ros PCL sensor_msgs OpenCV)
+target_include_directories(point2block PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${PCL_INCLUDE_DIRS})
+target_link_libraries(point2block ${PCL_LIBRARIES} ${OpenCV_LIBS})
 
-# install(TARGETS point2block
-# DESTINATION lib/${PROJECT_NAME})
+install(TARGETS point2block
+DESTINATION lib/${PROJECT_NAME})
 
 add_executable(tf_filter src/tf_filter.cpp)
 ament_target_dependencies(tf_filter rclcpp tf2 tf2_ros geometry_msgs)
