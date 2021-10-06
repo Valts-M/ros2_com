@@ -19,6 +19,7 @@
 #include <shmem/shmem_cb_consumer.hpp>
 #include <data_structures/protocol.hpp>
 #include <robot_pose.hpp>
+#include "helper.hpp"
 
 #include "kinematics.hpp"
 #include "ros2_com/srv/pause_odom.hpp"
@@ -115,6 +116,11 @@ private:
     * @brief Stores the timestamp
   */
   double m_ts{0.0};
+
+  /*!
+    * @brief Stores the timestamp
+  */
+  double m_prevTs{0.0};
 
   /*!
     * @brief Stores the X position of the previous message (m)
