@@ -177,9 +177,9 @@ def generate_launch_description():
     ld.add_action(urdf_model)
     ld.add_action(use_sim_time_arg)
     ld.add_action(robot_state_publisher_node)
-    # ld.add_action(pose_listener_node)
-    # ld.add_action(odom_publisher_node)
-    ld.add_action(point2block_node)
+    ld.add_action(pose_listener_node)
+    ld.add_action(odom_publisher_node)
+    # ld.add_action(point2block_node)
 
     robot_config = os.path.join(pkg_share, 'config', 'robot_config.yaml')
     with open(robot_config, 'r') as f:
