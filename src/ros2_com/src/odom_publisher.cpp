@@ -142,8 +142,10 @@ void OdometryPublisher::updateHandler()
   {
     updateOdom();
     updatePath();
-    RCLCPP_INFO(this->get_logger(), "gyro: %.10f, gyroBias: %f, m_yaw: %f", 
-    m_kinematics.m_debugGyroTicCount, m_kinematics.m_gyroBias, m_kinematics.m_yaw);
+    m_ts = Helper::getTimeStamp();
+    RCLCPP_INFO(this->get_logger(), "gyro: %.10f, gyroBias: %f, le:%d, re:%d, ts: %f", 
+    m_kinematics.m_debugGyroTicCount, m_kinematics.m_gyroBias, m_kinematics.m_debugLeftEnc, m_kinematics.m_debugRightEnc, m_ts - m_prevTs);
+    m_prevTs = m_ts;
 
     m_odomPublisher->publish(m_odomMsg);
     m_pathPublisher->publish(m_pathMsg);
@@ -174,9 +176,6 @@ bool OdometryPublisher::getPoseAndVelocity()
       return false;
     }
     m_reactdLog = m_poseConsumer->getAndPop();
-    m_ts = Helper::getTimeStamp();
-    RCLCPP_INFO(this->get_logger(), "%f", m_ts - m_prevTs);
-    m_prevTs = m_ts;
   } 
   catch (std::exception & e) 
   {
