@@ -30,6 +30,11 @@ public:
    */
   void calcPosAndVelocity(zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output);
   double m_yaw{0.0}; //rad
+  double m_debugGyroTicCount{0.0};
+  int m_debugLeftEnc{0};
+  int m_debugRightEnc{0};
+  double m_gyroBias{0.0};
+
 
 private:
 
@@ -40,7 +45,6 @@ private:
   uint32_t m_noMovementCount{0};
 
   double m_gyroTicCount{0.0};
-  double m_gyroBias{0.0};
 };
 }
 

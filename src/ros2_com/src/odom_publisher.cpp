@@ -135,12 +135,15 @@ void OdometryPublisher::updateHandler()
 {
   if(!getPoseAndVelocity()) 
   {
+    // RCLCPP_WARN(this->get_logger(), "BUFFER EMPTY");
     return;
   }
   if(!m_paused)
   {
     updateOdom();
     updatePath();
+    RCLCPP_INFO(this->get_logger(), "gyro: %.10f, gyroBias: %f, m_yaw: %f", 
+    m_kinematics.m_debugGyroTicCount, m_kinematics.m_gyroBias, m_kinematics.m_yaw);
 
     m_odomPublisher->publish(m_odomMsg);
     m_pathPublisher->publish(m_pathMsg);

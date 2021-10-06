@@ -19,7 +19,7 @@ import yaml
 
 def generate_launch_description():
     pkg_share = launch_ros.substitutions.FindPackageShare(package='ros2_com').find('ros2_com')
-    default_model_path = os.path.join(pkg_share, 'descriptions/columbus_description.urdf')
+    default_model_path = os.path.join(pkg_share, 'descriptions/stolzenberg_description.urdf')
     use_sim_time = LaunchConfiguration('use_sim_time')
     
     robot_state_publisher_node = launch_ros.actions.Node(
@@ -178,22 +178,22 @@ def generate_launch_description():
     ld.add_action(use_sim_time_arg)
     ld.add_action(robot_state_publisher_node)
     # ld.add_action(pose_listener_node)
-    # ld.add_action(odom_publisher_node)
-    ld.add_action(point2block_node)
+    ld.add_action(odom_publisher_node)
+    # ld.add_action(point2block_node)
 
     robot_config = os.path.join(pkg_share, 'config', 'robot_config.yaml')
     with open(robot_config, 'r') as f:
         lidar_model = yaml.safe_load(f)['odom_publisher']['ros__parameters']['lidar_model']
 
-    if lidar_model == 'ouster':
-        ld.add_action(ouster_node)
-        ld.add_action(activate_event)
-        ld.add_action(configure_event)
-        ld.add_action(shutdown_event)
-    elif lidar_model == 'velodyne':
-        ld.add_action(velodyne_driver_node)
-        ld.add_action(velodyne_convert_node)
-        ld.add_action(velodyne_laserscan_node)
+    # if lidar_model == 'ouster':
+    #     ld.add_action(ouster_node)
+    #     ld.add_action(activate_event)
+    #     ld.add_action(configure_event)
+    #     ld.add_action(shutdown_event)
+    # elif lidar_model == 'velodyne':
+    #     ld.add_action(velodyne_driver_node)
+    #     ld.add_action(velodyne_convert_node)
+    #     ld.add_action(velodyne_laserscan_node)
 
     return ld
     
