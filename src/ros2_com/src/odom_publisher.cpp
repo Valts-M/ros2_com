@@ -142,8 +142,8 @@ void OdometryPublisher::updateHandler()
   {
     updateOdom();
     updatePath();
-    // RCLCPP_INFO(this->get_logger(), "gyro: %.10f, gyroBias: %f, m_yaw: %f", 
-    // m_kinematics.m_debugGyroTicCount, m_kinematics.m_gyroBias, m_kinematics.m_yaw);
+    RCLCPP_INFO(this->get_logger(), "gyro: %.10f, gyroBias: %f, m_yaw: %f", 
+    m_kinematics.m_debugGyroTicCount, m_kinematics.m_gyroBias, m_kinematics.m_yaw);
 
     m_odomPublisher->publish(m_odomMsg);
     m_pathPublisher->publish(m_pathMsg);
