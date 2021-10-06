@@ -23,7 +23,7 @@ namespace ros2_com
     const double deltaAngle{ trueGyroZ < 0 ? trueGyroZ * m_leftGyroScale : trueGyroZ * m_rightGyroScale};
 
     //if moving update message
-    if(std::fabs(input.encoders[0]) > 10 || std::fabs(input.encoders[0]) > 10)
+    if(std::fabs(input.encoders[0]) > 10 || std::fabs(input.encoders[1]) > 10)
     {
       output.pose.pose.position.x += distanceTraveled * cos(m_yaw + deltaAngle / 2);
       output.pose.pose.position.y += distanceTraveled * sin(m_yaw + deltaAngle / 2);
