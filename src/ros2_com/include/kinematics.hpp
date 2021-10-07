@@ -15,6 +15,11 @@
 
 namespace ros2_com
 {
+
+/**
+ * @brief Library for calculating a differential drive robots forward kinematics
+ * 
+ */
 class Kinematics
 {
 public:

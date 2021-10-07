@@ -4,6 +4,11 @@
 #include <map>
 #include <data_structures/ros_flags.hpp>
 
+/**
+ * @brief Usefull maps used by ros manager
+ * 
+ */
+
 namespace ros2_com
 {
 

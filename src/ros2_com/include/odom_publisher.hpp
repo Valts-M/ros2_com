@@ -30,19 +30,47 @@ namespace ros2_com
 
 using namespace zbot;
 
+/**
+ * @brief Node that receives encoder and gyroscope readings from Shmem and calls kinematics 
+ * calculations to calculate the dead reckoning trajectory. It publishes the odom -> base_footprint
+ * transform, the path taken in the odom frame, and odometry messages.
+ * 
+ */
 class OdometryPublisher : public rclcpp::Node
 {
 
 public:
+/**
+ * @brief Construct a new Odometry Publisher object
+ * 
+ */
   OdometryPublisher();
+  /**
+   * @brief Construct a new Odometry Publisher object
+   * 
+   * @param options 
+   */
   OdometryPublisher(const rclcpp::NodeOptions & options);
+  /**
+   * @brief Destroy the Odometry Publisher object
+   * 
+   */
   ~OdometryPublisher();
 
 private:
   std::unique_ptr<ShmemUtility> m_shmemUtil;
 
+  /**
+   * @brief Gets the encoder and gyroscope scale factors from the parameter file
+   * 
+   * @return RobotConfig 
+   */
   RobotConfig getRobotConfig();
 
+  /**
+   * @brief Initializes the odom and tf messages
+   * 
+   */
   void initMsgs();
 
   /*!
@@ -59,7 +87,6 @@ private:
     * @brief Updates the travelled path in the odom frame
   */
   void updatePath();
-
 
   /*!
     * @brief Shared pointer to the ros odometry message publisher
@@ -81,7 +108,6 @@ private:
   */
   rclcpp::Service<ros2_com::srv::ResetOdom>::SharedPtr m_resetOdomService{nullptr};
 
-
   /*!
     * @brief Stores how many ros messages have been published
   */
@@ -92,10 +118,27 @@ private:
   */
   MsgRawStatus m_reactdLog{};
 
+  /**
+   * @brief Flag for pausing the publishing of odom, tf and path messages
+   * 
+   */
   bool m_paused{false};
 
+  /**
+   * @brief Callback for the pause odom service. Flips the m_paused flag
+   * 
+   * @param request 
+   * @param response 
+   */
   void pauseToggle(const std::shared_ptr<ros2_com::srv::PauseOdom::Request> request,
           std::shared_ptr<ros2_com::srv::PauseOdom::Response> response);
+  /**
+   * @brief Callback for the reset odom service. Sets the current position and orientation
+   * to 0 0 0 as well as clears the path vector.
+   * 
+   * @param request 
+   * @param response 
+   */
   void resetOdom(const std::shared_ptr<ros2_com::srv::ResetOdom::Request> request,
           std::shared_ptr<ros2_com::srv::ResetOdom::Response> response);
 
@@ -111,48 +154,48 @@ private:
   */
   nav_msgs::msg::Path m_pathMsg{};
 
-  /*!
+  /**
     * @brief Stores the timestamp
   */
   double m_ts{0.0};
 
-  /*!
+  /**
     * @brief Stores the X position of the previous message (m)
   */
   double m_previousX{0.0};
 
-  /*!
+  /**
     * @brief Stores the Y position of the previous message (m)
   */
   double m_previousY{0.0};
 
-  /*!
+  /**
     * @brief Stores the angle from the previous message (rad)
   */
   double m_previousAngle{0.0};
 
-  /*!
+  /**
     * @brief Timer for periodic message publishing
   */
   rclcpp::TimerBase::SharedPtr m_rosTimer{nullptr};
 
-  /*!
+  /**
     * @brief Transform broadcaster for the odom->base_footprint transform
   */
   tf2_ros::TransformBroadcaster m_tfBroadcaster;
 
-  /*!
+  /**
     * @brief Transform message for the odom->base_footprint transform
   */
   geometry_msgs::msg::TransformStamped m_tfMsg;
 
-  /*!
+  /**
     * @brief For robot kinematics transformations calculations
   */
   Kinematics m_kinematics;
 
-  /*!
-    * @brief Gets data from the kinematics producer
+  /**
+    * @brief Gets data react data from shmem
     * @return True if the data was successfully recieved, otherwise returns false
   */
   bool getPoseAndVelocity();

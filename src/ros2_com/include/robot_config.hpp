@@ -3,6 +3,10 @@
 
 namespace ros2_com
 {
+  /**
+   * @brief Struct that holds scale factors for robot kinematics
+   * 
+   */
   struct RobotConfig
   {
     double leftEncScale;

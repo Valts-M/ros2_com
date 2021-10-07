@@ -9,7 +9,7 @@ using std::placeholders::_2;
 namespace ros2_com
 {
   PoseListener::PoseListener() : rclcpp::Node("pose_listener"), 
-    m_count(0), m_map_frame("map"), m_odom_frame("odom"),
+   m_map_frame("map"), m_odom_frame("odom"),
     m_mapPose(0.0, 0.0, 0.0), m_odomPose(0.0, 0.0, 0.0)
   {
     

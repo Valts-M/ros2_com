@@ -16,22 +16,69 @@
 namespace ros2_com
 {
 
+/**
+ * @brief Node for saving the map in both a binary and pgm file
+ * 
+ */
 class MapSaver : public rclcpp::Node
 {
 public:
+  /**
+   * @brief Construct a new Map Saver object
+   * 
+   */
   MapSaver();
+  /**
+   * @brief Destroy the Map Saver object
+   * 
+   */
   ~MapSaver();
 
 private:
+  /**
+   * @brief Subscriber to the /map topic
+   * 
+   */
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_subscriber{nullptr};
-  size_t m_count;
+  /**
+   * @brief Map saver service
+   * 
+   */
   rclcpp::Service<ros2_com::srv::SaveMap>::SharedPtr m_saveMapService{nullptr};
+  /**
+   * @brief Shmem util
+   * 
+   */
   std::unique_ptr<ShmemUtility> m_shmemUtil;
 
+  /**
+   * @brief Callback for the save map service. Will attemt to save the map as a bin and pgm file.
+   * 
+   * @param t_request Contains a std::string of the full path minus the extention of where to
+   * save the map and with what name
+   * @param t_response Contains the success statuss
+   */
   void saveMapHandler(const std::shared_ptr<ros2_com::srv::SaveMap::Request> t_request,  
           std::shared_ptr<ros2_com::srv::SaveMap::Response> t_response);
+  /**
+   * @brief Will attempt to save the current map
+   * 
+   * @param path to where to save the map and with what name minus the extention
+   * @param saveImage bool of whether or not to save the map in the pgm format as well
+   * @return int 
+   */
   int saveMap(const std::string &path, const bool saveImage);
+  /**
+   * @brief Pointer to the map message
+   * 
+   */
   nav_msgs::msg::OccupancyGrid::SharedPtr m_map{nullptr};
+  /**
+   * @brief Subscription callback to the /map topic. Will save the current map as a temporary
+   * file to send to the server
+   * 
+   * @param msg 
+   */
   void topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
 };
 }

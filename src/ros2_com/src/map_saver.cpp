@@ -15,7 +15,7 @@ using namespace std::chrono_literals;
 
 namespace ros2_com
 {
-MapSaver::MapSaver() : Node("map_saver_server"), m_count(0)
+MapSaver::MapSaver() : Node("map_saver_server")
 {
   m_subscriber = this->create_subscription<nav_msgs::msg::OccupancyGrid>
     ("map", 10, std::bind(&MapSaver::topicCallback, this, _1));

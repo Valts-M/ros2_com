@@ -18,7 +18,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 {
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
   m_shmemUtil->start();
-  m_latestMapsPath = initLatestMapPath();
+  m_latestMapPath = initLatestMapPath();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
   m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
@@ -155,7 +155,7 @@ void RosManager::setStateFlag(const processId & t_processId)
         m_resetOdomFlag = true;
       }
     }
-    else 
+    else if(m_latestFlags.flagMap[t_processId].second < 0)
     {
       //set to shutdown
       m_flagMap[t_processId] = false;
@@ -266,7 +266,7 @@ void RosManager::startProcess(const processId & t_processId)
           execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "mapping.launch.py", NULL);
           break;
         case(processId::localization):
-          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "localization.launch.py", m_latestMapsPath.c_str(), NULL);
+          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "localization.launch.py", m_latestMapPath.c_str(), NULL);
           break;
         case(processId::logging):
           execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "recording.launch.py", NULL);
@@ -364,8 +364,8 @@ void RosManager::saveMap()
         RCLCPP_INFO(this->get_logger(), "Save map: SUCCESS");
         TextualInfo info{(path + ".bin").c_str()};
         //m_slamPathProducer->copyUpdate(info);
-        m_latestMapsPath = "map:=" + path + ".yaml";
-        RCLCPP_INFO(this->get_logger(), m_latestMapsPath);
+        m_latestMapPath = "map:=" + path + ".yaml";
+        RCLCPP_INFO(this->get_logger(), m_latestMapPath);
 
         m_saveMapFlag = false;
       }
