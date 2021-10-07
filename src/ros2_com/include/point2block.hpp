@@ -13,7 +13,8 @@
 #include <tf2_ros/transform_listener.h>
 
 //robotv3
-#include <robot_pose.hpp>
+#include "shmem_util.hpp"
+#include "data_structures/locald_data.hpp"
 
 //pcl
 #include <pcl_conversions/pcl_conversions.h>
@@ -28,17 +29,27 @@ namespace ros2_com
 
 using namespace zbot;
 
+enum ProjectionTypes :uint8_t {
+    UNKNOWN = 0U,
+    FALL = 1U << 0U,
+    FLOOR = 1U << 1U,
+    OBSTACLE = 1U << 2U,
+    TOO_HIGH = 1U << 3U
+};
+
 class Point2Block : public rclcpp::Node
 {
 
 public:
   Point2Block();
+  ~Point2Block();
 
 private:
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr m_subscriber{nullptr};
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_publisher{nullptr};
   sensor_msgs::msg::PointCloud2 m_filteredCloudMsg;
+  std::unique_ptr<ShmemUtility> m_shmemUtil;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr m_unfilteredCloud;
   pcl::PointCloud<pcl::PointXYZ>::Ptr m_filteredCloud;
@@ -59,6 +70,9 @@ private:
 
   int m_rows{120};
   int m_cols{120};
+  int m_mapResolutionCm{5};
+  int x_offset{m_rows * m_mapResolutionCm / 2};
+  int y_offset{m_cols * m_mapResolutionCm / 2};
 
   void topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   void updateClearImage(const pcl::PointXYZ& t_point);

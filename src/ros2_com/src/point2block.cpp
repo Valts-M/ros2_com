@@ -26,6 +26,9 @@ m_rotatedCloud(new pcl::PointCloud<pcl::PointXYZ>)
   m_clearMap.setTo(127U);
   m_obstacleMap.setTo(0U);
 
+  m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_LocalMap});
+  m_shmemUtil->start();
+
   m_subscriber = this->create_subscription<sensor_msgs::msg::PointCloud2>
     ("points", 10, std::bind(&Point2Block::topicCallback, this, _1));
 
@@ -35,8 +38,20 @@ m_rotatedCloud(new pcl::PointCloud<pcl::PointXYZ>)
   m_tfListener = std::make_shared<tf2_ros::TransformListener>(*m_tfBuffer);
 }
 
+Point2Block::~Point2Block()
+{
+  m_shmemUtil->stop();
+  m_shmemUtil.reset();
+}
+
 void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
+
+  auto m_localMapProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_MapPose);
+
+  if(!m_localMapProducer) return;
+  if(!m_localMapProducer->isObjectReferenced()) return;
+
   try 
   {
     m_mapLidarMsg = m_tfBuffer->lookupTransform(
@@ -95,7 +110,7 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
 
   cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
   cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
-
+    
   m_clearMap.setTo(127);
   m_obstacleMap.setTo(0U);
   m_filteredCloud->clear();
@@ -105,18 +120,27 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
 void Point2Block::updateClearImage(const pcl::PointXYZ& t_point)
 {
     const cv::Point startPoint{m_rows / 2, m_cols / 2};
-    const cv::Point endPoint{static_cast<int>(t_point.x * 100 + 300)/5, static_cast<int>(t_point.y * 100 + 300)/5};
+    const cv::Point endPoint{static_cast<int>(t_point.x * 100 + x_offset)/m_mapResolutionCm, 
+      static_cast<int>(t_point.y * 100 + y_offset)/m_mapResolutionCm};
     cv::line(m_clearMap, startPoint, endPoint, 255U, 1);
     m_clearMap.at<unsigned char>(endPoint) = 0U;
-
 }
 
 void Point2Block::updateObstacleImage(const pcl::PointXYZ& t_point)
 {
   if(t_point.z > -m_lidarHeight + m_floorTolerance || t_point.z < -m_lidarHeight - m_floorTolerance)
   {
-    const cv::Point endPoint{static_cast<int>(t_point.x * 100 + 300)/5, static_cast<int>(t_point.y * 100 + 300)/5};
-    m_obstacleMap.at<unsigned char>(endPoint) = 255U;
+    const cv::Point endPoint{static_cast<int>(t_point.x * 100 + x_offset) / m_mapResolutionCm, 
+      static_cast<int>(t_point.y * 100 + y_offset) / m_mapResolutionCm};
+    
+    if(t_point.z <= -(m_lidarHeight + m_floorTolerance))
+      m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::FALL;
+    else if(t_point.z > -(m_lidarHeight + m_floorTolerance) && t_point.z <= -(m_lidarHeight - m_floorTolerance))
+      m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::FLOOR;
+    else if(t_point.z > -(m_lidarHeight - m_floorTolerance) && t_point.z <= -(m_robotHeight - m_lidarHeight + m_robotHeightTolerance))
+      m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::OBSTACLE;
+    else
+      m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::TOO_HIGH;
   }
 }
 
