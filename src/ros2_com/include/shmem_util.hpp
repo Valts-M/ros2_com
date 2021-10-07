@@ -28,7 +28,8 @@ enum class ConsProdNames
 
   p_MapPath,
   p_OdomPose,
-  p_MapPose
+  p_MapPose,
+  p_LocalMap
 };
 
 constexpr int toMask(const ConsProdNames& t_enum)
@@ -65,7 +66,8 @@ private:
       {static_cast<int>(ConsProdNames::c_RosFlags), ConsProdDescription("RosFlags", "ShmemUtility")},
       {static_cast<int>(ConsProdNames::p_MapPath), ConsProdDescription("SlamMapPath")},
       {static_cast<int>(ConsProdNames::p_OdomPose), ConsProdDescription("RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)},
-      {static_cast<int>(ConsProdNames::p_MapPose), ConsProdDescription("RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)}
+      {static_cast<int>(ConsProdNames::p_MapPose), ConsProdDescription("RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)},
+      {static_cast<int>(ConsProdNames::p_LocalMap), ConsProdDescription("RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)}
   };
 
   const MyConsProdDescriptions & getDescriptions() const override
