@@ -155,7 +155,7 @@ void RosManager::setStateFlag(const processId & t_processId)
         m_resetOdomFlag = true;
       }
     }
-    else if(m_latestFlags.flagMap[t_processId].second < 0)
+    else
     {
       //set to shutdown
       m_flagMap[t_processId] = false;
