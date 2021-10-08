@@ -1,5 +1,3 @@
-# columbus 2
-
 ros2_com:
     ros__parameters:
       leftEncScale: 3.446982481197425E-06
