@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "color_codes.hpp"
 
 using namespace std::chrono_literals;
 
@@ -207,7 +208,8 @@ void RosManager::sendKill(const processId & t_processId)
   {
     int status = kill(m_pidMap[t_processId], SIGKILL);
     if(status == 0)
-      RCLCPP_INFO(this->get_logger(), "Successfully sent SIGKILL to %d", t_processId);
+      RCLCPP_INFO(this->get_logger(), "%sSuccessfully sent SIGKILL to %d%s", 
+        m_colorMap[Color::green], t_processId, m_colorMap[Color::endColor]);
     else
       RCLCPP_WARN(this->get_logger(), "Error while sending SIGKILL to %d", t_processId);
   }
@@ -260,16 +262,20 @@ void RosManager::startProcess(const processId & t_processId)
       switch(t_processId)
       {
         case(processId::odom):
-          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "common.launch.py", NULL);
+          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
+            "common.launch.py", NULL);
           break;
         case(processId::mapping):
-          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "mapping.launch.py", NULL);
+          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
+            "mapping.launch.py", NULL);
           break;
         case(processId::localization):
-          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "localization.launch.py", m_latestMapPath.c_str(), NULL);
+          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
+            "localization.launch.py", m_latestMapPath.c_str(), NULL);
           break;
         case(processId::logging):
-          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", "recording.launch.py", NULL);
+          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
+            "recording.launch.py", NULL);
           break;
         default:
           RCLCPP_ERROR(this->get_logger(), "Unknown process id, exiting subprocess");
@@ -278,7 +284,8 @@ void RosManager::startProcess(const processId & t_processId)
     }
     else
     {
-      RCLCPP_INFO(this->get_logger(), "Successacefully forked process %d with pid %d", t_processId, m_pidMap[t_processId]);
+      RCLCPP_INFO(this->get_logger(), "%sSuccessacefully forked process %d with pid %d%s", 
+        m_colorMap[Color::green], t_processId, m_pidMap[t_processId], m_colorMap[Color::endColor]);
     }
   }
 }
@@ -306,7 +313,8 @@ void RosManager::sendStop(const processId & t_processId)
     int status = kill(m_pidMap[t_processId], SIGINT);
     if(status == 0)
     {
-      RCLCPP_INFO(this->get_logger(), "Successfully sent SIGINT to %d", t_processId);
+      RCLCPP_INFO(this->get_logger(), "%sSuccessfully sent SIGINT to %d%s", 
+        m_colorMap[Color::green], t_processId, m_colorMap[Color::endColor]);
     }
     else
     {
@@ -361,7 +369,8 @@ void RosManager::saveMap()
       auto result = future.get();
       if(result->success == 1)
       {
-        RCLCPP_INFO(this->get_logger(), "Save map: SUCCESS");
+        RCLCPP_INFO(this->get_logger(), "%sSave map: SUCCESS%s", 
+          m_colorMap[Color::green], m_colorMap[Color::endColor]);
         TextualInfo info{(path + ".bin").c_str()};
         //m_slamPathProducer->copyUpdate(info);
         m_latestMapPath = "map:=" + path + ".yaml";
@@ -460,7 +469,8 @@ void RosManager::resetOdom()
   else
   {
     auto result = m_odomResetter->async_send_request(std::make_shared<ros2_com::srv::ResetOdom_Request>());
-    RCLCPP_INFO(this->get_logger(), "Odometry reset: SUCCESS");
+    RCLCPP_INFO(this->get_logger(), "%sOdometry reset: SUCCESS%s", 
+      m_colorMap[Color::green], m_colorMap[Color::endColor]);
   }
   m_resetOdomFlag = false;
 }
@@ -496,7 +506,8 @@ void RosManager::sendInitialPose()
       auto result = future.get();
       if(result->success)
       {
-        RCLCPP_INFO(this->get_logger(), "Send initial pose: SUCCESS");
+        RCLCPP_INFO(this->get_logger(), "%sSend initial pose: SUCCESS%s", 
+          m_colorMap[Color::green], m_colorMap[Color::green]);
         m_sendInitialPose = false;
       }
       else
@@ -535,7 +546,8 @@ void RosManager::saveInitialPose()
       auto result = future.get();
       if(result->success)
       {
-        RCLCPP_INFO(this->get_logger(), "Save initial pose: SUCCESS");
+        RCLCPP_INFO(this->get_logger(), "%sSave initial pose: SUCCESS%s", 
+          m_colorMap[Color::green], m_colorMap[Color::endColor]);
         m_saveInitialPose = false;
         m_sendInitialPose = true;
       }
