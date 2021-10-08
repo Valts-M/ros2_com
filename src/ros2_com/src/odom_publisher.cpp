@@ -52,7 +52,7 @@ RobotConfig OdometryPublisher::getRobotConfig()
   config.leftGyroScale = get_parameter("leftGyroScale").as_double();
   config.RightGyroScale = get_parameter("rightGyroScale").as_double();
 
-  RCLCPP_INFO(this->get_logger(), "le: %f, re: %f, lg: %f, rg: %f",
+  RCLCPP_DEBUG(this->get_logger(), "le: %f, re: %f, lg: %f, rg: %f",
    config.leftEncScale, config.rightEncScale, config.leftGyroScale, config.RightGyroScale);
 
   return config;

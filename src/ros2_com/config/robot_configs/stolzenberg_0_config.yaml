@@ -1,4 +1,4 @@
-ros2_com:
+odom_publisher:
     ros__parameters:
       leftEncScale: 3.446982481197425E-06
       rightEncScale: 3.451556213079376E-06
