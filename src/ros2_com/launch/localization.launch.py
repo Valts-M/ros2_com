@@ -22,6 +22,22 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
 from nav2_common.launch import RewrittenYaml
+from launch.event_handlers.on_process_exit import OnProcessExit
+from launch.events.process.process_exited import ProcessExited
+from launch.launch_context import LaunchContext
+from launch.actions import RegisterEventHandler
+import launch
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 
 def generate_launch_description():
@@ -55,6 +71,13 @@ def generate_launch_description():
         param_rewrites=param_substitutions,
         convert_types=True)
 
+    def shutdown_all(event:ProcessExited, context:LaunchContext):
+        if event.returncode != 0:
+            print(f"{bcolors.FAIL}[ERROR] {event.action.name} node exited with status code {event.returncode}, shutting down localization nodes{bcolors.ENDC}")
+            return launch.actions.EmitEvent(event=launch.events.Shutdown())
+        
+    RegisterEventHandler(event_handler=OnProcessExit(on_exit=shutdown_all))
+
     return LaunchDescription([
         # Set env var to print messages to stdout immediately
         SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
@@ -80,6 +103,8 @@ def generate_launch_description():
             'params_file',
             default_value=os.path.join(pkg_share, 'config', 'nav2_config.yaml'),
             description='Full path to the ROS2 parameters file to use'),
+
+        RegisterEventHandler(event_handler=OnProcessExit(on_exit=shutdown_all)),
 
         Node(
             package='nav2_map_server',
