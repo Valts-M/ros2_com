@@ -126,8 +126,9 @@ void RosManager::setLocalFlags()
         m_resetOdomFlag = true;
     }
 
-    RCLCPP_INFO(this->get_logger(), "PROCESS %d RECEIVED: %d; SET TO %d", 
-      id, m_latestFlags.flagMap[id].second, m_flagMap[id]);
+    RCLCPP_INFO(this->get_logger(), "%sPROCESS %d RECEIVED: %d; SET TO %d%s", 
+      m_colorMap[Color::blue], id, m_latestFlags.flagMap[id].second, m_flagMap[id], 
+      m_colorMap[Color::blue]);
   }
   if(m_latestFlags.saveMap)
       m_saveMapFlag = true;
@@ -148,6 +149,7 @@ void RosManager::setStateFlag(const processId & t_processId)
       {
         turnOffMapping();
         m_resetOdomFlag = true;
+        m_sendInitialPose = true;
       }
       //if mapping set to active, turn off localization, reset odometry
       else if(t_processId == processId::mapping && !isProcessRunning(processId::mapping))
@@ -343,11 +345,13 @@ void RosManager::saveMap()
   {
     RCLCPP_ERROR(this->get_logger(), "Save map: FAILED (Process not active)");
     m_saveMapFlag = false;
+    m_mapSavePending = false;
   }
-  else if (!m_mapSaver->wait_for_service())
+  else if (!m_mapSaver->service_is_ready())
   {
     RCLCPP_ERROR(this->get_logger(), "Save map: FAILED (Service not active)");
     m_saveMapFlag = false;
+    m_mapSavePending = false;
   }
   else if(m_mapSavePending)
   {
@@ -355,7 +359,6 @@ void RosManager::saveMap()
   }
   else
   {
-
     std::string path = createMapSavePath() + "/map";
 
     m_mapSavePending = true;
@@ -371,8 +374,6 @@ void RosManager::saveMap()
       {
         RCLCPP_INFO(this->get_logger(), "%sSave map: SUCCESS%s", 
           m_colorMap[Color::green], m_colorMap[Color::endColor]);
-        TextualInfo info{(path + ".bin").c_str()};
-        //m_slamPathProducer->copyUpdate(info);
         m_latestMapPath = "map:=" + path + ".yaml";
         RCLCPP_INFO(this->get_logger(), m_latestMapPath);
 
@@ -461,8 +462,9 @@ void RosManager::resetOdom()
   if(!isProcessRunning(processId::odom))
   {
     RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Process not active)");
+    m_resetOdomFlag = false;
   }
-  else if (!m_odomResetter->wait_for_service())
+  else if (!m_odomResetter->service_is_ready())
   {
     RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Service not active)");
   }
@@ -481,15 +483,16 @@ void RosManager::sendInitialPose()
   {
     RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Process not active)");
     m_sendInitialPose = false;
+    m_sendInitialPosePending = false;
   }
-  else if (!m_odomResetter->wait_for_service())
+  else if (!m_odomResetter->service_is_ready())
   {
     RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Service not active)");
-    m_sendInitialPose = false;
+    m_sendInitialPosePending = false;
   }
-  else if(m_saveInitialPose)
+  else if(m_saveInitialPose || m_saveInitialPosePending)
   {
-    RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING");
+    RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING POSE SAVE");
   }
   else if(m_sendInitialPosePending)
   {
@@ -525,11 +528,13 @@ void RosManager::saveInitialPose()
   {
     RCLCPP_ERROR(this->get_logger(), "Save initial pose: FAILED (Process not active)");
     m_saveInitialPose = false;
+    m_saveInitialPosePending = false;
   }
-  else if (!m_initialPoseSaver->wait_for_service())
+  else if (!m_initialPoseSaver->service_is_ready())
   {
     RCLCPP_ERROR(this->get_logger(), "Save initial pose: FAILED (Service not active)");
     m_saveInitialPose = false;
+    m_saveInitialPosePending = false;
   }
   else if(m_saveInitialPosePending)
   {
