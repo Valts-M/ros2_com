@@ -48,45 +48,6 @@ def generate_launch_description():
         name='joint_state_publisher',
         parameters=[{'use_sim_time': use_sim_time}],
     )
-    clock_server = launch_ros.actions.Node(
-        package='ros2_com',
-        executable='clock_server',
-        name='clock_server'
-    )
-    map_saver_server = launch_ros.actions.Node(
-        package='ros2_com',
-        executable='map_saver',
-        name='map_saver_server'
-    )
-    cloud_filter = launch_ros.actions.Node(
-        package='ros2_com',
-        executable='point2block',
-        name='point2block'
-    )
-    robot_localization_node = launch_ros.actions.Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
-        output='screen',
-        parameters=[os.path.join(pkg_share, 'config/ekf.yaml'), 
-            {'use_sim_time': use_sim_time}]
-	)
-    slam_toolbox_node = launch_ros.actions.Node(
-        package='slam_toolbox',
-        executable='async_slam_toolbox_node',
-        name='slam_toolbox',
-        parameters=[os.path.join(pkg_share, 'config/mapper_params_online_async.yaml'), 
-            {'use_sim_time': use_sim_time}]
-    )
-
-    localization_node = launch_ros.actions.Node(
-        package='slam_toolbox',
-        executable='localization_slam_toolbox_node',
-        name='slam_toolbox',
-        output='screen',
-        parameters=[os.path.join(pkg_share, 'config/localization_params.yaml'),
-            {"use_sim_time" : use_sim_time}],
-    )
 
     velodyne_driver_node = launch_ros.actions.Node(package='velodyne_driver',
         executable='velodyne_driver_node',
@@ -117,7 +78,7 @@ def generate_launch_description():
         executable='odom_publisher',
         name='odom_publisher',
         output='screen',
-        parameters=[os.path.join(pkg_share, 'config', 'ouster_config.yaml'),
+        parameters=[os.path.join(pkg_share, 'config', 'robot_configs', 'columbus_0_config.yaml'),
             {'use_sim_time': use_sim_time}],
     )
 
