@@ -68,8 +68,8 @@ private:
   double m_floorTolerance{0.5};
   double m_robotHeightTolerance{0.1};
 
-  int m_rows{120};
-  int m_cols{120};
+  u_int16_t m_rows{120};
+  u_int16_t m_cols{120};
   int m_mapResolutionCm{5};
   int x_offset{m_rows * m_mapResolutionCm / 2};
   int y_offset{m_cols * m_mapResolutionCm / 2};
@@ -78,10 +78,6 @@ private:
   void updateClearImage(const pcl::PointXYZ& t_point);
   void updateObstacleImage(const pcl::PointXYZ& t_point);
 
-  /*!
-    * @brief Stores how many ros messages have been published
-  */
-  size_t m_count;
 
   /*!
     * @brief Stores the timestamp

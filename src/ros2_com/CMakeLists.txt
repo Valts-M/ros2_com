@@ -18,8 +18,7 @@ endif()
 
 list(APPEND CMAKE_PREFIX_PATH 
   "/vcpkg/installed/arm64-linux" 
-  "/code/RobotV3/bin"
-  "/code/RobotV3/ros/install/ros2_com")
+  "/code/RobotV3/bin")
 
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
@@ -39,6 +38,7 @@ find_package(Boost REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(PCL REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(yaml-cpp REQUIRED)
 # find_package(cv_bridge REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -75,16 +75,16 @@ rosidl_target_interfaces(odom_publisher ${PROJECT_NAME} "rosidl_typesupport_cpp"
 install(TARGETS odom_publisher
 DESTINATION lib/${PROJECT_NAME})
 
-# add_executable(point2block src/point2block.cpp)
-# ament_target_dependencies(point2block rclcpp tf2 tf2_ros PCL sensor_msgs OpenCV)
-# target_include_directories(point2block PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   $<INSTALL_INTERFACE:include>
-#   ${PCL_INCLUDE_DIRS})
-# target_link_libraries(point2block ${PCL_LIBRARIES} ${OpenCV_LIBS})
+add_executable(point2block src/point2block.cpp)
+ament_target_dependencies(point2block rclcpp tf2 tf2_ros PCL sensor_msgs OpenCV)
+target_include_directories(point2block PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${PCL_INCLUDE_DIRS})
+target_link_libraries(point2block shmem_util ${PCL_LIBRARIES} ${OpenCV_LIBS})
 
-# install(TARGETS point2block
-# DESTINATION lib/${PROJECT_NAME})
+install(TARGETS point2block
+DESTINATION lib/${PROJECT_NAME})
 
 add_executable(tf_filter src/tf_filter.cpp)
 ament_target_dependencies(tf_filter rclcpp tf2 tf2_ros geometry_msgs)
@@ -146,11 +146,12 @@ install(TARGETS clock_server
   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(map_saver src/map_saver.cpp)
-ament_target_dependencies(map_saver rclcpp nav_msgs)
+ament_target_dependencies(map_saver rclcpp nav_msgs OpenCV yaml-cpp) 
 target_include_directories(map_saver PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_link_libraries(map_saver shmem_util)
+  $<INSTALL_INTERFACE:include>
+  ${YAML_CPP_INCLUDE_DIRS})
+target_link_libraries(map_saver shmem_util ${YAML_CPP_LIBRARIES})
 rosidl_target_interfaces(map_saver ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS map_saver

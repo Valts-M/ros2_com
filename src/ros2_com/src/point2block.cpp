@@ -16,7 +16,7 @@ using namespace std::chrono_literals;
 
 namespace ros2_com
 {
-Point2Block::Point2Block() : Node("point2block"), m_count(0), 
+Point2Block::Point2Block() : Node("point2block"),
 m_unfilteredCloud(new pcl::PointCloud<pcl::PointXYZ>),
 m_filteredCloud(new pcl::PointCloud<pcl::PointXYZ>),
 m_rotatedCloud(new pcl::PointCloud<pcl::PointXYZ>)
@@ -26,7 +26,7 @@ m_rotatedCloud(new pcl::PointCloud<pcl::PointXYZ>)
   m_clearMap.setTo(127U);
   m_obstacleMap.setTo(0U);
 
-  m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_LocalMap});
+  m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_LocaldMap});
   m_shmemUtil->start();
 
   m_subscriber = this->create_subscription<sensor_msgs::msg::PointCloud2>
@@ -47,10 +47,10 @@ Point2Block::~Point2Block()
 void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
 
-  auto m_localMapProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_MapPose);
+  auto localdMapProducer = m_shmemUtil->getShmem<RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap);
 
-  if(!m_localMapProducer) return;
-  if(!m_localMapProducer->isObjectReferenced()) return;
+  if(!localdMapProducer) return;
+  if(!localdMapProducer->isObjectReferenced()) return;
 
   try 
   {
@@ -103,13 +103,25 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
         }
   }
 
-  pcl::toROSMsg(*m_filteredCloud, m_filteredCloudMsg);
-  m_filteredCloudMsg.header.frame_id = msg->header.frame_id;
-  m_filteredCloudMsg.header.stamp = this->now();
-  m_publisher->publish(m_filteredCloudMsg);
+  // pcl::toROSMsg(*m_filteredCloud, m_filteredCloudMsg);
+  // m_filteredCloudMsg.header.frame_id = msg->header.frame_id;
+  // m_filteredCloudMsg.header.stamp = this->now();
+  // m_publisher->publish(m_filteredCloudMsg);
 
-  cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
-  cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
+
+  try
+  {
+    if (!localdMapProducer->isObjectReferenced()) return;
+    localdMapProducer->copyUpdate(LocaldMap{Helper::getTimeStamp(), m_clearMap.data, m_obstacleMap.data, m_rows, m_cols});
+  }
+  catch(const std::exception& e)
+  {
+    RCLCPP_ERROR(this->get_logger(), "Shmem not working: %s", e.what());
+    return;
+  }
+
+  // cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
+  // cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
     
   m_clearMap.setTo(127);
   m_obstacleMap.setTo(0U);

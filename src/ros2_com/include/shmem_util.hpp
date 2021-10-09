@@ -15,6 +15,7 @@
 #include <shmem/shmem_timeline_consumer.hpp>
 #include <data_structures/protocol.hpp>
 #include <data_structures/common_data_structures.hpp>
+#include <data_structures/locald_data.hpp>
 
 namespace ros2_com
 {
@@ -29,7 +30,7 @@ enum class ConsProdNames
   p_MapPath,
   p_OdomPose,
   p_MapPose,
-  p_LocalMap
+  p_LocaldMap
 };
 
 constexpr int toMask(const ConsProdNames& t_enum)
@@ -67,7 +68,7 @@ private:
       {static_cast<int>(ConsProdNames::p_MapPath), ConsProdDescription("SlamMapPath")},
       {static_cast<int>(ConsProdNames::p_OdomPose), ConsProdDescription("RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)},
       {static_cast<int>(ConsProdNames::p_MapPose), ConsProdDescription("RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)},
-      {static_cast<int>(ConsProdNames::p_LocalMap), ConsProdDescription("RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)}
+      {static_cast<int>(ConsProdNames::p_LocaldMap), ConsProdDescription("LocaldMap", sizeof(LocaldMap) + 1024U)}
   };
 
   const MyConsProdDescriptions & getDescriptions() const override
