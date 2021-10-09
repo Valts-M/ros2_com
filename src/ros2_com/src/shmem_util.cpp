@@ -23,5 +23,6 @@ namespace ros2_com
     if(m_shmemMask & toMask(ConsProdNames::p_MapPath)) BaseShmemClass::allocateShmem<RawProducer<TextualInfo>>(ConsProdNames::p_MapPath, false);
     if(m_shmemMask & toMask(ConsProdNames::p_OdomPose)) BaseShmemClass::allocateShmem<PositionProducer, true>(ConsProdNames::p_OdomPose, false);
     if(m_shmemMask & toMask(ConsProdNames::p_MapPose)) BaseShmemClass::allocateShmem<PositionProducer, true>(ConsProdNames::p_MapPose, false);
+    if(m_shmemMask & toMask(ConsProdNames::p_LocaldMap)) BaseShmemClass::allocateShmem<RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap, false);
   }
 }

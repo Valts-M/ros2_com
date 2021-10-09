@@ -162,7 +162,7 @@ bool OdometryPublisher::getPoseAndVelocity()
   {
     if (!m_poseConsumer->isConsumerReferenced()) 
     {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
       return false;
     }
     if( !m_poseConsumer->consumerSize()) 

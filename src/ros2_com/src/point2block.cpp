@@ -49,8 +49,16 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
 
   auto localdMapProducer = m_shmemUtil->getShmem<RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap);
 
-  if(!localdMapProducer) return;
-  if(!localdMapProducer->isObjectReferenced()) return;
+  if(!localdMapProducer)
+  {
+    RCLCPP_ERROR(this->get_logger(), "nullptr");
+    return;
+  }
+  if(!localdMapProducer->isObjectReferenced()) 
+  {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
+    return;
+  }
 
   try 
   {
@@ -120,8 +128,10 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
     return;
   }
 
-  // cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
-  // cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
+  RCLCPP_ERROR(this->get_logger(), "Writing images");
+
+  cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
+  cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
     
   m_clearMap.setTo(127);
   m_obstacleMap.setTo(0U);
