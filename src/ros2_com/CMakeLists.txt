@@ -38,7 +38,7 @@ find_package(Boost REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(PCL REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(yaml-cpp REQUIRED)
+# find_package(yaml-cpp REQUIRED)
 # find_package(cv_bridge REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -146,12 +146,11 @@ install(TARGETS clock_server
   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(map_saver src/map_saver.cpp)
-ament_target_dependencies(map_saver rclcpp nav_msgs OpenCV yaml-cpp) 
+ament_target_dependencies(map_saver rclcpp nav_msgs OpenCV) 
 target_include_directories(map_saver PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-  ${YAML_CPP_INCLUDE_DIRS})
-target_link_libraries(map_saver shmem_util ${YAML_CPP_LIBRARIES})
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(map_saver shmem_util)
 rosidl_target_interfaces(map_saver ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS map_saver
