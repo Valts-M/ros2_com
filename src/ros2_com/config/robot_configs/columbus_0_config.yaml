@@ -4,3 +4,4 @@ odom_publisher:
       rightEncScale: 3.451556213079376E-06
       leftGyroScale: -3.641771822801296E-07
       rightGyroScale: -3.615086195934141E-07
+      lidar_model: "ouster"
