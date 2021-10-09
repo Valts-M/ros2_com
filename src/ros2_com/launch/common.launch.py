@@ -117,7 +117,7 @@ def generate_launch_description():
         executable='odom_publisher',
         name='odom_publisher',
         output='screen',
-        parameters=[os.path.join(pkg_share, 'config', 'robot_configs', 'columbus_0_config.yaml'),
+        parameters=[os.path.join(pkg_share, 'config', 'ouster_config.yaml'),
             {'use_sim_time': use_sim_time}],
     )
 
@@ -204,7 +204,7 @@ def generate_launch_description():
     ld.add_action(point2block_node)
     ld.add_action(crash_event_hand)
 
-    robot_config = os.path.join(pkg_share, 'config', 'robot_config.yaml')
+    robot_config = os.path.join(pkg_share, 'config', 'robot_configs', 'columbus_0_config.yaml')
     with open(robot_config, 'r') as f:
         lidar_model = yaml.safe_load(f)['odom_publisher']['ros__parameters']['lidar_model']
 

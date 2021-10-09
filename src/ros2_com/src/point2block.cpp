@@ -111,11 +111,10 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
         }
   }
 
-  // pcl::toROSMsg(*m_filteredCloud, m_filteredCloudMsg);
-  // m_filteredCloudMsg.header.frame_id = msg->header.frame_id;
-  // m_filteredCloudMsg.header.stamp = this->now();
-  // m_publisher->publish(m_filteredCloudMsg);
-
+  pcl::toROSMsg(*m_filteredCloud, m_filteredCloudMsg);
+  m_filteredCloudMsg.header.frame_id = msg->header.frame_id;
+  m_filteredCloudMsg.header.stamp = this->now();
+  m_publisher->publish(m_filteredCloudMsg);
 
   try
   {
