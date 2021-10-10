@@ -94,7 +94,16 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
     binWriter.write((char *) &m_map->data[i], sizeof(int8_t));
 
     if(saveImage)
-      updateImage(i);
+      try
+      {
+        updateImage(i);
+      }
+      catch(const std::exception& e)
+      {
+        RCLCPP_ERROR(this->get_logger(), e.what());
+        return -1;
+      }
+      
   }
 
   binWriter.close();
@@ -137,7 +146,7 @@ void MapSaver::updateImage(const size_t& i)
     const int8_t map_cell = m_map->data[i];
     // if(map_cell == 0)
     //   RCLCPP_INFO(this->get_logger(), "%d %d %d", x ,y ,map_cell);
-
+    
     if (map_cell >= 0 && map_cell <= 100) 
     {
       if (map_cell <= m_freeThreashold) 
@@ -154,6 +163,7 @@ void MapSaver::updateImage(const size_t& i)
 bool MapSaver::saveMapYamlFile(const std::string& t_path)
 {
   std::string mapmetadatafile = t_path+ ".yaml";
+  RCLCPP_INFO(this->get_logger(), "Writing map metadata to %s", mapmetadatafile.c_str());
 
   geometry_msgs::msg::Quaternion orientation = m_map->info.origin.orientation;
   tf2::Matrix3x3 mat(tf2::Quaternion(orientation.x, orientation.y, orientation.z, orientation.w));
@@ -179,15 +189,23 @@ bool MapSaver::saveMapYamlFile(const std::string& t_path)
     return false;
   }
 
-  RCLCPP_INFO(this->get_logger(), "Writing map metadata to %s", mapmetadatafile.c_str());
-  std::ofstream yaml(mapmetadatafile);
-  yaml << e.c_str();
-  yaml.close();
+  try
+  {
+    std::ofstream yaml(mapmetadatafile);
+    yaml << e.c_str();
+    yaml.close();
 
-  if(yaml.good())
-    return true;
-  else
+    if(yaml.good())
+      return true;
+    else
+      return false;
+  }
+  catch(std::exception e)
+  {
+    RCLCPP_ERROR(this->get_logger(), "Error while writing map metadata to yaml file: %s", e.what());
     return false;
+  }
+
 }
 
 }
