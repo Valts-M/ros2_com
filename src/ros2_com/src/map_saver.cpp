@@ -141,8 +141,8 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
 
 void MapSaver::updateImage(const size_t& i)
 {
-    const size_t y = i / m_map->info.width;
-    const size_t x = i % m_map->info.width;
+    const size_t row = m_map->info.height - i / m_map->info.width - 1;
+    const size_t col = i % m_map->info.width;
     const int8_t map_cell = m_map->data[i];
     // if(map_cell == 0)
     //   RCLCPP_INFO(this->get_logger(), "%d %d %d", x ,y ,map_cell);
@@ -151,11 +151,11 @@ void MapSaver::updateImage(const size_t& i)
     {
       if (map_cell <= m_freeThreashold) 
       {
-        m_mapImage.at<unsigned char>(x, y) = 254;
+        m_mapImage.at<unsigned char>(row, col) = 254;
       } 
       else if (map_cell >= m_occupiedThreashold) 
       {
-        m_mapImage.at<unsigned char>(x, y) = 0;
+        m_mapImage.at<unsigned char>(row, col) = 0;
       }
     }
 }
