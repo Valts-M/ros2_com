@@ -181,9 +181,9 @@ def generate_launch_description():
     ld.add_action(odom_publisher_node)
     # ld.add_action(point2block_node)
 
-    robot_config = os.path.join(pkg_share, 'config', 'robot_config.yaml')
-    with open(robot_config, 'r') as f:
-        lidar_model = yaml.safe_load(f)['odom_publisher']['ros__parameters']['lidar_model']
+    # robot_config = os.path.join(pkg_share, 'config', 'robot_config.yaml')
+    # with open(robot_config, 'r') as f:
+    #     lidar_model = yaml.safe_load(f)['odom_publisher']['ros__parameters']['lidar_model']
 
     # if lidar_model == 'ouster':
     #     ld.add_action(ouster_node)

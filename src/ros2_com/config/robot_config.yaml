@@ -1,8 +1,9 @@
 #stolzenberg 1
 
-ros2_com:
+odom_publisher:
     ros__parameters:
       leftEncScale: 3.32869601595697E-06
       rightEncScale: 3.323756924881365E-06
       leftGyroScale: -3.63341763991777024E-07
       rightGyroScale: -3.641763991777024E-07
+      lidar_model: "velodyne"
