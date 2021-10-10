@@ -485,7 +485,7 @@ void RosManager::sendInitialPose()
     m_sendInitialPose = false;
     m_sendInitialPosePending = false;
   }
-  else if (!m_odomResetter->service_is_ready())
+  else if (!m_initialPoseSender->service_is_ready())
   {
     RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Service not active)");
     m_sendInitialPosePending = false;
@@ -515,7 +515,7 @@ void RosManager::sendInitialPose()
       }
       else
       {
-        RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Localization not fully active yet)");
+        RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Localization not fully active yet)");
       }
     };
     auto result = m_initialPoseSender->async_send_request(request, sendInitialPoseServiceCallback);
