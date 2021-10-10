@@ -84,7 +84,8 @@
         "unordered_set": "cpp",
         "forward_list": "cpp",
         "valarray": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "*.ipp": "cpp"
     },
     // Autocomplete from ros python packages
     "python.autoComplete.extraPaths": [

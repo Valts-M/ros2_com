@@ -13,6 +13,8 @@
 #include "ros2_com/srv/save_map.hpp"
 
 #include "shmem_util.hpp"
+#include <opencv2/opencv.hpp>
+
 namespace ros2_com
 {
 
@@ -50,6 +52,10 @@ private:
    * 
    */
   std::unique_ptr<ShmemUtility> m_shmemUtil;
+  
+  const double m_occupiedThreashold = 65;
+
+  const double m_freeThreashold = 25;
 
   /**
    * @brief Callback for the save map service. Will attemt to save the map as a bin and pgm file.
@@ -63,11 +69,18 @@ private:
   /**
    * @brief Will attempt to save the current map
    * 
-   * @param path to where to save the map and with what name minus the extention
-   * @param saveImage bool of whether or not to save the map in the pgm format as well
+   * @param t_path to where to save the map and with what name minus the extention
+   * @param t_saveImage bool of whether or not to save the map in the pgm format as well
    * @return int 
    */
-  int saveMap(const std::string &path, const bool saveImage);
+  int saveMap(const std::string &t_path, const bool t_saveImage);
+
+  cv::Mat m_mapImage;
+
+  void updateImage(const size_t& i);
+
+  bool saveMapYamlFile(const std::string& t_path);
+
   /**
    * @brief Pointer to the map message
    * 
@@ -80,6 +93,8 @@ private:
    * @param msg 
    */
   void topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
+
+  bool m_savingMap{false};
 };
 }
 #endif //MAP_SAVER_H

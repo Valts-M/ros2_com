@@ -162,7 +162,7 @@ def generate_launch_description():
     ld.add_action(robot_state_publisher_node)
     ld.add_action(pose_listener_node)
     ld.add_action(odom_publisher_node)
-    ld.add_action(point2block_node)
+    # ld.add_action(point2block_node)
     ld.add_action(crash_event_hand)
 
     robot_config = os.path.join(pkg_share, 'config', 'robot_configs', 'columbus_0_config.yaml')

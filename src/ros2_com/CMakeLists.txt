@@ -38,8 +38,9 @@ find_package(Boost REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(PCL REQUIRED)
 find_package(OpenCV REQUIRED)
-# find_package(yaml-cpp REQUIRED)
-# find_package(cv_bridge REQUIRED)
+find_package(yaml-cpp REQUIRED)
+
+include_directories(include)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SaveMap.srv"
@@ -51,8 +52,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
  )
 
 ament_export_dependencies(rosidl_default_runtime)
-
-include_directories(include)
 
 add_library(lidar_log_reader STATIC src/lidar_log_reader.cpp)
 add_library(kinematics STATIC src/kinematics.cpp)
@@ -146,11 +145,12 @@ install(TARGETS clock_server
   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(map_saver src/map_saver.cpp)
-ament_target_dependencies(map_saver rclcpp nav_msgs OpenCV) 
+ament_target_dependencies(map_saver rclcpp nav_msgs OpenCV yaml-cpp) 
 target_include_directories(map_saver PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_link_libraries(map_saver shmem_util)
+  $<INSTALL_INTERFACE:include>
+  ${YAML_CPP_INCLUDE_DIRS})
+target_link_libraries(map_saver shmem_util ${YAML_CPP_LIBRARIES})
 rosidl_target_interfaces(map_saver ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS map_saver
