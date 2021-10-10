@@ -1,7 +1,7 @@
 odom_publisher:
     ros__parameters:
-      leftEncScale: 3.446982481197425E-06
-      rightEncScale: 3.451556213079376E-06
-      leftGyroScale: -3.641771822801296E-07
-      rightGyroScale: -3.615086195934141E-07
+      leftEncScale: 3.486633337357489E-06
+      rightEncScale: 3.501896539618444E-06
+      leftGyroScale: -3.647533954404527E-07
+      rightGyroScale: -3.63972935218096E-07
       lidar_model: "ouster"
