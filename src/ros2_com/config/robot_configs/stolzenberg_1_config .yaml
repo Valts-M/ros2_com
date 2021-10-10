@@ -1,7 +1,7 @@
 odom_publisher:
     ros__parameters:
-      leftEncScale: 3.446982481197425E-06
-      rightEncScale: 3.451556213079376E-06
-      leftGyroScale: -3.641771822801296E-07
-      rightGyroScale: -3.615086195934141E-07
+      leftEncScale: 3.32869601595697E-06
+      rightEncScale: 3.323756924881365E-06
+      leftGyroScale: -3.63341763991777024E-07
+      rightGyroScale: -3.641763991777024E-07
       lidar_model: "velodyne"
