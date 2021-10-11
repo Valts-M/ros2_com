@@ -35,6 +35,10 @@ def generate_launch_description():
     pkg_share = launch_ros.substitutions.FindPackageShare(package='ros2_com').find('ros2_com')
     default_model_path = os.path.join(pkg_share, 'descriptions/columbus_description.urdf')
     use_sim_time = LaunchConfiguration('use_sim_time')
+
+    robot_config = os.path.join(pkg_share, 'config', 'robot_configs', 'columbus_2_config.yaml')
+    with open(robot_config, 'r') as f:
+        lidar_model = yaml.safe_load(f)['odom_publisher']['ros__parameters']['lidar_model']
     
     robot_state_publisher_node = launch_ros.actions.Node(
         package='robot_state_publisher',
@@ -78,7 +82,7 @@ def generate_launch_description():
         executable='odom_publisher',
         name='odom_publisher',
         output='screen',
-        parameters=[os.path.join(pkg_share, 'config', 'robot_configs', 'columbus_0_config.yaml'),
+        parameters=[robot_config,
             {'use_sim_time': use_sim_time}],
     )
 
@@ -164,10 +168,6 @@ def generate_launch_description():
     ld.add_action(odom_publisher_node)
     # ld.add_action(point2block_node)
     ld.add_action(crash_event_hand)
-
-    robot_config = os.path.join(pkg_share, 'config', 'robot_configs', 'columbus_0_config.yaml')
-    with open(robot_config, 'r') as f:
-        lidar_model = yaml.safe_load(f)['odom_publisher']['ros__parameters']['lidar_model']
 
     if lidar_model == 'ouster':
         ld.add_action(ouster_node)
