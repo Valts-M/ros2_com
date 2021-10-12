@@ -149,11 +149,11 @@ void MapSaver::updateImage(const size_t& i)
     
     if (map_cell >= 0 && map_cell <= 100) 
     {
-      if (map_cell <= m_freeThreashold*100) 
+      if (map_cell <= m_freeThreashold) 
       {
         m_mapImage.at<unsigned char>(row, col) = 254;
       } 
-      else if (map_cell >= m_occupiedThreashold*100) 
+      else if (map_cell >= m_occupiedThreashold) 
       {
         m_mapImage.at<unsigned char>(row, col) = 0;
       }
@@ -179,8 +179,8 @@ bool MapSaver::saveMapYamlFile(const std::string& t_path)
   e << YAML::Key << "origin" << YAML::Flow << YAML::BeginSeq << m_map->info.origin.position.x <<
     m_map->info.origin.position.y << yaw << YAML::EndSeq;
   e << YAML::Key << "negate" << YAML::Value << 0;
-  e << YAML::Key << "occupied_thresh" << YAML::Value << m_occupiedThreashold;
-  e << YAML::Key << "free_thresh" << YAML::Value << m_freeThreashold;
+  e << YAML::Key << "occupied_thresh" << YAML::Value << m_occupiedThreashold/100;
+  e << YAML::Key << "free_thresh" << YAML::Value << m_freeThreashold/100;
 
   if (!e.good()) 
   {
