@@ -10,6 +10,7 @@
 //ros
 #include "rclcpp/rclcpp.hpp"
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 #include <tf2_ros/transform_listener.h>
 
 //robotv3
@@ -46,10 +47,12 @@ public:
 
 private:
 
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr m_subscriber{nullptr};
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr m_pcSubscriber{nullptr};
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_lsSubscriber{nullptr};
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_publisher{nullptr};
   sensor_msgs::msg::PointCloud2 m_filteredCloudMsg;
-  std::unique_ptr<ShmemUtility> m_shmemUtil;
+  sensor_msgs::msg::LaserScan::SharedPtr m_laserScan;
+  // std::unique_ptr<ShmemUtility> m_shmemUtil;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr m_unfilteredCloud;
   pcl::PointCloud<pcl::PointXYZ>::Ptr m_filteredCloud;
@@ -62,20 +65,22 @@ private:
   cv::Mat m_clearMap;
   cv::Mat m_obstacleMap;
 
-  double m_lidarHeight{0.345};
-  double m_robotHeight{1.2};
-  double m_lidarTolerance{0.1};
-  double m_floorTolerance{0.5};
-  double m_robotHeightTolerance{0.1};
+  const double m_lidarHeight{0.345};
+  const double m_robotHeight{1.2};
+  const double m_lidarTolerance{0.1};
+  const double m_floorTolerance{0.07};
+  const double m_robotHeightTolerance{0.1};
 
-  u_int16_t m_rows{120};
-  u_int16_t m_cols{120};
-  int m_mapResolutionCm{5};
-  int x_offset{m_rows * m_mapResolutionCm / 2};
-  int y_offset{m_cols * m_mapResolutionCm / 2};
+  const u_int16_t m_rows{120};
+  const u_int16_t m_cols{120};
+  const int m_mapResolutionCm{5};
+  const int x_offset{m_rows * m_mapResolutionCm / 2};
+  const int y_offset{m_cols * m_mapResolutionCm / 2};
+  const float m_lidarBlindRadius = 0.5;
 
-  void topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
-  void updateClearImage(const pcl::PointXYZ& t_point);
+  void pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
+  void lsTopicCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
+  void makeClearImage();
   void updateObstacleImage(const pcl::PointXYZ& t_point);
 
 
