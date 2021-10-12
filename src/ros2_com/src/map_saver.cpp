@@ -149,11 +149,11 @@ void MapSaver::updateImage(const size_t& i)
     
     if (map_cell >= 0 && map_cell <= 100) 
     {
-      if (map_cell <= m_freeThreashold) 
+      if (map_cell <= m_freeThreashold*100) 
       {
         m_mapImage.at<unsigned char>(row, col) = 254;
       } 
-      else if (map_cell >= m_occupiedThreashold) 
+      else if (map_cell >= m_occupiedThreashold*100) 
       {
         m_mapImage.at<unsigned char>(row, col) = 0;
       }
