@@ -46,20 +46,6 @@ Point2Block::~Point2Block()
 
 void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-
-  auto localdMapProducer = m_shmemUtil->getShmem<RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap);
-
-  if(!localdMapProducer)
-  {
-    RCLCPP_ERROR(this->get_logger(), "nullptr");
-    return;
-  }
-  if(!localdMapProducer->isObjectReferenced()) 
-  {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
-    return;
-  }
-
   try 
   {
     m_mapLidarMsg = m_tfBuffer->lookupTransform(
@@ -116,9 +102,22 @@ void Point2Block::topicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
   m_filteredCloudMsg.header.stamp = this->now();
   m_publisher->publish(m_filteredCloudMsg);
 
+  auto localdMapProducer = m_shmemUtil->getShmem<shmem::RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap);
+
+  if (!localdMapProducer)
+  {
+      RCLCPP_ERROR(this->get_logger(), "nullptr");
+      return;
+  }
+
   try
   {
-    if (!localdMapProducer->isObjectReferenced()) return;
+    if (!localdMapProducer->isObjectReferenced())
+    {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
+        return;
+    }
+
     localdMapProducer->copyUpdate(LocaldMap{Helper::getTimeStamp(), m_clearMap.data, m_obstacleMap.data, m_rows, m_cols});
   }
   catch(const std::exception& e)

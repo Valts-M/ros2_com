@@ -93,11 +93,7 @@ namespace ros2_com
 
   void PoseListener::timerCallback()
   {
-    auto m_odomPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_OdomPose);
-    auto m_mapPoseProducer = m_shmemUtil->getShmem<PositionProducer>(ConsProdNames::p_MapPose);
     
-    if (!m_odomPoseProducer ) return;
-    if (!m_odomPoseProducer->isObjectReferenced()) return;
     m_ts = Helper::getTimeStamp();
 
     try {
@@ -125,12 +121,21 @@ namespace ros2_com
     m_odomPose.x() = m_odomLidarMsg.transform.translation.x;
     m_odomPose.y() = m_odomLidarMsg.transform.translation.y;
     m_odomPose.yaw() = yaw;
-    m_odomPoseProducer->append(m_odomPose, m_ts);
+    auto m_odomPoseProducer = m_shmemUtil->getShmem<shmem::PositionProducer>(ConsProdNames::p_OdomPose);
+    if (!m_odomPoseProducer) return;
+    try
+    {
+        if (!m_odomPoseProducer->isObjectReferenced()) return;
+        m_odomPoseProducer->append(m_odomPose, m_ts);
+    }
+    catch (const std::exception& ex)
+    {
+
+    }
 
     RCLCPP_DEBUG(this->get_logger(), "Odom: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
     RCLCPP_DEBUG(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
-    if (!m_mapPoseProducer ) return;
-    if (!m_mapPoseProducer->isObjectReferenced()) return;
+
     try {
       m_mapLidarMsg = m_tfBuffer->lookupTransform(
         m_map_frame, m_target_frame,
@@ -152,7 +157,17 @@ namespace ros2_com
 
     RCLCPP_DEBUG(this->get_logger(), "Map: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
     RCLCPP_DEBUG(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
-    m_mapPoseProducer->append(m_mapPose, m_ts);
+    auto m_mapPoseProducer = m_shmemUtil->getShmem<shmem::PositionProducer>(ConsProdNames::p_MapPose);
+    if (!m_mapPoseProducer) return;
+    try
+    {
+        if (!m_mapPoseProducer->isObjectReferenced()) return;
+        m_mapPoseProducer->append(m_mapPose, m_ts);
+    }
+    catch (const std::exception& ex)
+    {
+
+    }
   }
 
  }

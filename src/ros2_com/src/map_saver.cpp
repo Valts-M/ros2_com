@@ -122,12 +122,13 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
     // cv::imwrite(path + ".png", m_mapImage);
   }
   
-  auto p = m_shmemUtil->getShmem<RawProducer<TextualInfo>>(ConsProdNames::p_MapPath);
+  auto p = m_shmemUtil->getShmem<shmem::RawProducer<TextualInfo>>(ConsProdNames::p_MapPath);
   if(!p) return -2;
   try
   {
     if (!p->isObjectReferenced()) return -2;
-    p->copyUpdate(TextualInfo{(path + ".bin").c_str()});
+    p->copyUpdate(path + ".bin");
+    //p->copyUpdate(TextualInfo{(path + ".bin").c_str()});
   }
   catch(const std::exception& e)
   {

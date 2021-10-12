@@ -156,7 +156,7 @@ void OdometryPublisher::updateHandler()
 
 bool OdometryPublisher::getPoseAndVelocity()
 {
-  auto m_poseConsumer = m_shmemUtil->getShmem<CBConsumer<MsgRawStatus>>(ConsProdNames::c_MsgRawStatus);
+  auto m_poseConsumer = m_shmemUtil->getShmem<shmem::CBConsumer<MsgRawStatus>>(ConsProdNames::c_MsgRawStatus);
 
   try 
   {

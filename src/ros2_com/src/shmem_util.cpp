@@ -4,25 +4,49 @@
 
 namespace ros2_com
 {
-  ShmemUtility::ShmemUtility(const std::vector<ConsProdNames>& shmemEnums)
-  : shmem::ShmemContainer<shmem::Storage>()
-  {
-    for(auto& shmemEnum: shmemEnums) m_shmemMask |= toMask(shmemEnum);
-    allocateShmem();
-  }
+  ShmemUtility::ShmemUtility(const std::vector<ConsProdNames>& t_shmemEnums)
+  : BaseThread("RosShmemUtil"), ConsumerProducerHelper(), m_shmemEnums(t_shmemEnums)
+  {}
 
   ShmemUtility::~ShmemUtility()
   {
-		BaseShmemClass::deallocateShmem();
+      if (m_shmems)
+      {
+          m_shmems->stop();
+          m_shmems->deallocateShmem();
+      }
+      m_shmems.reset();
   }
   
-  void ShmemUtility::allocateShmem()
+  void ShmemUtility::onStart()
   {
-    if(m_shmemMask & toMask(ConsProdNames::c_MsgRawStatus)) BaseShmemClass::allocateShmem<CBConsumer<MsgRawStatus>>(ConsProdNames::c_MsgRawStatus, false);
-    if(m_shmemMask & toMask(ConsProdNames::c_RosFlags)) BaseShmemClass::allocateShmem<CBConsumer<RosFlags>>(ConsProdNames::c_RosFlags, false);
-    if(m_shmemMask & toMask(ConsProdNames::p_MapPath)) BaseShmemClass::allocateShmem<RawProducer<TextualInfo>>(ConsProdNames::p_MapPath, false);
-    if(m_shmemMask & toMask(ConsProdNames::p_OdomPose)) BaseShmemClass::allocateShmem<PositionProducer, true>(ConsProdNames::p_OdomPose, false);
-    if(m_shmemMask & toMask(ConsProdNames::p_MapPose)) BaseShmemClass::allocateShmem<PositionProducer, true>(ConsProdNames::p_MapPose, false);
-    if(m_shmemMask & toMask(ConsProdNames::p_LocaldMap)) BaseShmemClass::allocateShmem<RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap, false);
+      if (m_shmems)
+      {
+          m_shmems->stop();
+          m_shmems.reset();
+      }
+      m_shmems = std::make_unique<ShmemContainer>("RosShmemContainer", &getDescriptions(),
+                                                  [&](const size_t& t_enum)->bool
+                                                  {
+                                                      return isConsProdSet(static_cast<ConsProdNames>(t_enum));
+                                                  });
+      m_shmems->allocateShmem();
+      m_shmems->start();
   }
+
+  void ShmemUtility::onStop()
+  {
+      if (!m_shmems) return;
+      m_shmems->stop();
+      m_shmems->deallocateShmem();
+  }
+
+  void ShmemUtility::run()
+  {
+      while (isWorkerEnabled())
+      {
+          sleepFor(10ms);
+      }
+  }
+
 }
