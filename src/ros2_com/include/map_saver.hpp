@@ -53,9 +53,9 @@ private:
    */
   std::unique_ptr<ShmemUtility> m_shmemUtil;
   
-  const double m_occupiedThreashold = 65;
+  const double m_occupiedThreashold = 0.65;
 
-  const double m_freeThreashold = 25;
+  const double m_freeThreashold = 0.25;
 
   /**
    * @brief Callback for the save map service. Will attemt to save the map as a bin and pgm file.
