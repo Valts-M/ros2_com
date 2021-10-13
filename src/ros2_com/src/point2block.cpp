@@ -91,31 +91,41 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
         m_filteredCloud->points.push_back(point);
   }
 
-  pcl::transformPointCloud(*m_filteredCloud, *m_rotatedCloud, Eigen::Vector3f{}, 
+  pcl::transformPointCloud(*m_filteredCloud, *m_rotatedCloud, Eigen::Vector3f::Zero(), 
     Eigen::Quaternionf(quat->w, quat->x, quat->y, quat->z));
 
-  // m_filteredCloud->clear();
+  RCLCPP_WARN(this->get_logger(), "msg:%d, filtered:%d, unfiltered:%d, rotated:%d",
+    msg->data.size(), m_filteredCloud->size(), m_unfilteredCloud->size(), m_rotatedCloud->points.size());
+
+  m_filteredCloud->points.clear();
+  int zeroes = 0;
 
   for(size_t i = 0; i < m_rotatedCloud->points.size(); ++i)
   {
     pcl::PointXYZ point = m_rotatedCloud->points.at(i);
     if(std::abs(point.x) < m_lidarBlindRadius && std::abs(point.y) < m_lidarBlindRadius)
+    {
+      ++zeroes;
       continue;
+    }
 
     if(std::abs(point.x) < 3.0 )
       if(std::abs(point.y) < 3.0)
       {
-        // m_filteredCloud->points.push_back(point);
+        m_filteredCloud->points.push_back(point);
         updateObstacleImage(point);
       }
   }
 
+  RCLCPP_ERROR(this->get_logger(), "msg:%d, filtered:%d, unfiltered:%d, rotated:%d, zeroes: %d",
+    msg->data.size(), m_filteredCloud->size(), m_unfilteredCloud->size(), m_rotatedCloud->points.size(), zeroes);
+
   makeClearImage();
 
-  // pcl::toROSMsg(*m_filteredCloud, m_filteredCloudMsg);
-  // m_filteredCloudMsg.header = msg->header;
-  // // m_filteredCloudMsg.header.stamp = this->now();
-  // m_publisher->publish(m_filteredCloudMsg);
+  pcl::toROSMsg(*m_filteredCloud, m_filteredCloudMsg);
+  m_filteredCloudMsg.header = msg->header;
+  // m_filteredCloudMsg.header.stamp = this->now();
+  m_publisher->publish(m_filteredCloudMsg);
 
   // try
   // {
@@ -128,7 +138,6 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   //   return;
   // }
 
-  RCLCPP_ERROR(this->get_logger(), "Writing images");
 
   cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
   cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
@@ -175,17 +184,15 @@ void Point2Block::updateObstacleImage(const pcl::PointXYZ& t_point)
     static_cast<int>(-t_point.y * 100 + y_offset) / m_mapResolutionCm};
   
   if(t_point.z <= -(m_lidarHeight + m_floorTolerance))
-    // m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::FALL;
-    m_obstacleMap.at<unsigned char>(endPoint) |= 50;
+    m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::FALL;
 
   else if(t_point.z > -(m_lidarHeight + m_floorTolerance) && t_point.z <= -(m_lidarHeight - m_floorTolerance))
-    // m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::FLOOR;
-    m_obstacleMap.at<unsigned char>(endPoint) |= 100;
+    m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::FLOOR;
 
   else if(t_point.z > -(m_lidarHeight - m_floorTolerance) && t_point.z <= m_robotHeight + m_robotHeightTolerance)
-    m_obstacleMap.at<unsigned char>(endPoint) |= 255;
+    m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::OBSTACLE;
   else
-    m_obstacleMap.at<unsigned char>(endPoint) |= 150;
+    m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::TOO_HIGH;
 }
 
 }
