@@ -94,8 +94,8 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   pcl::transformPointCloud(*m_filteredCloud, *m_rotatedCloud, Eigen::Vector3f::Zero(), 
     Eigen::Quaternionf(quat->w, quat->x, quat->y, quat->z));
 
-  RCLCPP_WARN(this->get_logger(), "msg:%d, filtered:%d, unfiltered:%d, rotated:%d",
-    msg->data.size(), m_filteredCloud->size(), m_unfilteredCloud->size(), m_rotatedCloud->points.size());
+  // RCLCPP_WARN(this->get_logger(), "msg:%d, filtered:%d, unfiltered:%d, rotated:%d",
+  //   msg->data.size(), m_filteredCloud->size(), m_unfilteredCloud->size(), m_rotatedCloud->points.size());
 
   m_filteredCloud->points.clear();
   int zeroes = 0;
@@ -117,8 +117,8 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
       }
   }
 
-  RCLCPP_ERROR(this->get_logger(), "msg:%d, filtered:%d, unfiltered:%d, rotated:%d, zeroes: %d",
-    msg->data.size(), m_filteredCloud->size(), m_unfilteredCloud->size(), m_rotatedCloud->points.size(), zeroes);
+  // RCLCPP_ERROR(this->get_logger(), "msg:%d, filtered:%d, unfiltered:%d, rotated:%d, zeroes: %d",
+  //   msg->data.size(), m_filteredCloud->size(), m_unfilteredCloud->size(), m_rotatedCloud->points.size(), zeroes);
 
   makeClearImage();
 
