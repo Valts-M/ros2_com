@@ -12,7 +12,7 @@ namespace ros2_com
     m_leftGyroScale(config.leftGyroScale), 
     m_rightGyroScale(config.RightGyroScale){}
 
-  void Kinematics::calcPosAndVelocity(zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output)
+  void Kinematics::calcPosAndVelocity(const zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output)
   {
     const double leftDistance{input.encoders[0] * m_leftEncScale};
     const double rightDistance{input.encoders[1] * m_rightEncScale};
@@ -25,9 +25,9 @@ namespace ros2_com
     //if moving update message
     if(std::fabs(input.encoders[0]) > 10 || std::fabs(input.encoders[1]) > 10)
     {
-      output.pose.pose.position.x += distanceTraveled * cos(m_yaw + deltaAngle / 2);
-      output.pose.pose.position.y += distanceTraveled * sin(m_yaw + deltaAngle / 2);
       m_yaw += deltaAngle;
+      output.pose.pose.position.x += distanceTraveled * cos(m_yaw);
+      output.pose.pose.position.y += distanceTraveled * sin(m_yaw);
 
       //check if orientation is within bounds
       if( m_yaw >= M_PI)

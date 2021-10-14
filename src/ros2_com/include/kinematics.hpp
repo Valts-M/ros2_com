@@ -33,7 +33,7 @@ public:
    * @param input Reactd log input
    * @param output Odometry message to update
    */
-  void calcPosAndVelocity(zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output);
+  void calcPosAndVelocity(const zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output);
   double m_yaw{0.0}; //rad
 
 private:

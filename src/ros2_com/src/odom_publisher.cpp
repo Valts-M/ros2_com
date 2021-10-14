@@ -140,11 +140,11 @@ void OdometryPublisher::updateHandler()
   if(!m_paused)
   {
     updateOdom();
-    updatePath();
-
     m_odomPublisher->publish(m_odomMsg);
-    m_pathPublisher->publish(m_pathMsg);
     m_tfBroadcaster.sendTransform(m_tfMsg);
+
+    updatePath();
+    m_pathPublisher->publish(m_pathMsg);
 
     RCLCPP_DEBUG(this->get_logger(), 
       "x=%f, y=%f, yaw=%f", 
