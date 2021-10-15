@@ -20,7 +20,7 @@
       "request": "launch",
       "program": "${workspaceFolder}/install/lib/${input:package}/${input:program}",
       "args": [],
-      "preLaunchTask": "build",
+      "preLaunchTask": "debug",
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "externalConsole": false,
@@ -45,7 +45,7 @@
       "id": "program",
       "type": "promptString",
       "description": "Program name",
-      "default": "ros_manager"
+      "default": "point2block"
     }
   ]
 }
