@@ -22,7 +22,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def generate_launch_description():
-    config_path = "/Configs/Ros"
+    config_path = "/configs/ros"
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     robot_config = os.path.join(config_path, 'config', 'robot_configs', 'columbus_2_config.yaml')

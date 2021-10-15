@@ -32,7 +32,7 @@ class bcolors:
 
 
 def generate_launch_description():
-    config_path = "/Configs/Ros"
+    config_path = "/configs/ros"
     default_model_path = os.path.join(config_path, 'descriptions', 'columbus_description.urdf')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
