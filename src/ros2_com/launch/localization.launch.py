@@ -42,7 +42,7 @@ def generate_launch_description():
     # Get the launch directory
 
     namespace = LaunchConfiguration('namespace')
-    config_path = "/Config/Ros"
+    config_path = "/Configs/Ros"
     map_yaml_file = LaunchConfiguration('map')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
