@@ -22,11 +22,10 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def generate_launch_description():
-    pkg_share = launch_ros.substitutions.FindPackageShare(package='ros2_com').find('ros2_com')
-    default_model_path = os.path.join(pkg_share, 'descriptions/columbus_description.urdf')
+    config_path = "/Configs/Ros"
     use_sim_time = LaunchConfiguration('use_sim_time')
 
-    robot_config = os.path.join(pkg_share, 'config', 'robot_configs', 'columbus_2_config.yaml')
+    robot_config = os.path.join(config_path, 'config', 'robot_configs', 'columbus_2_config.yaml')
     with open(robot_config, 'r') as f:
         params = yaml.safe_load(f)['odom_publisher']['ros__parameters']
     
@@ -41,7 +40,7 @@ def generate_launch_description():
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
-        parameters=[os.path.join(pkg_share, 'config/mapper_params_online_async.yaml'), 
+        parameters=[os.path.join(config_path, 'config', 'mapper_params_online_async.yaml'), 
             {'use_sim_time': use_sim_time}]
     )
 
@@ -50,7 +49,7 @@ def generate_launch_description():
         executable='localization_slam_toolbox_node',
         name='slam_toolbox',
         output='screen',
-        parameters=[os.path.join(pkg_share, 'config/localization_params.yaml'),
+        parameters=[os.path.join(config_path, 'config', 'localization_params.yaml'),
             {"use_sim_time" : use_sim_time}],
     )
 
@@ -64,8 +63,6 @@ def generate_launch_description():
 
 
     return launch.LaunchDescription([      
-    launch.actions.DeclareLaunchArgument(name='model', default_value=default_model_path,
-                                        description='Absolute path to robot urdf file'),
     launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='false',
                                         description='Flag to enable use_sim_time'),                               
     map_saver_server,

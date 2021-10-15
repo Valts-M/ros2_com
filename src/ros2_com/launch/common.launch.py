@@ -32,11 +32,11 @@ class bcolors:
 
 
 def generate_launch_description():
-    pkg_share = launch_ros.substitutions.FindPackageShare(package='ros2_com').find('ros2_com')
-    default_model_path = os.path.join(pkg_share, 'descriptions/columbus_description.urdf')
+    config_path = "/Configs/Ros"
+    default_model_path = os.path.join(config_path, 'descriptions', 'columbus_description.urdf')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
-    robot_config = os.path.join(pkg_share, 'config', 'robot_configs', 'columbus_2_config.yaml')
+    robot_config = os.path.join(config_path, 'config', 'robot_configs', 'columbus_2_config.yaml')
     with open(robot_config, 'r') as f:
         lidar_model = yaml.safe_load(f)['odom_publisher']['ros__parameters']['lidar_model']
     
@@ -56,13 +56,13 @@ def generate_launch_description():
     velodyne_driver_node = launch_ros.actions.Node(package='velodyne_driver',
         executable='velodyne_driver_node',
         output='screen',
-        parameters=[os.path.join(pkg_share, 'config/velodyne_config.yaml')],
+        parameters=[os.path.join(config_path, 'config', 'velodyne_config.yaml')],
     )
 
-    convert_params_file = os.path.join(pkg_share, 'config', 'velodyne_converter_config.yaml')
+    convert_params_file = os.path.join(config_path, 'config', 'velodyne_converter_config.yaml')
     with open(convert_params_file, 'r') as f:
         convert_params = yaml.safe_load(f)['velodyne_convert_node']['ros__parameters']
-    convert_params['calibration'] = os.path.join(pkg_share, 'config', 'VLP16db.yaml')
+    convert_params['calibration'] = os.path.join(config_path, 'config', 'VLP16db.yaml')
 
     velodyne_convert_node = launch_ros.actions.Node(package='velodyne_pointcloud',
         executable='velodyne_convert_node',
@@ -73,7 +73,7 @@ def generate_launch_description():
     velodyne_laserscan_node = launch_ros.actions.Node(package='velodyne_laserscan',
         executable='velodyne_laserscan_node',
         output='screen',
-        parameters=[os.path.join(pkg_share, 'config', 'velodyne_laserscan_config.yaml')]
+        parameters=[os.path.join(config_path, 'config', 'velodyne_laserscan_config.yaml')]
     )
 
     odom_publisher_node = launch_ros.actions.Node(
@@ -90,7 +90,8 @@ def generate_launch_description():
                                 name="ouster_driver",
                                 output='screen',
                                 emulate_tty=True,
-                                parameters=[os.path.join(pkg_share, 'config/ouster_config.yaml'), {'use_sim_time': use_sim_time}],
+                                parameters=[os.path.join(config_path, 'config', 'uster_config.yaml'),
+                                    {'use_sim_time': use_sim_time}],
                                 arguments=['--ros-args', '--log-level', 'INFO'],
                                 namespace='/',
                                 )
@@ -165,7 +166,7 @@ def generate_launch_description():
     ld.add_action(robot_state_publisher_node)
     ld.add_action(pose_listener_node)
     ld.add_action(odom_publisher_node)
-    # ld.add_action(point2block_node)
+    ld.add_action(point2block_node)
     ld.add_action(crash_event_hand)
 
     if lidar_model == 'ouster':
