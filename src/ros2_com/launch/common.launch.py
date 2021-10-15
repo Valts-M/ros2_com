@@ -76,7 +76,6 @@ def generate_launch_description():
         parameters=[os.path.join(pkg_share, 'config', 'velodyne_laserscan_config.yaml')]
     )
 
-
     odom_publisher_node = launch_ros.actions.Node(
         package='ros2_com',
         executable='odom_publisher',

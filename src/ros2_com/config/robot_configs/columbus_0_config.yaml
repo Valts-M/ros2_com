@@ -5,3 +5,4 @@ odom_publisher:
       leftGyroScale: -3.647533954404527E-07
       rightGyroScale: -3.63972935218096E-07
       lidar_model: "ouster"
+      lidar_x_offset: 0.55
