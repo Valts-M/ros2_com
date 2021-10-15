@@ -20,6 +20,8 @@ namespace ros2_com
 {
 MapSaver::MapSaver() : Node("map_saver_server")
 {
+  this->declare_parameter("lidar_x_offset");
+  m_lidarOffset = this->get_parameter("lidar_x_offset").as_double();
   m_subscriber = this->create_subscription<nav_msgs::msg::OccupancyGrid>
     ("map", 10, std::bind(&MapSaver::topicCallback, this, _1));
   m_saveMapService = this->create_service<ros2_com::srv::SaveMap>
@@ -82,12 +84,13 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
     return 0;
   }
 
-  //write map info
-  binWriter.write((char *) &m_map->info, sizeof(m_map->info));
-
   if(saveImage)
     if(!saveMapYamlFile(path))
       return -2;
+
+  //write map info
+  m_map->info.origin.position.x -= m_lidarOffset;
+  binWriter.write((char *) &m_map->info, sizeof(m_map->info));
 
   for(size_t i = 0U; i < m_map->info.height * m_map->info.width; ++i)
   {

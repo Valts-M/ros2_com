@@ -53,9 +53,11 @@ private:
    */
   std::unique_ptr<ShmemUtility> m_shmemUtil;
   
-  const double m_occupiedThreashold = 65;
+  inline static constexpr double m_occupiedThreashold{65.0};
 
-  const double m_freeThreashold = 25;
+  inline static constexpr double m_freeThreashold{25.0};
+
+  double m_lidarOffset{-9999999.0};
 
   /**
    * @brief Callback for the save map service. Will attemt to save the map as a bin and pgm file.

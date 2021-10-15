@@ -14,8 +14,6 @@
 
 import os
 
-from ament_index_python.packages import get_package_share_directory
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable
 from launch.substitutions import LaunchConfiguration
@@ -44,7 +42,7 @@ def generate_launch_description():
     # Get the launch directory
 
     namespace = LaunchConfiguration('namespace')
-    pkg_share = FindPackageShare(package='ros2_com').find('ros2_com')
+    config_path = "/configs/ros"
     map_yaml_file = LaunchConfiguration('map')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
@@ -101,7 +99,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             'params_file',
-            default_value=os.path.join(pkg_share, 'config', 'nav2_config.yaml'),
+            default_value=os.path.join(config_path, 'config', 'nav2_config.yaml'),
             description='Full path to the ROS2 parameters file to use'),
 
         RegisterEventHandler(event_handler=OnProcessExit(on_exit=shutdown_all)),

@@ -5,3 +5,4 @@ odom_publisher:
       leftGyroScale: -3.641771822801296E-07
       rightGyroScale: -3.615086195934141E-07
       lidar_model: "velodyne"
+      lidar_x_offset: 0.55
