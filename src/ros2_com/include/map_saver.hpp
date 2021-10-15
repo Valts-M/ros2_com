@@ -53,9 +53,9 @@ private:
    */
   std::unique_ptr<ShmemUtility> m_shmemUtil;
   
-  constexpr double m_occupiedThreashold = 65.0;
+  inline static constexpr double m_occupiedThreashold{65.0};
 
-  constexpr double m_freeThreashold = 25.0;
+  inline static constexpr double m_freeThreashold{25.0};
 
   double m_lidarOffset{-9999999.0};
 
