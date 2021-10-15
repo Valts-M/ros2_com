@@ -20,7 +20,6 @@ list(APPEND CMAKE_PREFIX_PATH
   "/vcpkg/installed/arm64-linux" 
   "/opt/ros/foxy/opt/yaml_cpp_vendor")
 
-
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 include_directories("/code/RobotV3/MainCore/include")

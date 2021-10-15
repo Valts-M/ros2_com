@@ -106,7 +106,6 @@
         "editor.defaultFormatter": "zachflower.uncrustify"
     },
     "cSpell.words": [
-        "RTPS",
         "athackst",
         "autopep",
         "cmake",
@@ -114,6 +113,7 @@
         "cpplint",
         "deque",
         "devcontainer",
+        "imwrite",
         "ints",
         "noqa",
         "pytest",
@@ -122,6 +122,7 @@
         "repos",
         "rosdistro",
         "rosidl",
+        "RTPS",
         "uncrustify",
         "xmllint"
     ],
