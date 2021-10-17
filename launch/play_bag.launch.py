@@ -9,7 +9,7 @@ from launch.events.process.process_exited import ProcessExited
 from launch_ros.actions import Node
 from launch.event_handlers.on_process_exit import OnProcessExit
 
-launch.Event
+import yaml
 
 ld = launch.LaunchDescription()
 
@@ -17,15 +17,20 @@ save_dir = LaunchConfiguration('save_dir')
 
 slam_params_file = LaunchConfiguration('slam_params_file')
 bag_file = LaunchConfiguration('bag_file')
+config_path = "/configs/ros"
+
+robot_config = os.path.join(config_path, 'config', 'robot_configs', 'stolzenberg_1_config.yaml')
+with open(robot_config, 'r') as f:
+    params = yaml.safe_load(f)['odom_publisher']['ros__parameters']
 
 rosbag_node = ExecuteProcess(
     name='rosbag',
     cmd=['ros2', 'bag', 'play', 
-    '--read-ahead-queue-size', '20000', 
-    '-r', '4', 
+    '--read-ahead-queue-size', '200000', 
+    '-r', '5', 
     bag_file,
     '--remap', 'tf:=pre_filter_tf', 'tf_static:=pre_filter_tf',
-    '--topics', '/clock', '/tf', '/tf_static', '/scan', '/ros2_com/path']
+    '--topics', '/clock', '/tf', '/tf_static', '/scan', '/odom_publisher/path']
 )
 tf_filter = Node(
     package='ros2_com',
@@ -42,7 +47,8 @@ slam_toolbox_node = Node(
 map_saver_server = Node(
     package='ros2_com',
     executable='map_saver',
-    name='map_saver_server'
+    name='map_saver_server',
+    parameters=[params]
 )
 
 declare_params = DeclareLaunchArgument(name='slam_params_file',

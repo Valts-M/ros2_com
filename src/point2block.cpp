@@ -12,12 +12,13 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <pcl/common/transforms.h>
 
-using std::placeholders::_1;
-using std::placeholders::_2;
-using namespace std::chrono_literals;
-
 namespace ros2_com
 {
+  
+using namespace std::chrono_literals;
+using std::placeholders::_1;
+using std::placeholders::_2;
+
 Point2Block::Point2Block() : Node("point2block"),
 m_unfilteredCloud(new pcl::PointCloud<pcl::PointXYZ>),
 m_filteredCloud(new pcl::PointCloud<pcl::PointXYZ>),

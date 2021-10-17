@@ -22,7 +22,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   m_latestMapPath = initLatestMapPath();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
-  // m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
+  m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
   m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("pose_listener/send_initial_pose");
   m_initialPoseSaver = this->create_client<ros2_com::srv::SaveInitialPose>("pose_listener/save_initial_pose");
   
@@ -49,8 +49,8 @@ void RosManager::updateHandler()
   if(m_saveInitialPose)
     saveInitialPose();
 
-  // if(m_resetOdomFlag)
-  //   resetOdom();
+  if(m_resetOdomFlag)
+    resetOdom();
 
   if(m_saveMapFlag)
     saveMap();
@@ -120,10 +120,10 @@ void RosManager::setLocalFlags()
       if(id == processId::mapping)
       {
         m_saveMapFlag = true;
-        // m_resetOdomFlag = true;
+        m_resetOdomFlag = true;
       }
-      // else if(id == processId::localization)
-        // m_resetOdomFlag = true;
+      else if(id == processId::localization)
+        m_resetOdomFlag = true;
     }
 
     RCLCPP_INFO(this->get_logger(), "%sPROCESS %d RECEIVED: %d; SET TO %d%s", 
@@ -148,14 +148,14 @@ void RosManager::setStateFlag(const processId & t_processId)
       if(t_processId == processId::localization)
       {
         turnOffMapping();
-        // m_resetOdomFlag = true;
+        m_resetOdomFlag = true;
         m_sendInitialPose = true;
       }
       //if mapping set to active, turn off localization, reset odometry
       else if(t_processId == processId::mapping && !isProcessRunning(processId::mapping))
       {
         m_flagMap[processId::localization] = false;
-        // m_resetOdomFlag = true;
+        m_resetOdomFlag = true;
       }
     }
     else
@@ -457,25 +457,25 @@ std::string RosManager::initLatestMapPath()
   return "map:=" + m_slamMapsDir + "/" + std::to_string(num) + "/map.yaml";
 }
 
-// void RosManager::resetOdom()
-// {
-//   if(!isProcessRunning(processId::odom))
-//   {
-//     RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Process not active)");
-//     m_resetOdomFlag = false;
-//   }
-//   else if (!m_odomResetter->service_is_ready())
-//   {
-//     RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Service not active)");
-//   }
-//   else
-//   {
-//     auto result = m_odomResetter->async_send_request(std::make_shared<ros2_com::srv::ResetOdom_Request>());
-//     RCLCPP_INFO(this->get_logger(), "%sOdometry reset: SUCCESS%s", 
-//       m_colorMap[Color::green], m_colorMap[Color::endColor]);
-//   }
-//   m_resetOdomFlag = false;
-// }
+void RosManager::resetOdom()
+{
+  if(!isProcessRunning(processId::odom))
+  {
+    RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Process not active)");
+    m_resetOdomFlag = false;
+  }
+  else if (!m_odomResetter->service_is_ready())
+  {
+    RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Service not active)");
+  }
+  else
+  {
+    auto result = m_odomResetter->async_send_request(std::make_shared<ros2_com::srv::ResetOdom_Request>());
+    RCLCPP_INFO(this->get_logger(), "%sOdometry reset: SUCCESS%s", 
+      m_colorMap[Color::green], m_colorMap[Color::endColor]);
+  }
+  m_resetOdomFlag = false;
+}
 
 void RosManager::sendInitialPose()
 {
