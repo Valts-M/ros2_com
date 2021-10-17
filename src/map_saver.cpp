@@ -1,9 +1,5 @@
 #include "map_saver.hpp"
 
-#include <chrono>
-#include <functional>
-#include <memory>
-#include <string>
 #include <iostream>
 #include <fstream>
 
@@ -106,7 +102,6 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
         RCLCPP_ERROR(this->get_logger(), e.what());
         return -1;
       }
-      
   }
 
   binWriter.close();

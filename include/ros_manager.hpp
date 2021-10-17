@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <filesystem>
 #include <vector>
 
 //ros
@@ -61,12 +62,12 @@ private:
    * @brief Directory where all slam maps are saved
    * 
    */
-  const std::string m_slamMapsDir{"/home/RobotV3/slam_maps"};
+  const std::filesystem::path m_slamMapsDir{"/home/RobotV3/slam_maps"};
   /**
    * @brief Path to the latest created map
    * 
    */
-  std::string m_latestMapPath;
+  std::filesystem::path m_latestMapPath;
 
   /**
    * @brief Latest flag message received from RobotV3

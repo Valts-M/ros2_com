@@ -19,6 +19,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 {
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
   m_shmemUtil->start();
+
   m_latestMapPath = initLatestMapPath();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
@@ -273,7 +274,7 @@ void RosManager::startProcess(const processId & t_processId)
           break;
         case(processId::localization):
           execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
-            "localization.launch.py", "map:=\'" + m_latestMapPath + '\'', "initial_pose_x:=",
+            "localization.launch.py", "map:=\'" + m_latestMapPath.string() + '\'', "initial_pose_x:=",
             std::to_string(m_initialPose.x()), "initial_pose_y:=", 
             std::to_string(m_initialPose.y()), "initial_pose_yaw:=",
             std::to_string(m_initialPose.yaw()), NULL);
@@ -362,14 +363,15 @@ void RosManager::saveMap()
   }
   else
   {
-    std::string path = createMapSavePath() + "/map";
+    std::filesystem::path mapPath = createMapSavePath();
+    mapPath.append("map");
 
     m_mapSavePending = true;
 
     auto request = std::make_shared<ros2_com::srv::SaveMap_Request>();
-    request->filename = path;
+    request->filename = mapPath;
 
-    auto mapServiceCallback = [&, path](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
+    auto mapServiceCallback = [&, mapPath](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
     { 
       m_mapSavePending = false;
       auto result = future.get();
@@ -377,8 +379,8 @@ void RosManager::saveMap()
       {
         RCLCPP_INFO(this->get_logger(), "%sSave map: SUCCESS%s", 
           m_colorMap[Color::green], m_colorMap[Color::endColor]);
-        m_latestMapPath = "map:=" + path + ".yaml";
-        RCLCPP_INFO(this->get_logger(), m_latestMapPath);
+        m_latestMapPath = mapPath;
+        RCLCPP_INFO(this->get_logger(), "Map saved to %s", m_latestMapPath.c_str());
 
         m_saveMapFlag = false;
       }
@@ -403,13 +405,15 @@ void RosManager::saveMap()
 
 std::string RosManager::createMapSavePath()
 {
-  std::string numFilePath = m_slamMapsDir + "/num.txt";
+  std::filesystem::path numFilePath = m_slamMapsDir;
+  numFilePath.append("num.txt");
+
   std::ifstream fileReader(numFilePath);
   if(!fileReader.is_open())
   {
     RCLCPP_WARN(this->get_logger(), 
       "Couldn't open file %s, saving in %s",
-       numFilePath, m_slamMapsDir);
+       numFilePath.c_str(), m_slamMapsDir.c_str());
     return m_slamMapsDir;
   }
   int num;
@@ -417,13 +421,13 @@ std::string RosManager::createMapSavePath()
   fileReader.clear();
   fileReader.close();
 
-  std::string saveDir = m_slamMapsDir + "/" + std::to_string(++num);
-  if(mkdir(saveDir.c_str(), 0777) == -1)
+  std::filesystem::path saveDir = m_slamMapsDir;
+  saveDir.append(std::to_string(++num));
+
+  if(!std::filesystem::create_directory(saveDir))
   {
-    RCLCPP_WARN(this->get_logger(), 
-      "Couldn't create directory %s/%d, saving in %s",
-       m_slamMapsDir, num, m_slamMapsDir);
-    return m_slamMapsDir;
+    RCLCPP_FATAL(this->get_logger(), "Couldn't create map save directory: %s", saveDir.c_str());
+    throw -1;
   }
 
   std::ofstream fileWriter(numFilePath);
@@ -431,7 +435,7 @@ std::string RosManager::createMapSavePath()
   {
     RCLCPP_WARN(this->get_logger(), 
       "Couldn't open file %s for write, saving in %s",
-       numFilePath, m_slamMapsDir);
+       numFilePath.c_str(), m_slamMapsDir.c_str());
     return m_slamMapsDir;
   }
   fileWriter << num;
@@ -442,7 +446,32 @@ std::string RosManager::createMapSavePath()
 
 std::string RosManager::initLatestMapPath()
 {
-  std::string numFilePath = m_slamMapsDir + "/num.txt";
+  if(!std::filesystem::exists(m_slamMapsDir))
+  {
+    if(!std::filesystem::create_directories(m_slamMapsDir))
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't create map save directory: %s", m_slamMapsDir.c_str());
+      throw -1;
+    }
+  }
+
+  std::filesystem::path numFilePath = m_slamMapsDir;
+  numFilePath.append("num.txt");
+
+  if(!std::filesystem::exists(numFilePath))
+  {
+     std::ofstream fileWriter(numFilePath);
+    if(!fileWriter.is_open())
+    {
+      RCLCPP_FATAL(this->get_logger(), 
+        "Couldn't open file %s for write");
+      throw -1;
+    }
+    fileWriter << 0;
+    fileWriter.flush();
+    fileWriter.close();
+  }
+
   std::ifstream fileReader(numFilePath);
   if(!fileReader.is_open())
   {
@@ -457,7 +486,7 @@ std::string RosManager::initLatestMapPath()
   fileReader.clear();
   fileReader.close();
 
-  return "map:=" + m_slamMapsDir + "/" + std::to_string(num) + "/map.yaml";
+  return "map:=" + m_slamMapsDir.string() + "/" + std::to_string(num) + "/map.yaml";
 }
 
 void RosManager::resetOdom()
