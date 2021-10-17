@@ -44,6 +44,9 @@ def generate_launch_description():
     namespace = LaunchConfiguration('namespace')
     config_path = "/configs/ros"
     map_yaml_file = LaunchConfiguration('map')
+    initial_pose_x = LaunchConfiguration('initial_pose_x')
+    initial_pose_y = LaunchConfiguration('initial_pose_y')
+    initial_pose_yaw = LaunchConfiguration('initial_pose_yaw')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     params_file = LaunchConfiguration('params_file')
@@ -61,7 +64,10 @@ def generate_launch_description():
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
         'use_sim_time': use_sim_time,
-        'yaml_filename': map_yaml_file}
+        'yaml_filename': map_yaml_file,
+        'initial_pose.x': initial_pose_x,
+        'initial_pose.y': initial_pose_y,
+        'initial_pose.yaw': initial_pose_yaw,}
 
     configured_params = RewrittenYaml(
         source_file=params_file,
@@ -101,6 +107,15 @@ def generate_launch_description():
             'params_file',
             default_value=os.path.join(config_path, 'config', 'nav2_config.yaml'),
             description='Full path to the ROS2 parameters file to use'),
+
+        DeclareLaunchArgument(name='initial_pose_x', default_value= '0.0',
+            description='Initial pose x'),
+
+        DeclareLaunchArgument(name='initial_pose_y', default_value= '0.0',
+            description='Initial pose y'),
+
+        DeclareLaunchArgument(name='initial_pose_yaw', default_value= '0.0',
+            description='Initial pose yaw'),
 
         RegisterEventHandler(event_handler=OnProcessExit(on_exit=shutdown_all)),
 

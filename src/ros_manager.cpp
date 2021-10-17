@@ -23,7 +23,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
   m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
-  m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("pose_listener/send_initial_pose");
+  // m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("pose_listener/send_initial_pose");
   m_initialPoseSaver = this->create_client<ros2_com::srv::SaveInitialPose>("pose_listener/save_initial_pose");
   
   m_rosTimer = this->create_wall_timer(
@@ -55,8 +55,8 @@ void RosManager::updateHandler()
   if(m_saveMapFlag)
     saveMap();
 
-  if(m_sendInitialPose)
-    sendInitialPose();
+  // if(m_sendInitialPose)
+  //   sendInitialPose();
 
   RCLCPP_INFO(this->get_logger(), "\n\n*********************************************************************************************************************\n");
 }
@@ -149,7 +149,7 @@ void RosManager::setStateFlag(const processId & t_processId)
       {
         turnOffMapping();
         m_resetOdomFlag = true;
-        m_sendInitialPose = true;
+        // m_sendInitialPose = true;
       }
       //if mapping set to active, turn off localization, reset odometry
       else if(t_processId == processId::mapping && !isProcessRunning(processId::mapping))
@@ -273,7 +273,10 @@ void RosManager::startProcess(const processId & t_processId)
           break;
         case(processId::localization):
           execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
-            "localization.launch.py", m_latestMapPath.c_str(), NULL);
+            "localization.launch.py", "map:=\'" + m_latestMapPath + '\'', "initial_pose_x:=",
+            std::to_string(m_initialPose.x()), "initial_pose_y:=", 
+            std::to_string(m_initialPose.y()), "initial_pose_yaw:=",
+            std::to_string(m_initialPose.yaw()), NULL);
           break;
         case(processId::logging):
           execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
@@ -477,50 +480,50 @@ void RosManager::resetOdom()
   m_resetOdomFlag = false;
 }
 
-void RosManager::sendInitialPose()
-{
-  if(!isProcessRunning(processId::odom))
-  {
-    RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Process not active)");
-    m_sendInitialPose = false;
-    m_sendInitialPosePending = false;
-  }
-  else if (!m_initialPoseSender->service_is_ready())
-  {
-    RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Service not active)");
-    m_sendInitialPosePending = false;
-  }
-  else if(m_saveInitialPose || m_saveInitialPosePending)
-  {
-    RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING POSE SAVE");
-  }
-  else if(m_sendInitialPosePending)
-  {
-    RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING");
-  }
-  else
-  {
-    auto request = std::make_shared<ros2_com::srv::SendInitialPose_Request>();
-    m_sendInitialPosePending = true;
+// void RosManager::sendInitialPose()
+// {
+//   if(!isProcessRunning(processId::odom))
+//   {
+//     RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Process not active)");
+//     m_sendInitialPose = false;
+//     m_sendInitialPosePending = false;
+//   }
+//   else if (!m_initialPoseSender->service_is_ready())
+//   {
+//     RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Service not active)");
+//     m_sendInitialPosePending = false;
+//   }
+//   else if(m_saveInitialPose || m_saveInitialPosePending)
+//   {
+//     RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING POSE SAVE");
+//   }
+//   else if(m_sendInitialPosePending)
+//   {
+//     RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING");
+//   }
+//   else
+//   {
+//     auto request = std::make_shared<ros2_com::srv::SendInitialPose_Request>();
+//     m_sendInitialPosePending = true;
 
-    auto sendInitialPoseServiceCallback = [&](rclcpp::Client<ros2_com::srv::SendInitialPose>::SharedFuture future)
-    { 
-      m_sendInitialPosePending = false;
-      auto result = future.get();
-      if(result->success)
-      {
-        RCLCPP_INFO(this->get_logger(), "%sSend initial pose: SUCCESS%s", 
-          m_colorMap[Color::green], m_colorMap[Color::green]);
-        m_sendInitialPose = false;
-      }
-      else
-      {
-        RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Localization not fully active yet)");
-      }
-    };
-    auto result = m_initialPoseSender->async_send_request(request, sendInitialPoseServiceCallback);
-  }
-}
+//     auto sendInitialPoseServiceCallback = [&](rclcpp::Client<ros2_com::srv::SendInitialPose>::SharedFuture future)
+//     { 
+//       m_sendInitialPosePending = false;
+//       auto result = future.get();
+//       if(result->success)
+//       {
+//         RCLCPP_INFO(this->get_logger(), "%sSend initial pose: SUCCESS%s", 
+//           m_colorMap[Color::green], m_colorMap[Color::green]);
+//         m_sendInitialPose = false;
+//       }
+//       else
+//       {
+//         RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Localization not fully active yet)");
+//       }
+//     };
+//     auto result = m_initialPoseSender->async_send_request(request, sendInitialPoseServiceCallback);
+//   }
+// }
 
 void RosManager::saveInitialPose()
 {
@@ -554,7 +557,10 @@ void RosManager::saveInitialPose()
         RCLCPP_INFO(this->get_logger(), "%sSave initial pose: SUCCESS%s", 
           m_colorMap[Color::green], m_colorMap[Color::endColor]);
         m_saveInitialPose = false;
-        m_sendInitialPose = true;
+        // m_sendInitialPose = true;
+        m_initialPose.x() = result->x;
+        m_initialPose.y() = result->y;
+        m_initialPose.yaw() = result->yaw;
       }
       else
       {

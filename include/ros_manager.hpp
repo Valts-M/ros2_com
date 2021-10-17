@@ -17,6 +17,7 @@
 //robotv3
 #include <robot_pose.hpp>
 #include <data_structures/common_data_structures.hpp>
+#include <robot_pose.hpp>
 
 #include "ros_manager_maps.hpp"
 #include "shmem_util.hpp"
@@ -118,6 +119,8 @@ private:
    * 
    */
   bool m_resetOdomFlag{false};
+
+  RobotPose m_initialPose{0.0, 0.0, 0.0};
 
   /**
    * @brief Timer that calles the update handler at a given interval
