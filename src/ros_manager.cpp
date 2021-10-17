@@ -274,7 +274,7 @@ void RosManager::startProcess(const processId & t_processId)
           break;
         case(processId::localization):
           execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
-            "localization.launch.py", "map:=\'" + m_latestMapPath.c_str() + '\'', "initial_pose_x:=",
+            "localization.launch.py", "map:=", m_latestMapPath.c_str(), "initial_pose_x:=",
             std::to_string(m_initialPose.x()), "initial_pose_y:=", 
             std::to_string(m_initialPose.y()), "initial_pose_yaw:=",
             std::to_string(m_initialPose.yaw()), NULL);
