@@ -53,6 +53,12 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}],
     )
 
+    clock_server = launch_ros.actions.Node(
+        package='ros2_com',
+        executable='clock_server',
+        name='clock_server'
+    )
+
     velodyne_driver_node = launch_ros.actions.Node(package='velodyne_driver',
         executable='velodyne_driver_node',
         output='screen',
@@ -163,6 +169,7 @@ def generate_launch_description():
 
     ld.add_action(urdf_model)
     ld.add_action(use_sim_time_arg)
+    ld.add_action(clock_server)
     ld.add_action(robot_state_publisher_node)
     ld.add_action(pose_listener_node)
     ld.add_action(odom_publisher_node)
