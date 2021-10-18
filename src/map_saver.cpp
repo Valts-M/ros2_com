@@ -129,7 +129,6 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
   if(!p) return -2;
   try
   {
-    if (!p->isObjectReferenced()) return -2;
     p->copyUpdate(path + ".bin");
     //p->copyUpdate(TextualInfo{(path + ".bin").c_str()});
   }

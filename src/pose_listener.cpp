@@ -125,12 +125,11 @@ namespace ros2_com
     if (!m_odomPoseProducer) return;
     try
     {
-        if (!m_odomPoseProducer->isObjectReferenced()) return;
         m_odomPoseProducer->append(m_odomPose, m_ts);
     }
     catch (const std::exception& ex)
     {
-
+        RCLCPP_ERROR(this->get_logger(), "Shmem: failed to update odom pose");
     }
 
     RCLCPP_DEBUG(this->get_logger(), "Odom: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
@@ -161,12 +160,11 @@ namespace ros2_com
     if (!m_mapPoseProducer) return;
     try
     {
-        if (!m_mapPoseProducer->isObjectReferenced()) return;
         m_mapPoseProducer->append(m_mapPose, m_ts);
     }
     catch (const std::exception& ex)
     {
-
+        RCLCPP_ERROR(this->get_logger(), "Shmem: failed to update map pose");
     }
   }
 
