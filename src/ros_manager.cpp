@@ -20,7 +20,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
   m_shmemUtil->start();
 
-  initLatestMapPath();
+  getLatestMapYamlPath();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
   m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
@@ -448,7 +448,7 @@ std::string RosManager::createMapSavePath()
   return saveDir;
 }
 
-std::filesystem::path RosManager::initLatestMapPath()
+std::filesystem::path RosManager::getLatestMapYamlPath()
 {
   std::filesystem::path tmpSavePath{m_slamMapsDir};
   tmpSavePath.append("tmp");
@@ -496,10 +496,10 @@ std::filesystem::path RosManager::initLatestMapPath()
   std::ifstream fileReader(numFilePath);
   if(!fileReader.is_open())
   {
-    RCLCPP_WARN(this->get_logger(), 
+    RCLCPP_FATAL(this->get_logger(), 
       "Couldn't open file %s",
-       numFilePath, m_slamMapsDir);
-    return m_slamMapsDir;
+       numFilePath);
+    throw -1;
   }
 
   int num;
@@ -507,7 +507,18 @@ std::filesystem::path RosManager::initLatestMapPath()
   fileReader.clear();
   fileReader.close();
 
-  return slamMapsDir.string() + "/" + std::to_string(num);
+  std::filesystem::path mapYamlPath{m_slamMapsDir};
+  mapYamlPath.append(std::to_string(num));
+  mapYamlPath.append("map.yaml");
+  if(!std::filesystem::exists(mapYamlPath))
+  {
+    RCLCPP_FATAL(this->get_logger(), 
+      "Map yaml file:\"%s\" does not exist!",
+       mapYamlPath);
+    throw -1;
+  }
+
+  return mapYamlPath;
 }
 
 void RosManager::resetOdom()
