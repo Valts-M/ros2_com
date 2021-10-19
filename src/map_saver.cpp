@@ -56,6 +56,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
     RCLCPP_ERROR(
       this->get_logger(),
       "Haven't gotten any map data yet");
+    m_savingMap = false;
     return -1;
   }
 
@@ -64,6 +65,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
     RCLCPP_ERROR(
       this->get_logger(),
       "No map save path specified");
+    m_savingMap = false;
     return 0;
   }
 
@@ -77,12 +79,16 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
       this->get_logger(),
       "Failed to save map as %s.bin, can't open/create file",
       path.c_str());
+    m_savingMap = false;
     return 0;
   }
 
   if(saveImage)
     if(!saveMapYamlFile(path))
+    {
+      m_savingMap = false;
       return -2;
+    }
 
   //write map info
   m_map->info.origin.position.x -= m_lidarOffset;
@@ -100,6 +106,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
       catch(const std::exception& e)
       {
         RCLCPP_ERROR(this->get_logger(), e.what());
+        m_savingMap = false;
         return -1;
       }
   }
@@ -110,6 +117,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
   else
   {
     RCLCPP_ERROR(this->get_logger(), "Error while saving map");
+    m_savingMap = false;
     return 0;
   }
 
@@ -130,6 +138,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
   catch(const std::exception& e)
   {
     RCLCPP_ERROR(this->get_logger(), "Shmem not working");
+    m_savingMap = false;
     return -2;
   }
   
