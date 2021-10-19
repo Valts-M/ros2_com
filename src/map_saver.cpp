@@ -40,12 +40,14 @@ void MapSaver::topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
     saveMap("/home/RobotV3/slam_maps/tmp/map", false);
     // saveMap("/workspaces/RobotV3/ros/src/ros2_com/test", true);
   }
+  m_savingMap = false; //should be done by next topic callback
 }
 
 void MapSaver::saveMapHandler(const std::shared_ptr<ros2_com::srv::SaveMap::Request> request,
           std::shared_ptr<ros2_com::srv::SaveMap::Response> response)
 {
   response->success = saveMap(request->filename, true);
+  m_savingMap = false;
 }
 
 int MapSaver::saveMap(const std::string &path, const bool saveImage)
@@ -90,9 +92,12 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
       return -2;
     }
 
-  //write map info
-  m_map->info.origin.position.x -= m_lidarOffset;
-  binWriter.write((char *) &m_map->info, sizeof(m_map->info));
+  {
+    //write map info
+    auto mapInfo = m_map->info;
+    mapInfo.origin.position.x -= m_lidarOffset;
+    binWriter.write((char *) &mapInfo, sizeof(mapInfo));
+  }
 
   for(size_t i = 0U; i < m_map->info.height * m_map->info.width; ++i)
   {
@@ -129,7 +134,11 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
   }
   
   auto p = m_shmemUtil->getShmem<RawProducer<TextualInfo>>(ConsProdNames::p_MapPath);
-  if(!p) return -2;
+  if(!p) 
+  {
+    m_savingMap = false;
+    return -2;
+  }
   try
   {
     if (!p->isObjectReferenced()) return -2;

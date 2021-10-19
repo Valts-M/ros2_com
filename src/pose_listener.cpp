@@ -72,7 +72,7 @@ namespace ros2_com
     try
     {
       geometry_msgs::msg::TransformStamped mapBaseLinkTransform = 
-      m_tfBuffer->lookupTransform(m_map_frame, m_target_frame, tf2::TimePointZero);
+      m_tfBuffer->lookupTransform(m_map_frame, "base_footprint", tf2::TimePointZero);
 
       m_initialPose.header = mapBaseLinkTransform.header;
       m_initialPose.pose.pose.position.x = mapBaseLinkTransform.transform.translation.x;
