@@ -68,7 +68,7 @@ private:
       {static_cast<int>(ConsProdNames::p_MapPath), ConsProdDescription("SlamMapPath")},
       {static_cast<int>(ConsProdNames::p_OdomPose), ConsProdDescription("RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)},
       {static_cast<int>(ConsProdNames::p_MapPose), ConsProdDescription("RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)},
-      {static_cast<int>(ConsProdNames::p_LocaldMap), ConsProdDescription("LocaldMap"/*, sizeof(LocaldMap) * 1024U*1024U*/)}
+      {static_cast<int>(ConsProdNames::p_LocaldMap), ConsProdDescription("LocaldMap", sizeof(LocaldMap) * 1024U)}
   };
 
   const MyConsProdDescriptions & getDescriptions() const override

@@ -486,8 +486,7 @@ std::filesystem::path RosManager::getLatestMapYamlPath()
      std::ofstream fileWriter(numFilePath);
     if(!fileWriter.is_open())
     {
-      RCLCPP_FATAL(this->get_logger(), 
-        "Couldn't open file %s for write");
+      RCLCPP_FATAL(this->get_logger(), "Couldn't open file %s for write", numFilePath.c_str());
       throw -1;
     }
     fileWriter << 0;
@@ -500,7 +499,7 @@ std::filesystem::path RosManager::getLatestMapYamlPath()
   {
     RCLCPP_FATAL(this->get_logger(), 
       "Couldn't open file %s",
-       numFilePath);
+       numFilePath.c_str());
     throw -1;
   }
 
@@ -514,10 +513,10 @@ std::filesystem::path RosManager::getLatestMapYamlPath()
   mapYamlPath.append("map.yaml");
   if(!std::filesystem::exists(mapYamlPath))
   {
-    RCLCPP_FATAL(this->get_logger(), 
+    RCLCPP_WARN(this->get_logger(), 
       "Map yaml file:\"%s\" does not exist!",
-       mapYamlPath);
-    throw -1;
+       mapYamlPath.c_str());
+    return "";
   }
 
   return mapYamlPath;

@@ -30,8 +30,8 @@ m_rotatedCloud(new pcl::PointCloud<pcl::PointXYZ>)
   m_obstacleMap.setTo(0U);
   RCLCPP_ERROR(this->get_logger(), "Constr");
 
-  // m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_LocaldMap});
-  // m_shmemUtil->start();
+  m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_LocaldMap});
+  m_shmemUtil->start();
 
   m_publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>("filtered_points", 10);
 
@@ -45,32 +45,42 @@ m_rotatedCloud(new pcl::PointCloud<pcl::PointXYZ>)
 
 Point2Block::~Point2Block()
 {
-  // m_shmemUtil->stop();
-  // m_shmemUtil.reset();
+  m_shmemUtil->stop();
+  m_shmemUtil.reset();
 }
 
 void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
 
-  // auto localdMapProducer = m_shmemUtil->getShmem<RawProducer<int>>(ConsProdNames::p_LocaldMap);
+  auto localdMapProducer = m_shmemUtil->getShmem<RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap);
 
-  // if(!localdMapProducer)
-  // {
-  //   RCLCPP_ERROR(this->get_logger(), "nullptr");
-  //   return;
-  // }
-  // if(!localdMapProducer->isObjectReferenced()) 
-  // {
-  //   RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
-  //   return;
-  // }
+  try
+  {
+    if(!localdMapProducer)
+    {
+      RCLCPP_ERROR(this->get_logger(), "nullptr");
+      return;
+    }
+    if(!localdMapProducer->isObjectReferenced()) 
+    {
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
+      return;
+    }
+  }
+  catch(const std::exception& e)
+  {
+    RCLCPP_ERROR(this->get_logger(), e.what());
+  }
+
 
   try 
   {
     m_mapLidarMsg = m_tfBuffer->lookupTransform(
       "odom", "base_footprint",
       tf2::TimePointZero);
-  } catch (const tf2::TransformException & ex) {
+  } 
+  catch (const tf2::TransformException & ex) 
+  {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Could not transform map to laser_sensor_frame: %s", ex.what());
     return;
@@ -128,20 +138,19 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   // m_filteredCloudMsg.header.stamp = this->now();
   m_publisher->publish(m_filteredCloudMsg);
 
-  // try
-  // {
-  //   if (!localdMapProducer->isObjectReferenced()) return;
-  //   localdMapProducer->copyUpdate(LocaldMap{Helper::getTimeStamp(), m_clearMap.data, m_obstacleMap.data, m_rows, m_cols});
-  // }
-  // catch(const std::exception& e)
-  // {
-  //   RCLCPP_ERROR(this->get_logger(), "Shmem not working: %s", e.what());
-  //   return;
-  // }
+  try
+  {
+    localdMapProducer->copyUpdate(LocaldMap{Helper::getTimeStamp(), m_clearMap.data, m_obstacleMap.data, m_rows, m_cols});
+  }
+  catch(const std::exception& e)
+  {
+    RCLCPP_ERROR(this->get_logger(), "Shmem not working: %s", e.what());
+    return;
+  }
 
 
-  cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
-  cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
+  cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
+  cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
     
   m_clearMap.setTo(127);
   m_obstacleMap.setTo(0U);

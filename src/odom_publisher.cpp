@@ -160,6 +160,11 @@ bool OdometryPublisher::getPoseAndVelocity()
 
   try 
   {
+    if(!m_poseConsumer)
+    {
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "Nullptr");
+      return false;
+    }
     if (!m_poseConsumer->isConsumerReferenced()) 
     {
       RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");

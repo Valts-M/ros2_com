@@ -52,7 +52,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_publisher{nullptr};
   sensor_msgs::msg::PointCloud2 m_filteredCloudMsg;
   sensor_msgs::msg::LaserScan::SharedPtr m_laserScan;
-  // std::unique_ptr<ShmemUtility> m_shmemUtil;
+  std::unique_ptr<ShmemUtility> m_shmemUtil;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr m_unfilteredCloud;
   pcl::PointCloud<pcl::PointXYZ>::Ptr m_filteredCloud;
