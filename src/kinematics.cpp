@@ -7,7 +7,8 @@ namespace ros2_com
 
   Kinematics::Kinematics() : Kinematics::Kinematics(RobotConfig()){}
 
-  Kinematics::Kinematics(const RobotConfig& config) : m_leftEncScale(config.leftEncScale), 
+  Kinematics::Kinematics(const RobotConfig& config) : 
+    m_leftEncScale(config.leftEncScale), 
     m_rightEncScale(config.rightEncScale), 
     m_leftGyroScale(config.leftGyroScale), 
     m_rightGyroScale(config.RightGyroScale){}
