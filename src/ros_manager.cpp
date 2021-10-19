@@ -383,7 +383,9 @@ void RosManager::saveMap()
       {
         RCLCPP_INFO(this->get_logger(), "%sSave map: SUCCESS%s", 
           m_colorMap[Color::green], m_colorMap[Color::endColor]);
-        m_latestMapPath = mapPath;
+        std::filesystem::path mapYamlPath{mapPath};
+        mapYamlPath += ".yaml";
+        m_latestMapPath = mapYamlPath;
         RCLCPP_INFO(this->get_logger(), "Map saved to %s", m_latestMapPath.c_str());
 
         m_saveMapFlag = false;
