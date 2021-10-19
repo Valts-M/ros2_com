@@ -32,12 +32,12 @@ namespace ros2_com
 
     m_initialPose.pose.covariance =
     {
-    0.25, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0.0, 0.25, 0.0, 0.0, 0.0, 0.0,
+    0.025, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.025, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.06853891945200942 
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.006853891945200942 
     };
 
     m_initialPose.header.frame_id = "map";
@@ -72,7 +72,7 @@ namespace ros2_com
     try
     {
       geometry_msgs::msg::TransformStamped mapBaseLinkTransform = 
-      m_tfBuffer->lookupTransform(m_map_frame, "base_footprint", tf2::TimePointZero);
+      m_tfBuffer->lookupTransform(m_map_frame, m_target_frame, tf2::TimePointZero);
 
       m_initialPose.header = mapBaseLinkTransform.header;
       m_initialPose.pose.pose.position.x = mapBaseLinkTransform.transform.translation.x;
@@ -109,8 +109,8 @@ namespace ros2_com
         tf2::TimePointZero);
     } catch (const tf2::TransformException & ex) {
       RCLCPP_WARN_THROTTLE(
-        this->get_logger(), *this->get_clock(), 1000, "Could not transform %s to base_footprint: %s",
-        m_map_frame.c_str(), ex.what());
+        this->get_logger(), *this->get_clock(), 1000, "Could not transform %s to %s: %s",
+        m_map_frame.c_str(), m_target_frame.c_str(), ex.what());
       return;
     }
 
@@ -140,8 +140,8 @@ namespace ros2_com
         tf2::TimePointZero);
     } catch (const tf2::TransformException & ex) {
       RCLCPP_WARN_THROTTLE(
-        this->get_logger(), *this->get_clock(), 1000, "Could not transform %s to base_footprint: %s",
-        m_map_frame.c_str(), ex.what());
+        this->get_logger(), *this->get_clock(), 1000, "Could not transform %s to %s: %s",
+        m_map_frame.c_str(), m_target_frame.c_str(), ex.what());
       return;
     }
 
