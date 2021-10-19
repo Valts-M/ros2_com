@@ -81,8 +81,8 @@ namespace ros2_com
       m_initialPose.pose.pose.orientation = mapBaseLinkTransform.transform.rotation;
 
       response->success=true;
-      response->x = m_mapPose.x();
-      response->y = m_mapPose.y();
+      response->x = m_initialPose.pose.pose.position.x;
+      response->y = m_initialPose.pose.pose.position.y;
       response->yaw = m_mapPose.yaw();
     }
     catch(const tf2::TransformException & ex)
