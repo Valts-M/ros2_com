@@ -453,6 +453,13 @@ std::string RosManager::initLatestMapPath()
       RCLCPP_FATAL(this->get_logger(), "Couldn't create map save directory: %s", m_slamMapsDir.c_str());
       throw -1;
     }
+    std::filesystem::path tmpSavePath{m_slamMapsDir};
+    tmpSavePath.append("tmp");
+    if(!std::filesystem::create_directory(tmpSavePath))
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", tmpSavePath.c_str());
+      throw -1;
+    }
   }
 
   std::filesystem::path numFilePath = m_slamMapsDir;
