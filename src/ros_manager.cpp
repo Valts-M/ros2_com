@@ -20,7 +20,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
   m_shmemUtil->start();
 
-  getLatestMapYamlPath();
+  m_latestMapPath = getLatestMapYamlPath();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
   m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
@@ -279,7 +279,7 @@ void RosManager::startProcess(const processId & t_processId)
             const std::string initPoseY = "initial_pose_y:=" + std::to_string(m_initialPose.y());
             const std::string initPoseYaw = "initial_pose_yaw:=" + std::to_string(m_initialPose.yaw());
             execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n",
-              "ros2_com", mapPath.c_str(),
+              "ros2_com", "localization.launch.py", mapPath.c_str(),
               initPoseX.c_str(), initPoseY.c_str(), initPoseYaw.c_str(), NULL);
           }
           break;
