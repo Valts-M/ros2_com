@@ -192,7 +192,7 @@ private:
    * 
    * @return std::string map path
    */
-  std::string initLatestMapPath();
+  std::filesystem::path initLatestMapPath();
 
   /**
    * @brief Update handler called by the ros timer every n ms

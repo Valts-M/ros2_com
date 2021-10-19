@@ -20,7 +20,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
   m_shmemUtil->start();
 
-  m_latestMapPath = initLatestMapPath();
+  initLatestMapPath();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
   m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
@@ -273,11 +273,15 @@ void RosManager::startProcess(const processId & t_processId)
             "mapping.launch.py", NULL);
           break;
         case(processId::localization):
-          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
-            "localization.launch.py", "map:=%s", m_latestMapPath.c_str(), "initial_pose_x:=%f",
-            m_initialPose.x(), "initial_pose_y:=%f", 
-            m_initialPose.y(), "initial_pose_yaw:=%f",
-            m_initialPose.yaw(), NULL);
+          {
+            const std::string mapPath = "map:=" + m_latestMapPath.string();
+            const std::string initPoseX = "initial_pose_x:=" + std::to_string(m_initialPose.x());
+            const std::string initPoseY = "initial_pose_y:=" + std::to_string(m_initialPose.y());
+            const std::string initPoseYaw = "initial_pose_yaw:=" + std::to_string(m_initialPose.yaw());
+            execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n",
+              "ros2_com", mapPath.c_str(),
+              initPoseX.c_str(), initPoseY.c_str(), initPoseYaw.c_str(), NULL);
+          }
           break;
         case(processId::logging):
           execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
@@ -444,7 +448,7 @@ std::string RosManager::createMapSavePath()
   return saveDir;
 }
 
-std::string RosManager::initLatestMapPath()
+std::filesystem::path RosManager::initLatestMapPath()
 {
   std::filesystem::path tmpSavePath{m_slamMapsDir};
   tmpSavePath.append("tmp");
@@ -503,7 +507,7 @@ std::string RosManager::initLatestMapPath()
   fileReader.clear();
   fileReader.close();
 
-  return "map:=" + m_slamMapsDir.string() + "/" + std::to_string(num) + "/map.yaml";
+  return slamMapsDir.string() + "/" + std::to_string(num);
 }
 
 void RosManager::resetOdom()
