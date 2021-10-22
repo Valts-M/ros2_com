@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <filesystem>
 #include <vector>
 
 //ros
@@ -17,6 +18,7 @@
 //robotv3
 #include <robot_pose.hpp>
 #include <data_structures/common_data_structures.hpp>
+#include <robot_pose.hpp>
 
 #include "ros_manager_maps.hpp"
 #include "shmem_util.hpp"
@@ -60,12 +62,12 @@ private:
    * @brief Directory where all slam maps are saved
    * 
    */
-  const std::string m_slamMapsDir{"/home/RobotV3/slam_maps"};
+  const std::filesystem::path m_slamMapsDir{"/home/RobotV3/slam_maps"};
   /**
    * @brief Path to the latest created map
    * 
    */
-  std::string m_latestMapPath;
+  std::filesystem::path m_latestMapPath;
 
   /**
    * @brief Latest flag message received from RobotV3
@@ -118,6 +120,8 @@ private:
    * 
    */
   bool m_resetOdomFlag{false};
+
+  RobotPose m_initialPose{0.0, 0.0, 0.0};
 
   /**
    * @brief Timer that calles the update handler at a given interval
@@ -188,7 +192,7 @@ private:
    * 
    * @return std::string map path
    */
-  std::string initLatestMapPath();
+  std::filesystem::path getLatestMapYamlPath();
 
   /**
    * @brief Update handler called by the ros timer every n ms

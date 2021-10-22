@@ -71,7 +71,7 @@ private:
       {static_cast<size_t>(ConsProdNames::p_MapPath), { shmem::createRawProducer<TextualInfo>, ConsProdDescription("SlamMapPath")}},
       {static_cast<size_t>(ConsProdNames::p_OdomPose), { shmem::createPositionProducer, ConsProdDescription("RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)}},
       {static_cast<size_t>(ConsProdNames::p_MapPose), { shmem::createPositionProducer, ConsProdDescription("RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)}},
-      {static_cast<size_t>(ConsProdNames::p_LocaldMap), { shmem::createRawProducer<LocaldMap>, ConsProdDescription("LocaldMap", sizeof(LocaldMap) * 10U)}}
+      {static_cast<size_t>(ConsProdNames::p_LocaldMap), { shmem::createRawProducer<LocaldMap>, ConsProdDescription("LocaldMap", sizeof(LocaldMap) * 32U)}}
   };
 
   const MyConsProdDescriptions & getDescriptions() const override

@@ -96,7 +96,7 @@ def generate_launch_description():
                                 name="ouster_driver",
                                 output='screen',
                                 emulate_tty=True,
-                                parameters=[os.path.join(config_path, 'config', 'uster_config.yaml'),
+                                parameters=[os.path.join(config_path, 'config', 'ouster_config.yaml'),
                                     {'use_sim_time': use_sim_time}],
                                 arguments=['--ros-args', '--log-level', 'INFO'],
                                 namespace='/',
@@ -173,7 +173,7 @@ def generate_launch_description():
     ld.add_action(robot_state_publisher_node)
     ld.add_action(pose_listener_node)
     ld.add_action(odom_publisher_node)
-    ld.add_action(point2block_node)
+    # ld.add_action(point2block_node)
     ld.add_action(crash_event_hand)
 
     if lidar_model == 'ouster':

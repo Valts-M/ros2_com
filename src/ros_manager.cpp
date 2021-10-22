@@ -19,11 +19,12 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 {
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
   m_shmemUtil->start();
-  m_latestMapPath = initLatestMapPath();
+
+  m_latestMapPath = getLatestMapYamlPath();
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
   m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
-  m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("pose_listener/send_initial_pose");
+  // m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("pose_listener/send_initial_pose");
   m_initialPoseSaver = this->create_client<ros2_com::srv::SaveInitialPose>("pose_listener/save_initial_pose");
   
   m_rosTimer = this->create_wall_timer(
@@ -55,8 +56,8 @@ void RosManager::updateHandler()
   if(m_saveMapFlag)
     saveMap();
 
-  if(m_sendInitialPose)
-    sendInitialPose();
+  // if(m_sendInitialPose)
+  //   sendInitialPose();
 
   RCLCPP_INFO(this->get_logger(), "\n\n*********************************************************************************************************************\n");
 }
@@ -95,7 +96,6 @@ bool RosManager::getRosFlags()
   if(!m_flagConsumer) return false;
   try 
   {
-    if (!m_flagConsumer->consumerSize()) return false;
     m_latestFlags = m_flagConsumer->getAndPop();
 
     return true;
@@ -149,7 +149,7 @@ void RosManager::setStateFlag(const processId & t_processId)
       {
         turnOffMapping();
         m_resetOdomFlag = true;
-        m_sendInitialPose = true;
+        // m_sendInitialPose = true;
       }
       //if mapping set to active, turn off localization, reset odometry
       else if(t_processId == processId::mapping && !isProcessRunning(processId::mapping))
@@ -272,8 +272,15 @@ void RosManager::startProcess(const processId & t_processId)
             "mapping.launch.py", NULL);
           break;
         case(processId::localization):
-          execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
-            "localization.launch.py", m_latestMapPath.c_str(), NULL);
+          {
+            const std::string mapPath = "map:=" + m_latestMapPath.string();
+            const std::string initPoseX = "initial_pose_x:=" + std::to_string(m_initialPose.x());
+            const std::string initPoseY = "initial_pose_y:=" + std::to_string(m_initialPose.y());
+            const std::string initPoseYaw = "initial_pose_yaw:=" + std::to_string(m_initialPose.yaw());
+            execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n",
+              "ros2_com", "localization.launch.py", mapPath.c_str(),
+              initPoseX.c_str(), initPoseY.c_str(), initPoseYaw.c_str(), NULL);
+          }
           break;
         case(processId::logging):
           execl("/bin/python3", "python3", "/opt/ros/foxy/bin/ros2", "launch", "-n", "ros2_com", 
@@ -359,14 +366,15 @@ void RosManager::saveMap()
   }
   else
   {
-    std::string path = createMapSavePath() + "/map";
+    std::filesystem::path mapPath = createMapSavePath();
+    mapPath.append("map");
 
     m_mapSavePending = true;
 
     auto request = std::make_shared<ros2_com::srv::SaveMap_Request>();
-    request->filename = path;
+    request->filename = mapPath;
 
-    auto mapServiceCallback = [&, path](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
+    auto mapServiceCallback = [&, mapPath](rclcpp::Client<ros2_com::srv::SaveMap>::SharedFuture future)
     { 
       m_mapSavePending = false;
       auto result = future.get();
@@ -374,8 +382,10 @@ void RosManager::saveMap()
       {
         RCLCPP_INFO(this->get_logger(), "%sSave map: SUCCESS%s", 
           m_colorMap[Color::green], m_colorMap[Color::endColor]);
-        m_latestMapPath = "map:=" + path + ".yaml";
-        RCLCPP_INFO(this->get_logger(), m_latestMapPath);
+        std::filesystem::path mapYamlPath{mapPath};
+        mapYamlPath += ".yaml";
+        m_latestMapPath = mapYamlPath;
+        RCLCPP_INFO(this->get_logger(), "Map saved to %s", m_latestMapPath.c_str());
 
         m_saveMapFlag = false;
       }
@@ -400,13 +410,15 @@ void RosManager::saveMap()
 
 std::string RosManager::createMapSavePath()
 {
-  std::string numFilePath = m_slamMapsDir + "/num.txt";
+  std::filesystem::path numFilePath = m_slamMapsDir;
+  numFilePath.append("num.txt");
+
   std::ifstream fileReader(numFilePath);
   if(!fileReader.is_open())
   {
     RCLCPP_WARN(this->get_logger(), 
       "Couldn't open file %s, saving in %s",
-       numFilePath, m_slamMapsDir);
+       numFilePath.c_str(), m_slamMapsDir.c_str());
     return m_slamMapsDir;
   }
   int num;
@@ -414,13 +426,13 @@ std::string RosManager::createMapSavePath()
   fileReader.clear();
   fileReader.close();
 
-  std::string saveDir = m_slamMapsDir + "/" + std::to_string(++num);
-  if(mkdir(saveDir.c_str(), 0777) == -1)
+  std::filesystem::path saveDir = m_slamMapsDir;
+  saveDir.append(std::to_string(++num));
+
+  if(!std::filesystem::create_directory(saveDir))
   {
-    RCLCPP_WARN(this->get_logger(), 
-      "Couldn't create directory %s/%d, saving in %s",
-       m_slamMapsDir, num, m_slamMapsDir);
-    return m_slamMapsDir;
+    RCLCPP_FATAL(this->get_logger(), "Couldn't create map save directory: %s", saveDir.c_str());
+    throw -1;
   }
 
   std::ofstream fileWriter(numFilePath);
@@ -428,7 +440,7 @@ std::string RosManager::createMapSavePath()
   {
     RCLCPP_WARN(this->get_logger(), 
       "Couldn't open file %s for write, saving in %s",
-       numFilePath, m_slamMapsDir);
+       numFilePath.c_str(), m_slamMapsDir.c_str());
     return m_slamMapsDir;
   }
   fileWriter << num;
@@ -437,16 +449,57 @@ std::string RosManager::createMapSavePath()
   return saveDir;
 }
 
-std::string RosManager::initLatestMapPath()
+std::filesystem::path RosManager::getLatestMapYamlPath()
 {
-  std::string numFilePath = m_slamMapsDir + "/num.txt";
+  std::filesystem::path tmpSavePath{m_slamMapsDir};
+  tmpSavePath.append("tmp");
+
+  if(!std::filesystem::exists(m_slamMapsDir))
+  {
+    if(!std::filesystem::create_directories(m_slamMapsDir))
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't create map save directory: %s", m_slamMapsDir.c_str());
+      throw -1;
+    }
+    if(!std::filesystem::create_directory(tmpSavePath))
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", tmpSavePath.c_str());
+      throw -1;
+    }
+  }
+
+  if(!std::filesystem::exists(tmpSavePath))
+  {
+    if(!std::filesystem::create_directory(tmpSavePath))
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", tmpSavePath.c_str());
+      throw -1;
+    }
+  }
+
+  std::filesystem::path numFilePath = m_slamMapsDir;
+  numFilePath.append("num.txt");
+
+  if(!std::filesystem::exists(numFilePath))
+  {
+     std::ofstream fileWriter(numFilePath);
+    if(!fileWriter.is_open())
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't open file %s for write", numFilePath.c_str());
+      throw -1;
+    }
+    fileWriter << 0;
+    fileWriter.flush();
+    fileWriter.close();
+  }
+
   std::ifstream fileReader(numFilePath);
   if(!fileReader.is_open())
   {
-    RCLCPP_WARN(this->get_logger(), 
+    RCLCPP_FATAL(this->get_logger(), 
       "Couldn't open file %s",
-       numFilePath, m_slamMapsDir);
-    return m_slamMapsDir;
+       numFilePath.c_str());
+    throw -1;
   }
 
   int num;
@@ -454,7 +507,18 @@ std::string RosManager::initLatestMapPath()
   fileReader.clear();
   fileReader.close();
 
-  return "map:=" + m_slamMapsDir + "/" + std::to_string(num) + "/map.yaml";
+  std::filesystem::path mapYamlPath{m_slamMapsDir};
+  mapYamlPath.append(std::to_string(num));
+  mapYamlPath.append("map.yaml");
+  if(!std::filesystem::exists(mapYamlPath))
+  {
+    RCLCPP_WARN(this->get_logger(), 
+      "Map yaml file:\"%s\" does not exist!",
+       mapYamlPath.c_str());
+    return "";
+  }
+
+  return mapYamlPath;
 }
 
 void RosManager::resetOdom()
@@ -477,50 +541,50 @@ void RosManager::resetOdom()
   m_resetOdomFlag = false;
 }
 
-void RosManager::sendInitialPose()
-{
-  if(!isProcessRunning(processId::odom))
-  {
-    RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Process not active)");
-    m_sendInitialPose = false;
-    m_sendInitialPosePending = false;
-  }
-  else if (!m_initialPoseSender->service_is_ready())
-  {
-    RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Service not active)");
-    m_sendInitialPosePending = false;
-  }
-  else if(m_saveInitialPose || m_saveInitialPosePending)
-  {
-    RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING POSE SAVE");
-  }
-  else if(m_sendInitialPosePending)
-  {
-    RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING");
-  }
-  else
-  {
-    auto request = std::make_shared<ros2_com::srv::SendInitialPose_Request>();
-    m_sendInitialPosePending = true;
+// void RosManager::sendInitialPose()
+// {
+//   if(!isProcessRunning(processId::odom))
+//   {
+//     RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Process not active)");
+//     m_sendInitialPose = false;
+//     m_sendInitialPosePending = false;
+//   }
+//   else if (!m_initialPoseSender->service_is_ready())
+//   {
+//     RCLCPP_ERROR(this->get_logger(), "Send initial pose: FAILED (Service not active)");
+//     m_sendInitialPosePending = false;
+//   }
+//   else if(m_saveInitialPose || m_saveInitialPosePending)
+//   {
+//     RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING POSE SAVE");
+//   }
+//   else if(m_sendInitialPosePending)
+//   {
+//     RCLCPP_WARN(this->get_logger(), "Send initial pose: PENDING");
+//   }
+//   else
+//   {
+//     auto request = std::make_shared<ros2_com::srv::SendInitialPose_Request>();
+//     m_sendInitialPosePending = true;
 
-    auto sendInitialPoseServiceCallback = [&](rclcpp::Client<ros2_com::srv::SendInitialPose>::SharedFuture future)
-    { 
-      m_sendInitialPosePending = false;
-      auto result = future.get();
-      if(result->success)
-      {
-        RCLCPP_INFO(this->get_logger(), "%sSend initial pose: SUCCESS%s", 
-          m_colorMap[Color::green], m_colorMap[Color::green]);
-        m_sendInitialPose = false;
-      }
-      else
-      {
-        RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Localization not fully active yet)");
-      }
-    };
-    auto result = m_initialPoseSender->async_send_request(request, sendInitialPoseServiceCallback);
-  }
-}
+//     auto sendInitialPoseServiceCallback = [&](rclcpp::Client<ros2_com::srv::SendInitialPose>::SharedFuture future)
+//     { 
+//       m_sendInitialPosePending = false;
+//       auto result = future.get();
+//       if(result->success)
+//       {
+//         RCLCPP_INFO(this->get_logger(), "%sSend initial pose: SUCCESS%s", 
+//           m_colorMap[Color::green], m_colorMap[Color::green]);
+//         m_sendInitialPose = false;
+//       }
+//       else
+//       {
+//         RCLCPP_WARN(this->get_logger(), "Send initial pose: FAILED (Localization not fully active yet)");
+//       }
+//     };
+//     auto result = m_initialPoseSender->async_send_request(request, sendInitialPoseServiceCallback);
+//   }
+// }
 
 void RosManager::saveInitialPose()
 {
@@ -554,7 +618,10 @@ void RosManager::saveInitialPose()
         RCLCPP_INFO(this->get_logger(), "%sSave initial pose: SUCCESS%s", 
           m_colorMap[Color::green], m_colorMap[Color::endColor]);
         m_saveInitialPose = false;
-        m_sendInitialPose = true;
+        // m_sendInitialPose = true;
+        m_initialPose.x() = result->x;
+        m_initialPose.y() = result->y;
+        m_initialPose.yaw() = result->yaw;
       }
       else
       {

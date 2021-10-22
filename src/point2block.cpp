@@ -51,7 +51,7 @@ Point2Block::~Point2Block()
 
 void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-
+  const double scanTs = Helper::getTimeStamp();
   auto localdMapProducer = m_shmemUtil->getShmem<shmem::RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap);
   if (!localdMapProducer)
   {
@@ -64,7 +64,9 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
     m_mapLidarMsg = m_tfBuffer->lookupTransform(
       "odom", "base_footprint",
       tf2::TimePointZero);
-  } catch (const tf2::TransformException & ex) {
+  } 
+  catch (const tf2::TransformException & ex) 
+  {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Could not transform map to laser_sensor_frame: %s", ex.what());
     return;
@@ -122,19 +124,19 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   // m_filteredCloudMsg.header.stamp = this->now();
   m_publisher->publish(m_filteredCloudMsg);
 
-   try
-   {
-     localdMapProducer->copyUpdate(LocaldMap{Helper::getTimeStamp(), m_clearMap.data, m_obstacleMap.data, m_rows, m_cols});
-   }
-   catch(const std::exception& e)
-   {
-     RCLCPP_ERROR(this->get_logger(), "Shmem not working: %s", e.what());
-     return;
-   }
+  try
+  {
+    localdMapProducer->copyUpdate(LocaldMap{scanTs, m_clearMap.data, m_obstacleMap.data, m_rows, m_cols});
+  }
+  catch(const std::exception& e)
+  {
+    RCLCPP_ERROR(this->get_logger(), "Shmem not working: %s", e.what());
+    return;
+  }
 
 
-  cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
-  cv::imwrite("/workspaces/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
+  cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
+  cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
     
   m_clearMap.setTo(127);
   m_obstacleMap.setTo(0U);
