@@ -96,7 +96,7 @@ def generate_launch_description():
                                 name="ouster_driver",
                                 output='screen',
                                 emulate_tty=True,
-                                parameters=[os.path.join(config_path, 'config', 'uster_config.yaml'),
+                                parameters=[os.path.join(config_path, 'config', 'ouster_config.yaml'),
                                     {'use_sim_time': use_sim_time}],
                                 arguments=['--ros-args', '--log-level', 'INFO'],
                                 namespace='/',
