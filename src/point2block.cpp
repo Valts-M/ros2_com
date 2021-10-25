@@ -51,28 +51,14 @@ Point2Block::~Point2Block()
 
 void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-
-  auto localdMapProducer = m_shmemUtil->getShmem<RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap);
-
-  try
+  const double scanTs = Helper::getTimeStamp();
+  auto localdMapProducer = m_shmemUtil->getShmem<shmem::RawProducer<LocaldMap>>(ConsProdNames::p_LocaldMap);
+  if (!localdMapProducer)
   {
-    if(!localdMapProducer)
-    {
-      RCLCPP_ERROR(this->get_logger(), "nullptr");
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "Locald map producer not available!");
       return;
-    }
-    if(!localdMapProducer->isObjectReferenced()) 
-    {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
-      return;
-    }
   }
-  catch(const std::exception& e)
-  {
-    RCLCPP_ERROR(this->get_logger(), e.what());
-  }
-
-
+  
   try 
   {
     m_mapLidarMsg = m_tfBuffer->lookupTransform(
@@ -140,7 +126,7 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
 
   try
   {
-    localdMapProducer->copyUpdate(LocaldMap{Helper::getTimeStamp(), m_clearMap.data, m_obstacleMap.data, m_rows, m_cols});
+    localdMapProducer->copyUpdate(LocaldMap{scanTs, m_clearMap.data, m_obstacleMap.data, m_rows, m_cols});
   }
   catch(const std::exception& e)
   {

@@ -156,25 +156,10 @@ void OdometryPublisher::updateHandler()
 
 bool OdometryPublisher::getPoseAndVelocity()
 {
-  auto m_poseConsumer = m_shmemUtil->getShmem<CBConsumer<MsgRawStatus>>(ConsProdNames::c_MsgRawStatus);
-
+  auto m_poseConsumer = m_shmemUtil->getShmem<shmem::CBConsumer<MsgRawStatus>>(ConsProdNames::c_MsgRawStatus);
+  if (!m_poseConsumer) return false;
   try 
   {
-    if(!m_poseConsumer)
-    {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "Nullptr");
-      return false;
-    }
-    if (!m_poseConsumer->isConsumerReferenced()) 
-    {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "NOT REFERENCED");
-      return false;
-    }
-    if( !m_poseConsumer->consumerSize()) 
-    {
-    //RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 100, "BUFFER EMPTY");
-      return false;
-    }
     m_reactdLog = m_poseConsumer->getAndPop();
   } 
   catch (std::exception & e) 

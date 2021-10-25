@@ -92,11 +92,10 @@ void RosManager::updateProcessState(const processId & t_processId)
 
 bool RosManager::getRosFlags()
 {
-  auto m_flagConsumer = m_shmemUtil->getShmem<CBConsumer<RosFlags>>(ConsProdNames::c_RosFlags);
+  auto m_flagConsumer = m_shmemUtil->getShmem<shmem::CBConsumer<RosFlags>>(ConsProdNames::c_RosFlags);
   if(!m_flagConsumer) return false;
   try 
   {
-    if (!m_flagConsumer->consumerSize()) return false;
     m_latestFlags = m_flagConsumer->getAndPop();
 
     return true;
