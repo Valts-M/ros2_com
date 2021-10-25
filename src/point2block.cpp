@@ -62,7 +62,7 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   try 
   {
     m_mapLidarMsg = m_tfBuffer->lookupTransform(
-      "odom", "base_footprint",
+      "map", "base_footprint",
       tf2::TimePointZero);
   } 
   catch (const tf2::TransformException & ex) 
@@ -119,10 +119,10 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
 
   makeClearImage();
 
-  pcl::toROSMsg(*m_filteredCloud, m_filteredCloudMsg);
-  m_filteredCloudMsg.header = msg->header;
-  // m_filteredCloudMsg.header.stamp = this->now();
-  m_publisher->publish(m_filteredCloudMsg);
+  //pcl::toROSMsg(*m_filteredCloud, m_filteredCloudMsg);
+  //m_filteredCloudMsg.header = msg->header;
+  //// m_filteredCloudMsg.header.stamp = this->now();
+  //m_publisher->publish(m_filteredCloudMsg);
 
   try
   {
@@ -135,8 +135,8 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   }
 
 
-  cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
-  cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
+  /*cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
+  cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);*/
     
   m_clearMap.setTo(127);
   m_obstacleMap.setTo(0U);

@@ -173,7 +173,7 @@ def generate_launch_description():
     ld.add_action(robot_state_publisher_node)
     ld.add_action(pose_listener_node)
     ld.add_action(odom_publisher_node)
-    # ld.add_action(point2block_node)
+    ld.add_action(point2block_node)
     ld.add_action(crash_event_hand)
 
     if lidar_model == 'ouster':
