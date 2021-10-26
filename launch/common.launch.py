@@ -33,12 +33,22 @@ class bcolors:
 
 def generate_launch_description():
     config_path = "/configs/ros"
-    default_model_path = os.path.join(config_path, 'descriptions', 'columbus_description.urdf')
+    robot_model = os.getenv('ROBOT_MODEL')
+    robot_number = os.getenv('ROBOT_NUMBER')
+
+    robot_urdf_path = os.path.join(config_path, 'descriptions', robot_model + '_description.urdf')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
-    robot_config = os.path.join(config_path, 'config', 'robot_configs', 'columbus_2_config.yaml')
-    with open(robot_config, 'r') as f:
-        lidar_model = yaml.safe_load(f)['odom_publisher']['ros__parameters']['lidar_model']
+    robot_config_path = os.path.join(config_path, 'config', 'robot_configs', robot_model + '_' + robot_number + '_config.yaml')
+    robot_model_config_path = os.path.join(config_path, 'config', 'robot_model_configs', robot_model + '_config.yaml')
+
+    with open(robot_config_path, 'r') as f:
+        robot_config = yaml.safe_load(f)
+    lidar_params = robot_config['lidar_params']
+    robot_calibrations = robot_config['robot_calibrations']
+
+    with open(robot_model_config_path, 'r') as f:
+        model_params = yaml.safe_load(f)['model_params']
     
     robot_state_publisher_node = launch_ros.actions.Node(
         package='robot_state_publisher',
@@ -59,21 +69,20 @@ def generate_launch_description():
         name='clock_server'
     )
 
+    velodyne_params_path = os.path.join(config_path, 'config', 'velodyne_config.yaml')
+    with open(velodyne_params_path, 'r') as f:
+        velodyne_params = yaml.safe_load(f)['velodyne_driver_node']['ros__parameters']
+    velodyne_params['device_ip'] = lidar_params['lidar_ip']
     velodyne_driver_node = launch_ros.actions.Node(package='velodyne_driver',
         executable='velodyne_driver_node',
         output='screen',
-        parameters=[os.path.join(config_path, 'config', 'velodyne_config.yaml')],
+        parameters=[velodyne_params],
     )
-
-    convert_params_file = os.path.join(config_path, 'config', 'velodyne_converter_config.yaml')
-    with open(convert_params_file, 'r') as f:
-        convert_params = yaml.safe_load(f)['velodyne_convert_node']['ros__parameters']
-    convert_params['calibration'] = os.path.join(config_path, 'config', 'VLP16db.yaml')
 
     velodyne_convert_node = launch_ros.actions.Node(package='velodyne_pointcloud',
         executable='velodyne_convert_node',
         output='screen',
-        parameters=[convert_params]
+        parameters=[os.path.join(config_path, 'config', 'velodyne_converter_config.yaml')]
     )
 
     velodyne_laserscan_node = launch_ros.actions.Node(package='velodyne_laserscan',
@@ -87,17 +96,21 @@ def generate_launch_description():
         executable='odom_publisher',
         name='odom_publisher',
         output='screen',
-        parameters=[robot_config,
+        parameters=[robot_calibrations,
             {'use_sim_time': use_sim_time}],
     )
 
+    ouster_params_path = os.path.join(config_path, 'config', 'ouster_config.yaml')
+    with open(ouster_params_path, 'r') as f:
+        ouster_params = yaml.safe_load(f)['ouster_driver']['ros__parameters']
+    ouster_params['lidar_ip'] = lidar_params['lidar_ip']
+    ouster_params['computer_ip'] = lidar_params['robot_ip']
     ouster_node = LifecycleNode(package='ros2_ouster',
                                 executable='ouster_driver',
                                 name="ouster_driver",
                                 output='screen',
                                 emulate_tty=True,
-                                parameters=[os.path.join(config_path, 'config', 'ouster_config.yaml'),
-                                    {'use_sim_time': use_sim_time}],
+                                parameters=[ouster_params],
                                 arguments=['--ros-args', '--log-level', 'INFO'],
                                 namespace='/',
                                 )
@@ -144,14 +157,17 @@ def generate_launch_description():
         output='screen'
     )
 
+    with open(os.path.join(config_path, 'config', 'point2block_params.yaml'), 'r') as f:
+        point2block_params = yaml.safe_load(f)['point2block_params']
     point2block_node = launch_ros.actions.Node(
         package='ros2_com',
         executable='point2block',
         name='point2block',
-        output='screen'
+        output='screen',
+        parameters=[model_params, point2block_params]
     )
 
-    urdf_model = DeclareLaunchArgument(name='model', default_value=default_model_path,
+    urdf_model = DeclareLaunchArgument(name='model', default_value=robot_urdf_path,
                                         description='Absolute path to robot urdf file')
 
     use_sim_time_arg = DeclareLaunchArgument(name='use_sim_time', default_value='false',
@@ -176,12 +192,12 @@ def generate_launch_description():
     ld.add_action(point2block_node)
     ld.add_action(crash_event_hand)
 
-    if lidar_model == 'ouster':
+    if lidar_params['lidar_model'] == 'ouster':
         ld.add_action(ouster_node)
         ld.add_action(activate_event)
         ld.add_action(configure_event)
         ld.add_action(shutdown_event)
-    elif lidar_model == 'velodyne':
+    elif lidar_params['lidar_model'] == 'velodyne':
         ld.add_action(velodyne_driver_node)
         ld.add_action(velodyne_convert_node)
         ld.add_action(velodyne_laserscan_node)

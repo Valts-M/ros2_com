@@ -65,18 +65,19 @@ private:
   cv::Mat m_clearMap;
   cv::Mat m_obstacleMap;
 
-  const double m_lidarHeight{0.345};
-  const double m_robotHeight{1.2};
-  const double m_lidarTolerance{0.1};
-  const double m_floorTolerance{0.07};
-  const double m_robotHeightTolerance{0.1};
+  void initParams();
 
-  const u_int16_t m_rows{120};
-  const u_int16_t m_cols{120};
-  const int m_mapResolutionCm{5};
-  const int x_offset{m_rows * m_mapResolutionCm / 2};
-  const int y_offset{m_cols * m_mapResolutionCm / 2};
-  const float m_lidarBlindRadius = 0.5;
+  double m_lidarHeight;
+  double m_robotHeight;
+  double m_floorTolerance;
+  double m_robotHeightTolerance;
+
+  int m_rows;
+  int m_cols;
+  int m_mapResolutionCm;
+  double m_lidarBlindRadius;
+  int x_offset;
+  int y_offset;
 
   void pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   void lsTopicCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg);

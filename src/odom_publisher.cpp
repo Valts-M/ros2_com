@@ -41,16 +41,16 @@ OdometryPublisher::~OdometryPublisher()
 
 RobotConfig OdometryPublisher::getRobotConfig()
 {
-  this->declare_parameter("leftEncScale");
-  this->declare_parameter("rightEncScale");
-  this->declare_parameter("leftGyroScale");
-  this->declare_parameter("rightGyroScale");
+  this->declare_parameter("left_enc_scale");
+  this->declare_parameter("right_enc_scale");
+  this->declare_parameter("left_gyro_scale");
+  this->declare_parameter("right_gyro_scale");
 
   RobotConfig config{};
-  config.leftEncScale = get_parameter("leftEncScale").as_double();
-  config.rightEncScale = get_parameter("rightEncScale").as_double();
-  config.leftGyroScale = get_parameter("leftGyroScale").as_double();
-  config.RightGyroScale = get_parameter("rightGyroScale").as_double();
+  config.leftEncScale = get_parameter("left_enc_scale").as_double();
+  config.rightEncScale = get_parameter("right_enc_scale").as_double();
+  config.leftGyroScale = get_parameter("left_gyro_scale").as_double();
+  config.RightGyroScale = get_parameter("right_gyro_scale").as_double();
 
   RCLCPP_DEBUG(this->get_logger(), "le: %f, re: %f, lg: %f, rg: %f",
    config.leftEncScale, config.rightEncScale, config.leftGyroScale, config.RightGyroScale);

@@ -1,8 +1,9 @@
-odom_publisher:
-    ros__parameters:
-      leftEncScale: 3.32869601595697E-06
-      rightEncScale: 3.323756924881365E-06
-      leftGyroScale: -3.63341763991777024E-07
-      rightGyroScale: -3.641763991777024E-07
-      lidar_model: "velodyne"
-      lidar_x_offset: 0.83
+robot_calibrations:
+  left_enc_scale: 3.32869601595697E-06
+  right_enc_scale: 3.323756924881365E-06
+  left_gyro_scale: -3.63341763991777024E-07
+  right_gyro_scale: -3.641763991777024E-07
+lidar_params:
+  lidar_model: "velodyne"
+  lidar_ip: 192.168.3.22
+  robot_ip: 192.168.3.52

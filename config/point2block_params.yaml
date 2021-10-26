@@ -1,0 +1,7 @@
+point2block_params:
+  floor_tolerance: 0.07
+  robot_height_tolerance: 0.1
+  image_height: 120
+  image_width: 120
+  map_resolution_cm: 5
+  lidar_blind_radius: 0.5

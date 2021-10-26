@@ -28,8 +28,11 @@ m_rotatedCloud(new pcl::PointCloud<pcl::PointXYZ>)
   m_obstacleMap = cv::Mat(m_rows, m_cols, CV_8U);
   m_clearMap.setTo(127U);
   m_obstacleMap.setTo(0U);
-  RCLCPP_ERROR(this->get_logger(), "Constr");
 
+  initParams();
+  x_offset = m_rows * m_mapResolutionCm / 2;
+  y_offset = m_cols * m_mapResolutionCm / 2;
+  
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_LocaldMap});
   m_shmemUtil->start();
 
@@ -142,6 +145,28 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   m_obstacleMap.setTo(0U);
   m_filteredCloud->clear();
   m_rotatedCloud->clear();
+}
+
+void Point2Block::initParams()
+{
+  this->declare_parameter("lidar_height");
+  this->declare_parameter("robot_height");
+  this->declare_parameter("floor_tolerance");
+  this->declare_parameter("robot_height_tolerance");
+  this->declare_parameter("image_height");
+  this->declare_parameter("image_width");
+  this->declare_parameter("map_resolution_cm");
+  this->declare_parameter("lidar_blind_radius");
+
+  m_lidarHeight = this->get_parameter("lidar_height").as_double();
+  m_robotHeight = this->get_parameter("robot_height").as_double();
+  m_floorTolerance = this->get_parameter("floor_tolerance").as_double();
+  m_robotHeightTolerance = this->get_parameter("robot_height_tolerance").as_double();
+  m_rows = this->get_parameter("image_height").as_int();
+  m_cols = this->get_parameter("image_width").as_int();
+  m_mapResolutionCm = this->get_parameter("map_resolution_cm").as_int();
+  m_lidarBlindRadius = this->get_parameter("lidar_blind_radius").as_double();
+
 }
 
 void Point2Block::lsTopicCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg)

@@ -24,10 +24,11 @@ class bcolors:
 def generate_launch_description():
     config_path = "/configs/ros"
     use_sim_time = LaunchConfiguration('use_sim_time')
+    robot_model = os.getenv('ROBOT_MODEL')
 
-    robot_config = os.path.join(config_path, 'config', 'robot_configs', 'columbus_2_config.yaml')
-    with open(robot_config, 'r') as f:
-        params = yaml.safe_load(f)['odom_publisher']['ros__parameters']
+    robot_model_config = os.path.join(config_path, 'config', 'robot_model_configs', robot_model + '_config.yaml')
+    with open(robot_model_config, 'r') as f:
+        params = yaml.safe_load(f)['model_params']
     
     map_saver_server = launch_ros.actions.Node(
         package='ros2_com',

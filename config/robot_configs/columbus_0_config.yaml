@@ -1,8 +1,9 @@
-odom_publisher:
-    ros__parameters:
-      leftEncScale: 3.486633337357489E-06
-      rightEncScale: 3.501896539618444E-06
-      leftGyroScale: -3.647533954404527E-07
-      rightGyroScale: -3.63972935218096E-07
-      lidar_model: "ouster"
-      lidar_x_offset: 0.55
+robot_calibrations:
+  left_enc_scale: 3.486633337357489E-06
+  right_enc_scale: 3.501896539618444E-06
+  left_gyro_scale: -3.647533954404527E-07
+  right_gyro_scale: -3.63972935218096E-07
+lidar_params:
+  lidar_model: "ouster"
+  lidar_ip: 192.168.3.22
+  robot_ip: 192.168.3.42
