@@ -62,7 +62,7 @@ def generate_launch_description():
             lidar_config = yaml.safe_load(f)['velodyne_driver_node']['ros__parameters']
         lidar_config['device_ip'] = lidar_params['lidar_ip']
 
-    robot_model['lidar_height'] += lidar_config['lidar_z_offset']
+    model_params['lidar_height'] += lidar_config['lidar_z_offset']
     
     robot_state_publisher_node = launch_ros.actions.Node(
         package='robot_state_publisher',
