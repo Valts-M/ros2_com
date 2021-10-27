@@ -5,5 +5,5 @@ robot_calibrations:
   right_gyro_scale: -3.615086195934141E-07
 lidar_params:
   lidar_model: "velodyne"
-  lidar_ip: 192.168.3.22
+  lidar_ip: 192.168.3.25
   robot_ip: 192.168.3.72
