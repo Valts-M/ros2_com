@@ -51,3 +51,5 @@ ouster_driver:
     # PCL
     #
     proc_mask: PCL|IMU|SCAN
+    lidar_z_offset: 0.055
+

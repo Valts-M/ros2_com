@@ -49,6 +49,20 @@ def generate_launch_description():
 
     with open(robot_model_config_path, 'r') as f:
         model_params = yaml.safe_load(f)['model_params']
+
+    if lidar_params['lidar_model'] == 'ouster':
+        lidar_config_path = os.path.join(config_path, 'config', 'ouster_config.yaml')
+        with open(lidar_config_path, 'r') as f:
+            lidar_config = yaml.safe_load(f)['ouster_driver']['ros__parameters']
+        lidar_config['lidar_ip'] = lidar_params['lidar_ip']
+        lidar_config['computer_ip'] = lidar_params['robot_ip']
+    elif lidar_params['lidar_model'] == 'velodyne':
+        lidar_config_path = os.path.join(config_path, 'config', 'velodyne_config.yaml')
+        with open(lidar_config_path, 'r') as f:
+            lidar_config = yaml.safe_load(f)['velodyne_driver_node']['ros__parameters']
+        lidar_config['device_ip'] = lidar_params['lidar_ip']
+
+    robot_model['lidar_height'] += lidar_config['lidar_z_offset']
     
     robot_state_publisher_node = launch_ros.actions.Node(
         package='robot_state_publisher',
@@ -69,14 +83,10 @@ def generate_launch_description():
         name='clock_server'
     )
 
-    velodyne_params_path = os.path.join(config_path, 'config', 'velodyne_config.yaml')
-    with open(velodyne_params_path, 'r') as f:
-        velodyne_params = yaml.safe_load(f)['velodyne_driver_node']['ros__parameters']
-    velodyne_params['device_ip'] = lidar_params['lidar_ip']
     velodyne_driver_node = launch_ros.actions.Node(package='velodyne_driver',
         executable='velodyne_driver_node',
         output='screen',
-        parameters=[velodyne_params],
+        parameters=[lidar_config],
     )
 
     velodyne_convert_node = launch_ros.actions.Node(package='velodyne_pointcloud',
@@ -100,17 +110,12 @@ def generate_launch_description():
             {'use_sim_time': use_sim_time}],
     )
 
-    ouster_params_path = os.path.join(config_path, 'config', 'ouster_config.yaml')
-    with open(ouster_params_path, 'r') as f:
-        ouster_params = yaml.safe_load(f)['ouster_driver']['ros__parameters']
-    ouster_params['lidar_ip'] = lidar_params['lidar_ip']
-    ouster_params['computer_ip'] = lidar_params['robot_ip']
     ouster_node = LifecycleNode(package='ros2_ouster',
                                 executable='ouster_driver',
                                 name="ouster_driver",
                                 output='screen',
                                 emulate_tty=True,
-                                parameters=[ouster_params],
+                                parameters=[lidar_config],
                                 arguments=['--ros-args', '--log-level', 'INFO'],
                                 namespace='/',
                                 )

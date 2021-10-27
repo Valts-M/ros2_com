@@ -4,6 +4,6 @@ robot_calibrations:
   left_gyro_scale: -3.647533954404527E-07
   right_gyro_scale: -3.63972935218096E-07
 lidar_params:
-  lidar_model: "ouster"
+  lidar_model: ouster
   lidar_ip: 192.168.3.22
   robot_ip: 192.168.3.42
