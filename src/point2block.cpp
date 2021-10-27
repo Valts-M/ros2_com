@@ -65,7 +65,7 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   try 
   {
     m_mapLidarMsg = m_tfBuffer->lookupTransform(
-      "map", "base_footprint",
+      "map", "laser_sensor_frame",
       tf2::TimePointZero);
   } 
   catch (const tf2::TransformException & ex) 
@@ -100,21 +100,23 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   m_filteredCloud->points.clear();
   int zeroes = 0;
 
-  for(size_t i = 0; i < m_rotatedCloud->points.size(); ++i)
+  for (size_t i = 0; i < m_rotatedCloud->points.size(); ++i)
   {
-    pcl::PointXYZ point = m_rotatedCloud->points.at(i);
-    if(std::abs(point.x) < m_lidarBlindRadius && std::abs(point.y) < m_lidarBlindRadius)
-    {
-      ++zeroes;
-      continue;
-    }
+      pcl::PointXYZ point = m_rotatedCloud->points.at(i);
 
-    if(std::abs(point.x) < 3.0 )
-      if(std::abs(point.y) < 3.0)
+      if (std::abs(point.x) < m_lidarBlindRadius && std::abs(point.y) < m_lidarBlindRadius)
       {
-        m_filteredCloud->points.push_back(point);
-        updateObstacleImage(point);
+          ++zeroes;
+          continue;
       }
+
+      if (std::abs(point.x) < 3.0)
+          if (std::abs(point.y) < 3.0)
+          {
+              m_filteredCloud->points.push_back(point);
+
+              updateObstacleImage(point);
+          }
   }
 
   // RCLCPP_ERROR(this->get_logger(), "msg:%d, filtered:%d, unfiltered:%d, rotated:%d, zeroes: %d",
@@ -127,16 +129,28 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
   //// m_filteredCloudMsg.header.stamp = this->now();
   //m_publisher->publish(m_filteredCloudMsg);
 
+  tf2::Quaternion tempQuat;
+  tf2::convert(m_mapLidarMsg.transform.rotation, tempQuat);
+  tf2::Matrix3x3 tempMatrix(tempQuat);
+  double roll, pitch, yaw;
+  tempMatrix.getEulerYPR(yaw, pitch, roll);
+
+  m_pose.x() = m_mapLidarMsg.transform.translation.x;
+  m_pose.y() = m_mapLidarMsg.transform.translation.y;
+  m_pose.yaw() = yaw;
+  const double msgTs = static_cast<double>(m_mapLidarMsg.header.stamp.sec) + 1e-9 * static_cast<double>(m_mapLidarMsg.header.stamp.nanosec);
+
+  //RCLCPP_INFO(this->get_logger(), "scanTs=%.5f, msgTs=%.5f, tsDiff=%.5f, x=%.2f, y=%.2f, yaw=%.2f", scanTs, msgTs, scanTs - msgTs, m_pose.x(), m_pose.y(), m_pose.yawDeg());
+
   try
   {
-    localdMapProducer->copyUpdate(LocaldMap{scanTs, m_clearMap.data, m_obstacleMap.data, m_rows, m_cols});
+    localdMapProducer->copyUpdate(LocaldMap{ msgTs, m_clearMap.data, m_obstacleMap.data, m_rows, m_cols, PoseRaw(m_pose) });
   }
   catch(const std::exception& e)
   {
     RCLCPP_ERROR(this->get_logger(), "Shmem not working: %s", e.what());
     return;
   }
-
 
   /*cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
   cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);*/
@@ -203,7 +217,7 @@ void Point2Block::updateObstacleImage(const pcl::PointXYZ& t_point)
 {
   const cv::Point endPoint{static_cast<int>(t_point.x * 100 + x_offset) / m_mapResolutionCm, 
     static_cast<int>(-t_point.y * 100 + y_offset) / m_mapResolutionCm};
-  
+
   if(t_point.z <= -(m_lidarHeight + m_floorTolerance))
     m_obstacleMap.at<unsigned char>(endPoint) |= ProjectionTypes::FALL;
 

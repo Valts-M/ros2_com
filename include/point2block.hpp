@@ -78,6 +78,7 @@ private:
   double m_lidarBlindRadius;
   int x_offset;
   int y_offset;
+  RobotPose m_pose;
 
   void pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   void lsTopicCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg);

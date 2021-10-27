@@ -124,11 +124,13 @@ namespace ros2_com
     m_odomPose.x() = m_odomLidarMsg.transform.translation.x;
     m_odomPose.y() = m_odomLidarMsg.transform.translation.y;
     m_odomPose.yaw() = yaw;
+    double msgTs = static_cast<double>(m_odomLidarMsg.header.stamp.sec) + 1e-9 * static_cast<double>(m_odomLidarMsg.header.stamp.nanosec);
+
     auto m_odomPoseProducer = m_shmemUtil->getShmem<shmem::PositionProducer>(ConsProdNames::p_OdomPose);
     if (!m_odomPoseProducer) return;
     try
     {
-        m_odomPoseProducer->append(m_odomPose, m_ts);
+        m_odomPoseProducer->append(m_odomPose, msgTs);
     }
     catch (const std::exception& ex)
     {
@@ -157,13 +159,15 @@ namespace ros2_com
     m_mapPose.y() = m_mapLidarMsg.transform.translation.y;
     m_mapPose.yaw() = yaw;
 
-    RCLCPP_DEBUG(this->get_logger(), "Map: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
+    msgTs = static_cast<double>(m_mapLidarMsg.header.stamp.sec) + 1e-9 * static_cast<double>(m_mapLidarMsg.header.stamp.nanosec);
+
+    RCLCPP_DEBUG(this->get_logger(), "Map: x='%f', y='%f'", m_mapPose.x(), m_mapPose.y());
     RCLCPP_DEBUG(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
     auto m_mapPoseProducer = m_shmemUtil->getShmem<shmem::PositionProducer>(ConsProdNames::p_MapPose);
     if (!m_mapPoseProducer) return;
     try
     {
-        m_mapPoseProducer->append(m_mapPose, m_ts);
+        m_mapPoseProducer->append(m_mapPose, msgTs);
     }
     catch (const std::exception& ex)
     {
