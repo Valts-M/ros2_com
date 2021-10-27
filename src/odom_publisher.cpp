@@ -152,6 +152,8 @@ void OdometryPublisher::updateHandler()
       m_odomMsg.pose.pose.position.y, 
       m_kinematics.m_yaw);
   }
+  RCLCPP_DEBUG(this->get_logger(), "leftEnc=%d; rightEnc=%d; gyro=%f", 
+    m_kinematics.leftEncTicCount, m_kinematics.rightEncTicCount, m_kinematics.gyroTicCount);
 }
 
 bool OdometryPublisher::getPoseAndVelocity()

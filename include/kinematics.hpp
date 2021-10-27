@@ -35,6 +35,9 @@ public:
    */
   void calcPosAndVelocity(const zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output);
   double m_yaw{0.0}; //rad
+  int leftEncTicCount{0};
+  int rightEncTicCount{0};
+  double gyroTicCount{0.0};
 
 private:
 

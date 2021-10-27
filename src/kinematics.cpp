@@ -30,6 +30,11 @@ namespace ros2_com
       output.pose.pose.position.x += distanceTraveled * cos(m_yaw);
       output.pose.pose.position.y += distanceTraveled * sin(m_yaw);
 
+      //calibration
+      leftEncTicCount += input.encoders[0];
+      rightEncTicCount += input.encoders[1];
+      gyroTicCount += trueGyroZ;
+
       //check if orientation is within bounds
       if( m_yaw >= M_PI)
         m_yaw -= 2 * M_PI;
