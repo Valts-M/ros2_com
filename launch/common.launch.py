@@ -68,7 +68,9 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         parameters=[{'robot_description': Command(['xacro ', LaunchConfiguration('model')]),
-            'use_sim_time': use_sim_time}]
+            'use_sim_time': use_sim_time}],
+        arguments=['--ros-args', '--log-level', 'ERROR'],
+
     )
     joint_state_publisher_node = launch_ros.actions.Node(
         package='joint_state_publisher',
@@ -108,6 +110,7 @@ def generate_launch_description():
         output='screen',
         parameters=[robot_calibrations,
             {'use_sim_time': use_sim_time}],
+        arguments=['--ros-args', '--log-level', 'INFO'],
     )
 
     ouster_node = LifecycleNode(package='ros2_ouster',
