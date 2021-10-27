@@ -24,12 +24,12 @@ m_unfilteredCloud(new pcl::PointCloud<pcl::PointXYZ>),
 m_filteredCloud(new pcl::PointCloud<pcl::PointXYZ>),
 m_rotatedCloud(new pcl::PointCloud<pcl::PointXYZ>)
 {
+  initParams();
   m_clearMap = cv::Mat(m_rows, m_cols, CV_8U);
   m_obstacleMap = cv::Mat(m_rows, m_cols, CV_8U);
   m_clearMap.setTo(127U);
   m_obstacleMap.setTo(0U);
 
-  initParams();
   x_offset = m_rows * m_mapResolutionCm / 2;
   y_offset = m_cols * m_mapResolutionCm / 2;
   
