@@ -45,6 +45,9 @@ void RosManager::updateHandler()
   if(getRosFlags())
     setLocalFlags();
 
+  if(m_pausePoseSendFlag)
+    pausePoseSend(true);
+
   updateProcessStates();
 
   if(m_saveInitialPose)
@@ -175,7 +178,7 @@ void RosManager::setStateFlag(const processId & t_processId)
 void RosManager::turnOffMapping()
 {
   m_flagMap[processId::mapping] = false;
-  pausePoseSend(true);
+  m_pausePoseSendFlag = true;
   if(isProcessRunning(processId::mapping))
   {
     m_saveMapFlag = true;
@@ -225,9 +228,13 @@ void RosManager::pausePoseSend(const bool pause)
       RCLCPP_INFO(this->get_logger(), "%sPausePoseSend: SUCCESS%s",m_colorMap[Color::green], m_colorMap[Color::endColor]);
     };
 
-    m_posePauser->async_send_request(std::make_shared<ros2_com::srv::PausePoseSend_Request>(), 
-      posePauseServiceCallback);
-
+    if(m_posePauser->service_is_ready())
+    {
+      m_posePauser->async_send_request(std::make_shared<ros2_com::srv::PausePoseSend_Request>(), 
+        posePauseServiceCallback);
+      m_pausePoseSendFlag = false;
+      RCLCPP_INFO(this->get_logger(), "Paused pose send");
+    }
 }
 
 bool RosManager::incompatibleProcesses(const processId & t_processId)

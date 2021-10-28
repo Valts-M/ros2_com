@@ -122,6 +122,8 @@ private:
    */
   bool m_resetOdomFlag{false};
 
+  bool m_pausePoseSendFlag{false};
+
   RobotPose m_initialPose{0.0, 0.0, 0.0};
 
   /**
