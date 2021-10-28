@@ -15,6 +15,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include "ros2_com/srv/send_initial_pose.hpp"
 #include "ros2_com/srv/save_initial_pose.hpp"
+#include "ros2_com/srv/pause_pose_send.hpp"
 
 //robotv3
 #include <robot_pose.hpp>
@@ -105,6 +106,9 @@ private:
   void saveInitialPose(const std::shared_ptr<ros2_com::srv::SaveInitialPose::Request> request,
           std::shared_ptr<ros2_com::srv::SaveInitialPose::Response> response);
 
+  void pausePoseSend(const std::shared_ptr<ros2_com::srv::PausePoseSend::Request> request,
+        std::shared_ptr<ros2_com::srv::PausePoseSend::Response> response);
+
   /**
    * @brief Ros timer callback
    * 
@@ -115,6 +119,8 @@ private:
     * @brief Stores the timestamp
   */
   double m_ts{0.0};
+
+  bool m_pausePoseSend{false};
 
   /*!
     * @brief Transform listener

@@ -14,6 +14,7 @@
 #include "ros2_com/srv/reset_odom.hpp"
 #include "ros2_com/srv/send_initial_pose.hpp"
 #include "ros2_com/srv/save_initial_pose.hpp"
+#include "ros2_com/srv/pause_pose_send.hpp"
 
 //robotv3
 #include <robot_pose.hpp>
@@ -134,6 +135,9 @@ private:
    * 
    */
   rclcpp::Client<ros2_com::srv::SaveMap>::SharedPtr m_mapSaver;
+
+  rclcpp::Client<ros2_com::srv::PausePoseSend>::SharedPtr m_posePauser;
+
   /**
    * @brief Client for the odom resetter service
    * 
@@ -177,6 +181,8 @@ private:
    * 
    */
   void saveMap();
+
+  void pausePoseSend(const bool pause);
 
   /**
    * @brief Creates a folder for where to store the map files and returns the path

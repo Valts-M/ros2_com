@@ -94,9 +94,14 @@ namespace ros2_com
     }
   }
 
+  void PoseListener::pausePoseSend(const std::shared_ptr<ros2_com::srv::PausePoseSend::Request> request,
+      std::shared_ptr<ros2_com::srv::PausePoseSend::Response> response)
+  {
+    m_pausePoseSend = true;
+  }
+
   void PoseListener::timerCallback()
   {
-    
     m_ts = Helper::getTimeStamp();
 
     try {
@@ -126,15 +131,18 @@ namespace ros2_com
     m_odomPose.yaw() = yaw;
     double msgTs = static_cast<double>(m_odomLidarMsg.header.stamp.sec) + 1e-9 * static_cast<double>(m_odomLidarMsg.header.stamp.nanosec);
 
-    auto m_odomPoseProducer = m_shmemUtil->getShmem<shmem::PositionProducer>(ConsProdNames::p_OdomPose);
-    if (!m_odomPoseProducer) return;
-    try
+    if(!m_pausePoseSend)
     {
-        m_odomPoseProducer->append(m_odomPose, msgTs);
-    }
-    catch (const std::exception& ex)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Shmem: failed to update odom pose");
+      auto m_odomPoseProducer = m_shmemUtil->getShmem<shmem::PositionProducer>(ConsProdNames::p_OdomPose);
+      if (!m_odomPoseProducer) return;
+      try
+      {
+          m_odomPoseProducer->append(m_odomPose, msgTs);
+      }
+      catch (const std::exception& ex)
+      {
+          RCLCPP_ERROR(this->get_logger(), "Shmem: failed to update odom pose");
+      }
     }
 
     RCLCPP_DEBUG(this->get_logger(), "Odom: x='%f', y='%f'", m_odomPose.x(), m_odomPose.y());
@@ -163,15 +171,45 @@ namespace ros2_com
 
     RCLCPP_DEBUG(this->get_logger(), "Map: x='%f', y='%f'", m_mapPose.x(), m_mapPose.y());
     RCLCPP_DEBUG(this->get_logger(), "roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
-    auto m_mapPoseProducer = m_shmemUtil->getShmem<shmem::PositionProducer>(ConsProdNames::p_MapPose);
-    if (!m_mapPoseProducer) return;
-    try
+    if(!m_pausePoseSend)
     {
-        m_mapPoseProducer->append(m_mapPose, msgTs);
+      auto m_mapPoseProducer = m_shmemUtil->getShmem<shmem::PositionProducer>(ConsProdNames::p_MapPose);
+      if (!m_mapPoseProducer) return;
+      try
+      {
+          m_mapPoseProducer->append(m_mapPose, msgTs);
+      }
+      catch (const std::exception& ex)
+      {
+          RCLCPP_ERROR(this->get_logger(), "Shmem: failed to update map pose");
+      }
     }
-    catch (const std::exception& ex)
+
+    if(m_pausePoseSend && m_initialPosePublisher->get_subscription_count() > 0)
     {
-        RCLCPP_ERROR(this->get_logger(), "Shmem: failed to update map pose");
+      geometry_msgs::msg::TransformStamped currentPose;
+      try 
+      {
+        currentPose = m_tfBuffer->lookupTransform(
+          m_map_frame, "base_footprint",
+          tf2::TimePointZero);
+      } 
+      catch (const tf2::TransformException & ex) 
+      {
+        RCLCPP_WARN_THROTTLE(
+          this->get_logger(), *this->get_clock(), 1000, "Could not transform %s to %s: %s",
+          m_map_frame.c_str(), "base_footprint", ex.what());
+        return;
+      }
+
+      std::fabs(m_initialPose.pose.pose.position.x - currentPose.transform.translation.x) < 0.05 &&
+      std::fabs(m_initialPose.pose.pose.position.y - currentPose.transform.translation.y) < 0.05 &&
+      std::fabs(m_initialPose.pose.pose.position.z - currentPose.transform.translation.z) < 0.05 &&
+      std::fabs(m_initialPose.pose.pose.orientation.w - currentPose.transform.rotation.w) < 0.05 &&
+      std::fabs(m_initialPose.pose.pose.orientation.z - currentPose.transform.rotation.z) < 0.05 ?
+      m_pausePoseSend = false : m_pausePoseSend = true;
+
+      RCLCPP_FATAL(this->get_logger(), "pause: %d", m_pausePoseSend);
     }
   }
 

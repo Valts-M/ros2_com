@@ -175,6 +175,7 @@ void RosManager::setStateFlag(const processId & t_processId)
 void RosManager::turnOffMapping()
 {
   m_flagMap[processId::mapping] = false;
+  pausePoseSend(true);
   if(isProcessRunning(processId::mapping))
   {
     m_saveMapFlag = true;
@@ -215,6 +216,18 @@ void RosManager::sendKill(const processId & t_processId)
     else
       RCLCPP_WARN(this->get_logger(), "Error while sending SIGKILL to %d", t_processId);
   }
+}
+
+void RosManager::pausePoseSend(const bool pause)
+{
+    auto posePauseServiceCallback = [&](rclcpp::Client<ros2_com::srv::PausePoseSend>::SharedFuture future)
+    { 
+      RCLCPP_INFO(this->get_logger(), "%sPausePoseSend: SUCCESS%s",m_colorMap[Color::green], m_colorMap[Color::endColor]);
+    };
+
+    m_posePauser->async_send_request(std::make_shared<ros2_com::srv::PausePoseSend_Request>(), 
+      posePauseServiceCallback);
+
 }
 
 bool RosManager::incompatibleProcesses(const processId & t_processId)
