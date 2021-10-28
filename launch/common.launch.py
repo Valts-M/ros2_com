@@ -41,6 +41,8 @@ def generate_launch_description():
 
     robot_config_path = os.path.join(config_path, 'config', 'robot_configs', robot_model + '_' + robot_number + '_config.yaml')
     robot_model_config_path = os.path.join(config_path, 'config', 'robot_model_configs', robot_model + '_config.yaml')
+    print(bcolors.OKCYAN, 'Robot config = ', robot_config_path, bcolors.ENDC)
+    print(bcolors.OKCYAN, 'Robot model config = ', robot_model_config_path, bcolors.ENDC)
 
     with open(robot_config_path, 'r') as f:
         robot_config = yaml.safe_load(f)
@@ -197,7 +199,7 @@ def generate_launch_description():
     ld.add_action(robot_state_publisher_node)
     ld.add_action(pose_listener_node)
     ld.add_action(odom_publisher_node)
-    ld.add_action(point2block_node)
+    # ld.add_action(point2block_node)
     ld.add_action(crash_event_hand)
 
     if lidar_params['lidar_model'] == 'ouster':
