@@ -219,7 +219,11 @@ namespace ros2_com
       std::fabs(m_initialPose.pose.pose.orientation.w - currentPose.transform.rotation.w) < 0.2 &&
       std::fabs(m_initialPose.pose.pose.orientation.z - currentPose.transform.rotation.z) < 0.2 ?
       m_pausePoseSend = false : m_pausePoseSend = true;
-      if(m_pausePoseSend == false) m_pausedCount = 0;
+      if(m_pausePoseSend == false) 
+      {
+        m_pausedCount = 0;
+        RCLCPP_INFO(this->get_logger(), "Unpaused odom");
+      }
     }
   }
 
