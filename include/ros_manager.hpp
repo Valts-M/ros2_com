@@ -184,6 +184,8 @@ private:
    */
   void saveMap();
 
+  bool waitForOtherProcess(const processId & t_processId);
+
   void pausePoseSend(const bool pause);
 
   /**

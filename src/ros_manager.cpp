@@ -54,11 +54,11 @@ void RosManager::updateHandler()
   if(m_saveInitialPose)
     saveInitialPose();
 
-  if(m_resetOdomFlag)
-    resetOdom();
-
   if(m_saveMapFlag)
     saveMap();
+
+  if(m_resetOdomFlag)
+    resetOdom();
 
   // if(m_sendInitialPose)
   //   sendInitialPose();
@@ -277,6 +277,9 @@ void RosManager::startProcess(const processId & t_processId)
     if(incompatibleProcesses(t_processId))
       return;
 
+    if(waitForOtherProcess(t_processId))
+      return;
+
     m_pidMap[t_processId] = fork();
 
     if (m_pidMap[t_processId] < 0) 
@@ -322,6 +325,21 @@ void RosManager::startProcess(const processId & t_processId)
         m_colorMap[Color::green], t_processId, m_pidMap[t_processId], m_colorMap[Color::endColor]);
     }
   }
+}
+
+bool RosManager::waitForOtherProcess(const processId & t_processId)
+{
+  if(t_processId == processId::localization && m_resetOdomFlag)
+  {
+    RCLCPP_WARN(this->get_logger(), "Waiting for odometry reset");
+    return true;
+  }
+  if(t_processId == processId::mapping && m_resetOdomFlag)
+  {
+    RCLCPP_WARN(this->get_logger(), "Waiting for odometry reset");
+    return true;
+  }
+  return false;
 }
 
 void RosManager::sendStop(const processId & t_processId)
@@ -556,14 +574,23 @@ void RosManager::resetOdom()
   else if (!m_odomResetter->service_is_ready())
   {
     RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Service not active)");
+    m_resetOdomFlag = false;
+  }
+  else if(saveInitialPose)
+  {
+    RCLCPP_WARN(this->get_logger(), "Odometry reset: PENDING (Waiting for initial pose save)");
+  }
+  else if(isProcessRunning(processId::mapping) || isProcessRunning(processId::localization))
+  {
+    RCLCPP_WARN(this->get_logger(), "Odometry reset: PENDING (Waiting for localization or slam to exit)");
   }
   else
   {
-    auto result = m_odomResetter->async_send_request(std::make_shared<ros2_com::srv::ResetOdom_Request>());
+    m_odomResetter->async_send_request(std::make_shared<ros2_com::srv::ResetOdom_Request>());
     RCLCPP_INFO(this->get_logger(), "%sOdometry reset: SUCCESS%s", 
       m_colorMap[Color::green], m_colorMap[Color::endColor]);
+    m_resetOdomFlag = false;
   }
-  m_resetOdomFlag = false;
 }
 
 // void RosManager::sendInitialPose()
