@@ -202,11 +202,11 @@ namespace ros2_com
         return;
       }
 
-      std::fabs(m_initialPose.pose.pose.position.x - currentPose.transform.translation.x) < 0.05 &&
-      std::fabs(m_initialPose.pose.pose.position.y - currentPose.transform.translation.y) < 0.05 &&
-      std::fabs(m_initialPose.pose.pose.position.z - currentPose.transform.translation.z) < 0.05 &&
-      std::fabs(m_initialPose.pose.pose.orientation.w - currentPose.transform.rotation.w) < 0.05 &&
-      std::fabs(m_initialPose.pose.pose.orientation.z - currentPose.transform.rotation.z) < 0.05 ?
+      std::fabs(m_initialPose.pose.pose.position.x - currentPose.transform.translation.x) < 0.2 &&
+      std::fabs(m_initialPose.pose.pose.position.y - currentPose.transform.translation.y) < 0.2 &&
+      std::fabs(m_initialPose.pose.pose.position.z - currentPose.transform.translation.z) < 0.2 &&
+      std::fabs(m_initialPose.pose.pose.orientation.w - currentPose.transform.rotation.w) < 0.2 &&
+      std::fabs(m_initialPose.pose.pose.orientation.z - currentPose.transform.rotation.z) < 0.2 ?
       m_pausePoseSend = false : m_pausePoseSend = true;
 
       RCLCPP_FATAL(this->get_logger(), "pause: %d", m_pausePoseSend);
