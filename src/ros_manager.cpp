@@ -168,7 +168,7 @@ void RosManager::setStateFlag(const processId & t_processId)
       m_flagMap[t_processId] = false;
 
       //if shutting down mapping, save map
-      if(t_processId == processId::mapping)
+      if(t_processId == processId::mapping && isProcessRunning(processId::mapping))
       {
         turnOffMapping();
       }

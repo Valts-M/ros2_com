@@ -196,8 +196,8 @@ namespace ros2_com
 
     if(m_pausePoseSend)
     {
-      RCLCPP_ERROR(this->get_logger(), "Paused: %d", m_pausedCount);
-      if(++m_pausedCount > 1000)
+      RCLCPP_INFO(this->get_logger(), "Paused: %d", m_pausedCount);
+      if(++m_pausedCount > 100)
       {
         m_pausePoseSend = false;
         RCLCPP_ERROR(this->get_logger(), "Position didn't converge on the set position, giving up");
