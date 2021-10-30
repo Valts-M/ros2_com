@@ -120,6 +120,8 @@ private:
    */
   void timerCallback();
 
+  void sendPose(const RobotPose& pose);
+
   /*!
     * @brief Stores the timestamp
   */

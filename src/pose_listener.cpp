@@ -1,6 +1,7 @@
 #include "pose_listener.hpp"
 #include "helper.hpp"
 #include "tf2/LinearMath/Quaternion.h"
+#include "tf2/convert.h"
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -13,7 +14,7 @@ namespace ros2_com
     m_mapPose(0.0, 0.0, 0.0), m_odomPose(0.0, 0.0, 0.0)
   {
     
-    m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPose, ConsProdNames::p_OdomPose});
+    m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPose, ConsProdNames::p_OdomPose, ConsProdNames::c_ForcePose});
     m_shmemUtil->start();
 
     this->declare_parameter<std::string>("target_frame", "laser_sensor_frame");
@@ -105,7 +106,23 @@ namespace ros2_com
 
   void PoseListener::timerCallback()
   {
-    m_ts = Helper::getTimeStamp();
+    // m_ts = Helper::getTimeStamp();
+    auto m_forcePoseListener = m_shmemUtil->getShmem<shmem::RawConsumer<RobotPose>>(ConsProdNames::p_MapPose);
+    if (m_forcePoseListener)
+    {
+      try
+      {
+        RobotPose tempPose;
+        if(m_forcePoseListener->pollCopy(tempPose))
+        {
+          sendPose(tempPose);
+        }
+      }
+      catch (const std::exception& ex)
+      {
+        RCLCPP_ERROR(this->get_logger(), "Shmem: failed to get fore pose");
+      }
+    }
 
     try {
       m_odomLidarMsg = m_tfBuffer->lookupTransform(
@@ -223,7 +240,20 @@ namespace ros2_com
     }
   }
 
- }
+  void PoseListener::sendPose(const RobotPose& pose)
+  {
+    m_initialPose.header.stamp = this->now();
+    m_initialPose.pose.pose.position.x = pose.x();
+    m_initialPose.pose.pose.position.y = pose.y();
+
+    tf2::Quaternion temp;
+    temp.setRPY(0, 0, pose.yaw());
+    tf2::convert(temp, m_initialPose.pose.pose.orientation);
+
+    m_initialPosePublisher->publish(m_initialPose);
+  }
+
+}
 
 int main(int argc, char * argv[])
 {
