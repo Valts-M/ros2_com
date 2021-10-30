@@ -2,6 +2,7 @@
 #include "helper.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/convert.h"
+#include "color_codes.hpp"
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -106,22 +107,10 @@ namespace ros2_com
 
   void PoseListener::timerCallback()
   {
-    // m_ts = Helper::getTimeStamp();
-    auto m_forcePoseListener = m_shmemUtil->getShmem<shmem::RawConsumer<RobotPose>>(ConsProdNames::p_MapPose);
-    if (m_forcePoseListener)
+    RobotPose p;
+    if (m_shmemUtil->getForcePose(&p))
     {
-      try
-      {
-        RobotPose tempPose;
-        if(m_forcePoseListener->pollCopy(tempPose))
-        {
-          sendPose(tempPose);
-        }
-      }
-      catch (const std::exception& ex)
-      {
-        RCLCPP_ERROR(this->get_logger(), "Shmem: failed to get fore pose");
-      }
+      sendPose(p);
     }
 
     try {
@@ -207,6 +196,7 @@ namespace ros2_com
 
     if(m_pausePoseSend)
     {
+      RCLCPP_ERROR(this->get_logger(), "Paused: %d", m_pausedCount);
       if(++m_pausedCount > 1000)
       {
         m_pausePoseSend = false;
@@ -239,7 +229,7 @@ namespace ros2_com
       if(m_pausePoseSend == false) 
       {
         m_pausedCount = 0;
-        RCLCPP_INFO(this->get_logger(), "Unpaused odom");
+        RCLCPP_INFO(this->get_logger(), "%sUnpaused odom%s", m_colorMap[Color::green], m_colorMap[Color::endColor]);
       }
     }
   }

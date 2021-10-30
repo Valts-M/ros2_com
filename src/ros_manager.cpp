@@ -149,7 +149,7 @@ void RosManager::setStateFlag(const processId & t_processId)
       m_flagMap[t_processId] = true;
 
       //if localization set to active, turn off mapping
-      if(t_processId == processId::localization)
+      if(t_processId == processId::localization && !isProcessRunning(processId::localization))
       {
         turnOffMapping();
         m_resetOdomFlag = true;
@@ -227,15 +227,16 @@ void RosManager::pausePoseSend(const bool pause)
   if(!isProcessRunning(processId::odom))
   {
     RCLCPP_ERROR(this->get_logger(), "Pause pose send: FAILED (Process not active)");
-    m_resetOdomFlag = false;
+    m_pausePoseSendFlag = false;
   }
   else if (!m_posePauser->service_is_ready())
   {
     RCLCPP_ERROR(this->get_logger(), "Pause pose send: FAILED (Service not active)");
+    m_pausePoseSendFlag = false;
   }
   else
   {
-    auto result = m_posePauser->async_send_request(std::make_shared<ros2_com::srv::PausePoseSend_Request>());
+    m_posePauser->async_send_request(std::make_shared<ros2_com::srv::PausePoseSend_Request>());
     RCLCPP_INFO(this->get_logger(), "%sPause pose send: SUCCESS%s", 
       m_colorMap[Color::green], m_colorMap[Color::endColor]);
     m_pausePoseSendFlag = false;
