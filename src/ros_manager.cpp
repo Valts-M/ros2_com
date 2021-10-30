@@ -576,7 +576,7 @@ void RosManager::resetOdom()
     RCLCPP_ERROR(this->get_logger(), "Odometry reset: FAILED (Service not active)");
     m_resetOdomFlag = false;
   }
-  else if(saveInitialPose)
+  else if(m_saveInitialPose || m_saveInitialPosePending)
   {
     RCLCPP_WARN(this->get_logger(), "Odometry reset: PENDING (Waiting for initial pose save)");
   }
