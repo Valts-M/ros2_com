@@ -26,6 +26,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
   // m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("pose_listener/send_initial_pose");
   m_initialPoseSaver = this->create_client<ros2_com::srv::SaveInitialPose>("pose_listener/save_initial_pose");
+  m_posePauser = this->create_client<ros2_com::srv::PausePoseSend>("pose_listener/pause_pose_send");
   
   m_rosTimer = this->create_wall_timer(
     500ms,
@@ -45,10 +46,10 @@ void RosManager::updateHandler()
   if(getRosFlags())
     setLocalFlags();
 
+  updateProcessStates();
+
   if(m_pausePoseSendFlag)
     pausePoseSend(true);
-
-  updateProcessStates();
 
   if(m_saveInitialPose)
     saveInitialPose();
@@ -223,18 +224,22 @@ void RosManager::sendKill(const processId & t_processId)
 
 void RosManager::pausePoseSend(const bool pause)
 {
-    auto posePauseServiceCallback = [&](rclcpp::Client<ros2_com::srv::PausePoseSend>::SharedFuture future)
-    { 
-      RCLCPP_INFO(this->get_logger(), "%sPausePoseSend: SUCCESS%s",m_colorMap[Color::green], m_colorMap[Color::endColor]);
-    };
-
-    if(m_posePauser->service_is_ready())
-    {
-      m_posePauser->async_send_request(std::make_shared<ros2_com::srv::PausePoseSend_Request>(), 
-        posePauseServiceCallback);
-      m_pausePoseSendFlag = false;
-      RCLCPP_INFO(this->get_logger(), "Paused pose send");
-    }
+  if(!isProcessRunning(processId::odom))
+  {
+    RCLCPP_ERROR(this->get_logger(), "Pause pose send: FAILED (Process not active)");
+    m_resetOdomFlag = false;
+  }
+  else if (!m_posePauser->service_is_ready())
+  {
+    RCLCPP_ERROR(this->get_logger(), "Pause pose send: FAILED (Service not active)");
+  }
+  else
+  {
+    auto result = m_posePauser->async_send_request(std::make_shared<ros2_com::srv::PausePoseSend_Request>());
+    RCLCPP_INFO(this->get_logger(), "%sPause pose send: SUCCESS%s", 
+      m_colorMap[Color::green], m_colorMap[Color::endColor]);
+    m_pausePoseSendFlag = false;
+  }
 }
 
 bool RosManager::incompatibleProcesses(const processId & t_processId)

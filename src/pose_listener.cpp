@@ -23,7 +23,10 @@ namespace ros2_com
     std::bind(&PoseListener::sendInitialPose, this, _1, _2));
 
     m_savePoseService = this->create_service<ros2_com::srv::SaveInitialPose>("pose_listener/save_initial_pose", 
-    std::bind(&PoseListener::saveInitialPose, this, _1, _2)); 
+    std::bind(&PoseListener::saveInitialPose, this, _1, _2));
+
+    m_pausePoseSendService = this->create_service<ros2_com::srv::PausePoseSend>("pose_listener/pause_pose_send", 
+    std::bind(&PoseListener::pausePoseSend, this, _1, _2)); 
 
     m_initialPosePublisher = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose", 10);
 
@@ -185,6 +188,14 @@ namespace ros2_com
       }
     }
 
+    if(m_pausePoseSend)
+    {
+      if(++m_pausedCount > 1000)
+      {
+        m_pausePoseSend = false;
+        RCLCPP_ERROR(this->get_logger(), "Position didn't converge on the set position, giving up");
+      } 
+    }
     if(m_pausePoseSend && m_initialPosePublisher->get_subscription_count() > 0)
     {
       geometry_msgs::msg::TransformStamped currentPose;
@@ -208,8 +219,7 @@ namespace ros2_com
       std::fabs(m_initialPose.pose.pose.orientation.w - currentPose.transform.rotation.w) < 0.2 &&
       std::fabs(m_initialPose.pose.pose.orientation.z - currentPose.transform.rotation.z) < 0.2 ?
       m_pausePoseSend = false : m_pausePoseSend = true;
-
-      RCLCPP_FATAL(this->get_logger(), "pause: %d", m_pausePoseSend);
+      if(m_pausePoseSend == false) m_pausedCount = 0;
     }
   }
 

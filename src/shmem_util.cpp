@@ -49,4 +49,22 @@ namespace ros2_com
       }
   }
 
+  bool ShmemUtility::getForcePose(RobotPose* t_pose)
+  {
+      auto p = m_shmems->getShmem<shmem::RawConsumer<ForcePose>>(ConsProdNames::c_ForcePose);
+      if (!p || !t_pose) return false;
+      try
+      {
+          if (!p->isConsumerReferenced()) return false;
+          ForcePose data;
+          if (!p->pollCopy(data)) return false;
+          *t_pose = data.getRobotPose();
+          return true;
+      }
+      catch (const std::exception& stde)
+      {
+          std::cerr << "getForcePose failed: " << stde.what() << '\n';
+      }
+      return false;
+  }
 }

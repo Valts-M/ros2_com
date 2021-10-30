@@ -18,6 +18,7 @@ enum class ConsProdNames
 {
   c_MsgRawStatus,
   c_RosFlags,
+  c_ForcePose,
 
   p_MapPath,
   p_OdomPose,
@@ -45,11 +46,14 @@ public:
 	  return std::forward<ShmemObject* const>(m_shmems->getShmem<ShmemObject>(std::forward<const ConsProdEnum&>(t_cpName)));
   }
 
+  bool getForcePose(RobotPose* t_pose);
+
 private:
   inline static const MyConsProdDescriptions m_consProdDescriptions =
   {
       {static_cast<size_t>(ConsProdNames::c_MsgRawStatus), { shmem::createCBConsumer<MsgRawStatus>, ConsProdDescription("MsgRawStatus", "ShmemUtility")}},
       {static_cast<size_t>(ConsProdNames::c_RosFlags), { shmem::createCBConsumer<RosFlags>, ConsProdDescription("RosFlags", "ShmemUtility")}},
+      {static_cast<size_t>(ConsProdNames::c_ForcePose), { shmem::createRawConsumer<ForcePose>, ConsProdDescription("ForcePose", "ShmemUtility")}},
       {static_cast<size_t>(ConsProdNames::p_MapPath), { shmem::createRawProducer<TextualInfo>, ConsProdDescription("SlamMapPath")}},
       {static_cast<size_t>(ConsProdNames::p_OdomPose), { shmem::createPositionProducer, ConsProdDescription("RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)}},
       {static_cast<size_t>(ConsProdNames::p_MapPose), { shmem::createPositionProducer, ConsProdDescription("RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)}},

@@ -48,6 +48,8 @@ public:
 
 private:
 
+  int m_pausedCount{0};
+
   /**
    * @brief Send pose service pointer
    * 
@@ -58,6 +60,9 @@ private:
    * 
    */
   rclcpp::Service<ros2_com::srv::SaveInitialPose>::SharedPtr m_savePoseService{nullptr};
+
+  rclcpp::Service<ros2_com::srv::PausePoseSend>::SharedPtr m_pausePoseSendService{nullptr};
+
   /**
    * @brief Initial pose publisher
    * 
