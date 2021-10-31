@@ -51,7 +51,7 @@ namespace ros2_com
 
   bool ShmemUtility::getForcePose(RobotPose* t_pose)
   {
-      auto p = m_shmems->getShmem<shmem::RawConsumer<ForcePose>>(ConsProdNames::c_ForcePose);
+      auto p = m_shmems->getShmem<shmem::RawConsumer<ForcePose>>(ConsProdNames::c_ForcePoseROS);
       if (!p || !t_pose) return false;
       try
       {

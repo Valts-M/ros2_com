@@ -15,7 +15,7 @@ namespace ros2_com
     m_mapPose(0.0, 0.0, 0.0), m_odomPose(0.0, 0.0, 0.0)
   {
     
-    m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPose, ConsProdNames::p_OdomPose, ConsProdNames::c_ForcePose});
+    m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPose, ConsProdNames::p_OdomPose, ConsProdNames::c_ForcePoseROS});
     m_shmemUtil->start();
 
     this->declare_parameter<std::string>("target_frame", "laser_sensor_frame");
