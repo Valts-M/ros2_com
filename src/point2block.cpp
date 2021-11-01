@@ -152,8 +152,8 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
     return;
   }
 
-  /*cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
-  cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);*/
+  cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
+  cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
     
   m_clearMap.setTo(127);
   m_obstacleMap.setTo(0U);
@@ -208,7 +208,14 @@ void Point2Block::makeClearImage()
       const int y = -std::rint(std::sin(angle + yaw) * range) + m_cols/2;
       const cv::Point endPoint{x, y};
       cv::line(m_clearMap, startPoint, endPoint, 255U, 1);
-      cv::circle(m_clearMap, endPoint, 0, 0, cv::FILLED);
+    }
+    else
+    {
+      const float angle = m_laserScan->angle_min + i * m_laserScan->angle_increment;
+      const int x = std::rint(std::cos(angle + yaw) * 69) + m_rows/2;
+      const int y = -std::rint(std::sin(angle + yaw) * 420) + m_cols/2;
+      const cv::Point endPoint{x, y};
+      cv::line(m_clearMap, startPoint, endPoint, 255U, 1);
     }
   }
 }
