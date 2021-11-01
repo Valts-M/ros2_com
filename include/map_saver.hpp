@@ -83,6 +83,8 @@ private:
 
   bool saveMapYamlFile(const std::string& t_path);
 
+  bool bin2img(const std::string& t_path);
+
   /**
    * @brief Pointer to the map message
    * 
