@@ -200,23 +200,17 @@ void Point2Block::makeClearImage()
 
   for(size_t i = 0; i < m_laserScan->ranges.size(); ++i)
   {
-    if(m_laserScan->ranges.at(i) > m_lidarBlindRadius  && m_laserScan->ranges.at(i) != INFINITY)
-    {
-      const float range = m_laserScan->ranges.at(i) * 100 / m_mapResolutionCm; //in px
+      float range = m_laserScan->ranges.at(i) * 100 / m_mapResolutionCm; //in px
       const float angle = m_laserScan->angle_min + i * m_laserScan->angle_increment;
+      if(m_laserScan->ranges.at(i) < m_lidarBlindRadius  || m_laserScan->ranges.at(i) == INFINITY)
+        if(angle > -M_PI_2 && angle < M_PI_2)
+          range = 420;     
+        else 
+          continue;
       const int x = std::rint(std::cos(angle + yaw) * range) + m_rows/2;
       const int y = -std::rint(std::sin(angle + yaw) * range) + m_cols/2;
       const cv::Point endPoint{x, y};
       cv::line(m_clearMap, startPoint, endPoint, 255U, 1);
-    }
-    else
-    {
-      const float angle = m_laserScan->angle_min + i * m_laserScan->angle_increment;
-      const int x = std::rint(std::cos(angle + yaw) * 69) + m_rows/2;
-      const int y = -std::rint(std::sin(angle + yaw) * 420) + m_cols/2;
-      const cv::Point endPoint{x, y};
-      cv::line(m_clearMap, startPoint, endPoint, 255U, 1);
-    }
   }
 }
 
