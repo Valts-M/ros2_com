@@ -17,7 +17,7 @@ RosManager::RosManager() : RosManager(rclcpp::NodeOptions()){}
 RosManager::RosManager(const rclcpp::NodeOptions & t_options)
 : Node("ros_manager", t_options)
 {
-  m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags});
+  m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags, ConsProdNames::c_MapAndPose});
   m_shmemUtil->start();
 
   m_latestMapPath = getLatestMapYamlPath();
@@ -27,6 +27,7 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   // m_initialPoseSender = this->create_client<ros2_com::srv::SendInitialPose>("pose_listener/send_initial_pose");
   m_initialPoseSaver = this->create_client<ros2_com::srv::SaveInitialPose>("pose_listener/save_initial_pose");
   m_posePauser = this->create_client<ros2_com::srv::PausePoseSend>("pose_listener/pause_pose_send");
+  m_mapImgMaker = this->create_client<ros2_com::srv::CreateMapImg>("map_saver/create_map_img");
   
   m_rosTimer = this->create_wall_timer(
     500ms,
@@ -43,6 +44,8 @@ RosManager::~RosManager()
 
 void RosManager::updateHandler()
 {
+  getMapFromServer();
+
   if(getRosFlags())
     setLocalFlags();
 
@@ -94,7 +97,37 @@ void RosManager::updateProcessState(const processId & t_processId)
     stopProcess(t_processId);
 }
 
-bool RosManager::getRosFlags()
+const bool RosManager::getMapFromServer()
+{
+  if(m_shmemUtil->getMapAndPose(&m_pathToBin, nullptr))
+  {
+    auto request = std::make_shared<ros2_com::srv::CreateMapImg_Request>();
+    request->path = m_pathToBin;
+
+    auto createMapImgServiceCallback = [&](rclcpp::Client<ros2_com::srv::CreateMapImg>::SharedFuture future)
+    { 
+      auto result = future.get();
+      if(result->success)
+      {
+        RCLCPP_INFO(this->get_logger(), "%sCreate map image from bin: SUCCESS%s", 
+          m_colorMap[Color::green], m_colorMap[Color::endColor]);
+        m_latestMapPath = std::filesystem::path("/home/RobotV3/slam_maps/server_map/map.yaml");
+        m_initialPose = RobotPose(0, 0, 0);
+        m_restartMap[processId::localization] = true;
+      }
+      else
+      {
+        RCLCPP_ERROR(this->get_logger(), "Create map image from bin: FAILED (Unknown error)");
+      }
+    };
+    auto result = m_mapImgMaker->async_send_request(request, createMapImgServiceCallback);
+
+    return true;
+  }
+  return false;
+}
+
+const bool RosManager::getRosFlags()
 {
   auto m_flagConsumer = m_shmemUtil->getShmem<shmem::CBConsumer<RosFlags>>(ConsProdNames::c_RosFlags);
   if(!m_flagConsumer) return false;
@@ -123,15 +156,14 @@ void RosManager::setLocalFlags()
       m_restartMap[id] = true;
       if(id == processId::mapping)
       {
-        m_saveMapFlag = true;
         m_resetOdomFlag = true;
       }
       else if(id == processId::localization)
         m_resetOdomFlag = true;
     }
 
-    RCLCPP_INFO(this->get_logger(), "%sPROCESS %d RECEIVED: %d; SET TO %d%s", 
-      m_colorMap[Color::blue], id, m_latestFlags.flagMap[id].second, m_flagMap[id], 
+    RCLCPP_INFO(this->get_logger(), "%sPROCESS %s RECEIVED: %d; SET TO %d%s", 
+      m_colorMap[Color::blue], toString(id).c_str(), m_latestFlags.flagMap[id].second, m_flagMap[id], 
       m_colorMap[Color::blue]);
   }
   if(m_latestFlags.saveMap)
@@ -208,17 +240,17 @@ void RosManager::sendKill(const processId & t_processId)
 {
   if(!isProcessRunning(t_processId))
   {
-    RCLCPP_INFO(this->get_logger(), "Process %d NOT running, nothing to kill", t_processId);
+    RCLCPP_INFO(this->get_logger(), "Process %s NOT running, nothing to kill", toString(t_processId).c_str());
     return;
   }
   else
   {
     int status = kill(m_pidMap[t_processId], SIGKILL);
     if(status == 0)
-      RCLCPP_INFO(this->get_logger(), "%sSuccessfully sent SIGKILL to %d%s", 
-        m_colorMap[Color::green], t_processId, m_colorMap[Color::endColor]);
+      RCLCPP_INFO(this->get_logger(), "%sSuccessfully sent SIGKILL to %s%s", 
+        m_colorMap[Color::green], toString(t_processId), m_colorMap[Color::endColor]);
     else
-      RCLCPP_WARN(this->get_logger(), "Error while sending SIGKILL to %d", t_processId);
+      RCLCPP_WARN(this->get_logger(), "Error while sending SIGKILL to %s", toString(t_processId).c_str());
   }
 }
 
@@ -243,7 +275,7 @@ void RosManager::pausePoseSend(const bool pause)
   }
 }
 
-bool RosManager::incompatibleProcesses(const processId & t_processId)
+const bool RosManager::incompatibleProcesses(const processId & t_processId)
 {
   //check if starting localization or mapping
   if(t_processId == processId::localization && isProcessRunning(processId::mapping))
@@ -269,7 +301,7 @@ void RosManager::startProcess(const processId & t_processId)
 {
   if(isProcessRunning(t_processId))
   {
-    RCLCPP_INFO(this->get_logger(), "Process %d running", t_processId);
+    RCLCPP_INFO(this->get_logger(), "Process %s running", toString(t_processId).c_str());
     return;
   }
   else
@@ -285,7 +317,7 @@ void RosManager::startProcess(const processId & t_processId)
 
     if (m_pidMap[t_processId] < 0) 
     {
-      RCLCPP_WARN(this->get_logger(), "Failed to fork process %d, trying again", t_processId);
+      RCLCPP_WARN(this->get_logger(), "Failed to fork process %s, trying again", toString(t_processId).c_str());
     } 
     else if (m_pidMap[t_processId] == 0) 
     {
@@ -322,13 +354,13 @@ void RosManager::startProcess(const processId & t_processId)
     }
     else
     {
-      RCLCPP_INFO(this->get_logger(), "%sSuccessacefully forked process %d with pid %d%s", 
-        m_colorMap[Color::green], t_processId, m_pidMap[t_processId], m_colorMap[Color::endColor]);
+      RCLCPP_INFO(this->get_logger(), "%sSuccessacefully forked process %s with pid %d%s", 
+        m_colorMap[Color::green], toString(t_processId).c_str(), m_pidMap[t_processId], m_colorMap[Color::endColor]);
     }
   }
 }
 
-bool RosManager::waitForOtherProcess(const processId & t_processId)
+const bool RosManager::waitForOtherProcess(const processId & t_processId)
 {
   if(t_processId == processId::localization && m_resetOdomFlag)
   {
@@ -347,7 +379,7 @@ void RosManager::sendStop(const processId & t_processId)
 {
   if(!isProcessRunning(t_processId))
   {
-    RCLCPP_INFO(this->get_logger(), "Process %d NOT running", t_processId);
+    RCLCPP_INFO(this->get_logger(), "Process %s NOT running", toString(t_processId).c_str());
     m_stopCountMap[t_processId] = 0;
     return;
   }
@@ -366,18 +398,18 @@ void RosManager::sendStop(const processId & t_processId)
     int status = kill(m_pidMap[t_processId], SIGINT);
     if(status == 0)
     {
-      RCLCPP_INFO(this->get_logger(), "%sSuccessfully sent SIGINT to %d%s", 
-        m_colorMap[Color::green], t_processId, m_colorMap[Color::endColor]);
+      RCLCPP_INFO(this->get_logger(), "%sSuccessfully sent SIGINT to %s%s", 
+        m_colorMap[Color::green], toString(t_processId).c_str(), m_colorMap[Color::endColor]);
     }
     else
     {
-      RCLCPP_WARN(this->get_logger(), "Error while sending SIGINT to %d", t_processId);
+      RCLCPP_WARN(this->get_logger(), "Error while sending SIGINT to %s", toString(t_processId).c_str());
     }
     ++m_stopCountMap[t_processId];
   }
 }
 
-bool RosManager::isProcessRunning(const processId & t_processId)
+const bool RosManager::isProcessRunning(const processId & t_processId)
 {
   //check if valid pid
   if(m_pidMap[t_processId] > 0)
@@ -519,6 +551,23 @@ std::filesystem::path RosManager::getLatestMapYamlPath()
       RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", tmpSavePath.c_str());
       throw -1;
     }
+  }
+
+  std::filesystem::path serverMapPath{m_slamMapsDir};
+  serverMapPath.append("server_map");
+  if(!std::filesystem::exists(serverMapPath))
+  {
+    if(!std::filesystem::create_directory(serverMapPath))
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", serverMapPath.c_str());
+      throw -1;
+    }
+  }
+  else
+  {
+    serverMapPath.append("map.yaml");
+    if(std::filesystem::exists(serverMapPath))
+      return serverMapPath;
   }
 
   std::filesystem::path numFilePath = m_slamMapsDir;

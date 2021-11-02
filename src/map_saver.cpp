@@ -22,10 +22,11 @@ MapSaver::MapSaver() : Node("map_saver_server")
     ("map", 10, std::bind(&MapSaver::topicCallback, this, _1));
   m_saveMapService = this->create_service<ros2_com::srv::SaveMap>
     ("map_saver/save_map", std::bind(&MapSaver::saveMapHandler, this, _1, _2));
+  m_createMapImgService = this->create_service<ros2_com::srv::CreateMapImg>
+    ("map_saver/create_map_img", std::bind(&MapSaver::bin2img, this, _1, _2));
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPath});
   m_shmemUtil->start();
   m_map = std::make_shared<nav_msgs::msg::OccupancyGrid>();
-  bin2img("/home/RobotV3/slam_maps/tmp/map.bin");
 }
 
 MapSaver::~MapSaver()
@@ -177,17 +178,18 @@ void MapSaver::updateImage(const size_t& i)
   }
 }
 
-bool MapSaver::bin2img(const std::string& t_path)
+void MapSaver::bin2img(const std::shared_ptr<ros2_com::srv::CreateMapImg::Request> request,
+          std::shared_ptr<ros2_com::srv::CreateMapImg::Response> response)
 {
-  std::ifstream binReader(t_path, std::ios::in | std::ios::binary);
+  std::ifstream binReader(request->path, std::ios::in | std::ios::binary);
   if(!binReader) 
   {
     RCLCPP_ERROR(
       this->get_logger(),
       "Failed to read %s",
-      t_path.c_str());
-    m_savingMap = false;
-    return false;
+      request->path.c_str());
+      response->success=false;
+      return;
   }
 
   //read map info
@@ -207,8 +209,8 @@ bool MapSaver::bin2img(const std::string& t_path)
     catch(const std::exception& e)
     {
       RCLCPP_ERROR(this->get_logger(), e.what());
-      m_savingMap = false;
-      return -1;
+      response->success = false;
+      return;
     }
   }
 
@@ -218,13 +220,14 @@ bool MapSaver::bin2img(const std::string& t_path)
   else
   {
     RCLCPP_ERROR(this->get_logger(), "Error while reading bin file");
-    m_savingMap = false;
-    return false;
+    response->success = false;
+    return;
   }
 
   RCLCPP_INFO(this->get_logger(), "Saving map as /home/RobotV3/slam_maps/server_map/map.pgm");
   saveMapYamlFile("/home/RobotV3/slam_paths/server_map/map");
   cv::imwrite("/home/RobotV3/slam_maps/server_map/map.pgm", m_mapImage);
+  response->success = true;
 }
 
 bool MapSaver::saveMapYamlFile(const std::string& t_path)
