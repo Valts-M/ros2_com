@@ -50,7 +50,7 @@ void MapSaver::saveMapHandler(const std::shared_ptr<ros2_com::srv::SaveMap::Requ
           std::shared_ptr<ros2_com::srv::SaveMap::Response> response)
 {
   response->success = saveMap(request->filename, true);
-  m_savingMap = false;
+  // m_savingMap = false;
 }
 
 int MapSaver::saveMap(const std::string &path, const bool saveImage)
@@ -153,7 +153,7 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
     return -2;
   }
   
-  m_savingMap = false;
+  // m_savingMap = false;
   return 1;
 }
 
@@ -181,6 +181,7 @@ void MapSaver::updateImage(const size_t& i)
 void MapSaver::bin2img(const std::shared_ptr<ros2_com::srv::CreateMapImg::Request> request,
           std::shared_ptr<ros2_com::srv::CreateMapImg::Response> response)
 {
+  m_savingMap = true;
   std::ifstream binReader(request->path, std::ios::in | std::ios::binary);
   if(!binReader) 
   {
@@ -225,7 +226,7 @@ void MapSaver::bin2img(const std::shared_ptr<ros2_com::srv::CreateMapImg::Reques
   }
 
   RCLCPP_INFO(this->get_logger(), "Saving map as /home/RobotV3/slam_maps/server_map/map.pgm");
-  saveMapYamlFile("/home/RobotV3/slam_paths/server_map/map");
+  saveMapYamlFile("/home/RobotV3/slam_maps/server_map/map");
   cv::imwrite("/home/RobotV3/slam_maps/server_map/map.pgm", m_mapImage);
   response->success = true;
 }

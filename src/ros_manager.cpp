@@ -99,7 +99,8 @@ void RosManager::updateProcessState(const processId & t_processId)
 
 const bool RosManager::getMapFromServer()
 {
-  if(m_shmemUtil->getMapAndPose(&m_pathToBin, nullptr))
+  RobotPose tmp;
+  if(m_shmemUtil->getMapAndPose(&m_pathToBin, &tmp))
   {
     RCLCPP_INFO(this->get_logger(), "%sCreating img from bin%s", 
       m_colorMap[Color::green], m_colorMap[Color::endColor]);
