@@ -101,6 +101,8 @@ const bool RosManager::getMapFromServer()
 {
   if(m_shmemUtil->getMapAndPose(&m_pathToBin, nullptr))
   {
+    RCLCPP_INFO(this->get_logger(), "%sCreating img from bin%s", 
+      m_colorMap[Color::green], m_colorMap[Color::endColor]);
     auto request = std::make_shared<ros2_com::srv::CreateMapImg_Request>();
     request->path = m_pathToBin;
 
@@ -240,7 +242,7 @@ void RosManager::sendKill(const processId & t_processId)
 {
   if(!isProcessRunning(t_processId))
   {
-    RCLCPP_INFO(this->get_logger(), "Process %s NOT running, nothing to kill", toString(t_processId).c_str());
+    RCLCPP_INFO(this->get_logger(), "Process %s %soffline%s, nothing to kill", toString(t_processId).c_str(), m_colorMap[Color::red], m_colorMap[Color::endColor]);
     return;
   }
   else
