@@ -303,7 +303,7 @@ void RosManager::startProcess(const processId & t_processId)
 {
   if(isProcessRunning(t_processId))
   {
-    RCLCPP_INFO(this->get_logger(), "Process %s running", toString(t_processId).c_str());
+    RCLCPP_INFO(this->get_logger(), "%s %sONLINE%s", toString(t_processId).c_str(), m_colorMap[Color::green], m_colorMap[Color::endColor]);
     return;
   }
   else
@@ -381,7 +381,7 @@ void RosManager::sendStop(const processId & t_processId)
 {
   if(!isProcessRunning(t_processId))
   {
-    RCLCPP_INFO(this->get_logger(), "Process %s NOT running", toString(t_processId).c_str());
+    RCLCPP_INFO(this->get_logger(), "%s %sOFFLINE%s", toString(t_processId).c_str(), m_colorMap[Color::red], m_colorMap[Color::endColor]);
     m_stopCountMap[t_processId] = 0;
     return;
   }
