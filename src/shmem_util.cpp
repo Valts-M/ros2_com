@@ -67,25 +67,4 @@ namespace ros2_com
       }
       return false;
   }
-
-  bool ShmemUtility::getMapAndPose(std::string* t_path, RobotPose* t_pose)
-  {
-      auto p = m_shmems->getShmem<shmem::RawConsumer<TextAndPose>>(ConsProdNames::c_MapAndPose);
-      if (!p || !t_path || !t_pose) return false;
-      try
-      {
-          if (!p->isConsumerReferenced()) return false;
-          TextAndPose d;
-          if (!p->pollCopy(d)) return false;
-          *t_pose = d.second.getRobotPose();
-          *t_path = d.first.toString();
-          return true;
-      }
-      catch (const std::exception& stde)
-      {
-          std::cerr << "getMapAndPose failed: " << stde.what() << '\n';
-      }
-      return false;
-  }
-
 }
