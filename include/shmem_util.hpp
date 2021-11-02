@@ -19,6 +19,7 @@ enum class ConsProdNames
   c_MsgRawStatus,
   c_RosFlags,
   c_ForcePoseROS,
+  c_MapAndPose,
 
   p_MapPath,
   p_OdomPose,
@@ -47,6 +48,7 @@ public:
   }
 
   bool getForcePose(RobotPose* t_pose);
+  bool getMapAndPose(std::string* t_path, RobotPose* t_pose);
 
 private:
   inline static const MyConsProdDescriptions m_consProdDescriptions =
@@ -54,6 +56,7 @@ private:
       {static_cast<size_t>(ConsProdNames::c_MsgRawStatus), { shmem::createCBConsumer<MsgRawStatus>, ConsProdDescription("MsgRawStatus", "ShmemUtility")}},
       {static_cast<size_t>(ConsProdNames::c_RosFlags), { shmem::createCBConsumer<RosFlags>, ConsProdDescription("RosFlags", "ShmemUtility")}},
       {static_cast<size_t>(ConsProdNames::c_ForcePoseROS), { shmem::createRawConsumer<ForcePose>, ConsProdDescription("ForcePoseROS", "ShmemUtility")}},
+      {static_cast<size_t>(ConsProdNames::c_MapAndPose), { shmem::createRawConsumer<TextAndPose>, ConsProdDescription("MapAndPose", "ShmemUtility")}},
       {static_cast<size_t>(ConsProdNames::p_MapPath), { shmem::createRawProducer<TextualInfo>, ConsProdDescription("SlamMapPath")}},
       {static_cast<size_t>(ConsProdNames::p_OdomPose), { shmem::createPositionProducer, ConsProdDescription("RosOdomPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)}},
       {static_cast<size_t>(ConsProdNames::p_MapPose), { shmem::createPositionProducer, ConsProdDescription("RosMapPoses", 1024U, 1024U * sizeof(RobotPose) + 10240U)}},

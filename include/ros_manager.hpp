@@ -15,6 +15,7 @@
 #include "ros2_com/srv/send_initial_pose.hpp"
 #include "ros2_com/srv/save_initial_pose.hpp"
 #include "ros2_com/srv/pause_pose_send.hpp"
+#include "ros2_com/srv/create_map_img.hpp"
 
 //robotv3
 #include <robot_pose.hpp>
@@ -69,6 +70,8 @@ private:
    * 
    */
   std::filesystem::path m_latestMapPath;
+
+  std::string m_pathToBin;
 
   /**
    * @brief Latest flag message received from RobotV3
@@ -138,6 +141,8 @@ private:
    */
   rclcpp::Client<ros2_com::srv::SaveMap>::SharedPtr m_mapSaver;
 
+  rclcpp::Client<ros2_com::srv::CreateMapImg>::SharedPtr m_mapImgMaker;
+
   rclcpp::Client<ros2_com::srv::PausePoseSend>::SharedPtr m_posePauser;
 
   /**
@@ -162,7 +167,7 @@ private:
    * @return true if received ros flags
    * @return false if no ros flags were received
    */
-  bool getRosFlags();
+  const bool getRosFlags();
 
   /**
    * @brief Loops through all the processes and sets their flags according to what 
@@ -184,7 +189,7 @@ private:
    */
   void saveMap();
 
-  bool waitForOtherProcess(const processId & t_processId);
+  const bool waitForOtherProcess(const processId & t_processId);
 
   void pausePoseSend(const bool pause);
 
@@ -229,6 +234,8 @@ private:
    * @param t_processId 
    */
   void startProcess(const processId & t_processId);
+
+  const bool getMapFromServer();
 
   /**
    * @brief If the process is running tries to turn it off for a time. If the process
@@ -292,7 +299,7 @@ private:
    * @details First checks if the processId has a valid PID associated to it. If it does then
    * sends the 0 signal to it, to check if it is alive
    */
-  bool isProcessRunning(const processId & t_processId);
+  const bool isProcessRunning(const processId & t_processId);
 
   /**
    * @brief Checks if there is a call to turn on mapping or localization while the other is active.
@@ -302,7 +309,7 @@ private:
    * @return true if incompatible processes
    * @return false otherwise
    */
-  bool incompatibleProcesses(const processId & t_processId);
+  const bool incompatibleProcesses(const processId & t_processId);
 
 };
 }
