@@ -9,6 +9,7 @@
 #include <vector>
 #include <math.h>
 
+#include <boost/circular_buffer.hpp>
 #include "data_structures/protocol.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "robot_config.hpp"
@@ -45,10 +46,11 @@ private:
   const double m_rightEncScale;
   const double m_rightGyroScale;
   const double m_leftGyroScale;
-  uint32_t m_noMovementCount{0};
+  int m_noMovementCount{0};
 
-  double m_gyroTicCount{0.0};
-  double m_gyroBias{0.0};
+  boost::circular_buffer<int> gyroBuf{40};
+  int m_gyroTicSum{0};
+  int m_gyroBias{0};
 };
 }
 

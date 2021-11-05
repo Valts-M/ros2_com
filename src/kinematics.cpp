@@ -50,10 +50,17 @@ namespace ros2_com
     }
     else //if not moving recalculate gyro bias
     {
-      //TODO: replaces with something better. If robot stands still for an hour might run into
-      // a large number division problem
-      m_gyroTicCount += input.gyroDelta;
-      m_gyroBias = m_gyroTicCount / ++m_noMovementCount;
+      gyroBuf.push_back(input.gyroDelta);
+      m_gyroTicSum += input.gyroDelta;
+      if(gyroBuf.full())
+      {
+        m_gyroTicSum -= gyroBuf.front();
+      }
+      else 
+      {
+        ++m_noMovementCount;
+      }
+      m_gyroBias = m_gyroTicSum / m_noMovementCount;
     }
   }
 }
