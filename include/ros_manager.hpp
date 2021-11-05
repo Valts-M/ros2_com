@@ -167,7 +167,9 @@ private:
    * @return true if received ros flags
    * @return false if no ros flags were received
    */
-  const bool getRosFlags();
+  bool getRosFlags();
+
+  void createMapSaveDirStructure();
 
   /**
    * @brief Loops through all the processes and sets their flags according to what 
@@ -175,6 +177,8 @@ private:
    * 
    */
   void setLocalFlags();
+
+  void createServerMapDir();
 
   /**
    * @brief Sets the appropriate flags depending on what process gets turned on or off
@@ -189,7 +193,7 @@ private:
    */
   void saveMap();
 
-  const bool waitForOtherProcess(const processId & t_processId);
+  bool waitForOtherProcess(const processId & t_processId);
 
   void pausePoseSend(const bool pause);
 
@@ -235,7 +239,7 @@ private:
    */
   void startProcess(const processId & t_processId);
 
-  const bool getMapFromServer();
+  bool getMapFromServer();
 
   /**
    * @brief If the process is running tries to turn it off for a time. If the process
@@ -299,7 +303,7 @@ private:
    * @details First checks if the processId has a valid PID associated to it. If it does then
    * sends the 0 signal to it, to check if it is alive
    */
-  const bool isProcessRunning(const processId & t_processId);
+  bool isProcessRunning(const processId & t_processId);
 
   /**
    * @brief Checks if there is a call to turn on mapping or localization while the other is active.
@@ -309,7 +313,7 @@ private:
    * @return true if incompatible processes
    * @return false otherwise
    */
-  const bool incompatibleProcesses(const processId & t_processId);
+  bool incompatibleProcesses(const processId & t_processId);
 
 };
 }

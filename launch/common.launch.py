@@ -167,10 +167,10 @@ def generate_launch_description():
         output='screen'
     )
 
-    map_saver_server = launch_ros.actions.Node(
+    map_loader = launch_ros.actions.Node(
         package='ros2_com',
-        executable='map_saver',
-        name='map_saver_server',
+        executable='map_loader',
+        name='map_loader',
         parameters=[model_params]
     )
 
@@ -202,8 +202,8 @@ def generate_launch_description():
 
     ld.add_action(urdf_model)
     ld.add_action(use_sim_time_arg)
-    # ld.add_action(clock_server)
-    ld.add_action(map_saver_server)
+    ld.add_action(clock_server)
+    ld.add_action(map_loader)
     ld.add_action(robot_state_publisher_node)
     ld.add_action(pose_listener_node)
     ld.add_action(odom_publisher_node)

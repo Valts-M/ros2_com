@@ -20,7 +20,11 @@ RosManager::RosManager(const rclcpp::NodeOptions & t_options)
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::c_RosFlags, ConsProdNames::c_MapAndPose});
   m_shmemUtil->start();
 
+  createMapSaveDirStructure();
   m_latestMapPath = getLatestMapYamlPath();
+  //if there is no local map we don't start localization automatically
+  if(m_latestMapPath.empty())
+    m_flagMap[processId::localization] = false;
 
   m_mapSaver = this->create_client<ros2_com::srv::SaveMap>("map_saver/save_map");
   m_odomResetter = this->create_client<ros2_com::srv::ResetOdom>("odom_publisher/reset_odom");
@@ -40,6 +44,63 @@ RosManager::~RosManager()
   m_shmemUtil.reset();
   stopAll();
   RCLCPP_INFO(this->get_logger(), "Destructed");
+}
+
+void RosManager::createMapSaveDirStructure()
+{
+  std::filesystem::path tmpSavePath{m_slamMapsDir / "tmp"};
+
+  if(!std::filesystem::exists(m_slamMapsDir))
+  {
+    if(!std::filesystem::create_directories(m_slamMapsDir))
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't create map save directory: %s", m_slamMapsDir.c_str());
+      exit(EXIT_FAILURE);
+    }
+    if(!std::filesystem::create_directory(tmpSavePath))
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", tmpSavePath.c_str());
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  if(!std::filesystem::exists(tmpSavePath))
+  {
+    if(!std::filesystem::create_directory(tmpSavePath))
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", tmpSavePath.c_str());
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  std::filesystem::path numFilePath{m_slamMapsDir / "num.txt"};
+
+  if(!std::filesystem::exists(numFilePath))
+  {
+     std::ofstream fileWriter(numFilePath);
+    if(!fileWriter.is_open())
+    {
+      RCLCPP_FATAL(this->get_logger(), "Couldn't open file %s for write", numFilePath.c_str());
+      exit(EXIT_FAILURE);
+    }
+    fileWriter << 0;
+    fileWriter.flush();
+    fileWriter.close();
+  }
+
+  std::ifstream fileReader(numFilePath);
+  if(!fileReader.is_open())
+  {
+    RCLCPP_FATAL(this->get_logger(), 
+      "Couldn't open file %s",
+       numFilePath.c_str());
+    exit(EXIT_FAILURE);
+  }
+
+  int num;
+  fileReader >> num;
+  fileReader.clear();
+  fileReader.close();
 }
 
 void RosManager::updateHandler()
@@ -97,13 +158,26 @@ void RosManager::updateProcessState(const processId & t_processId)
     stopProcess(t_processId);
 }
 
-const bool RosManager::getMapFromServer()
+void RosManager::createServerMapDir()
+{
+  std::filesystem::path serverMapPath{m_slamMapsDir / "server_map"};
+  if(std::filesystem::exists(serverMapPath))
+    std::filesystem::remove_all(serverMapPath);
+  if(!std::filesystem::create_directory(serverMapPath))
+  {
+    RCLCPP_FATAL(this->get_logger(), "Couldn't create server map save directory: %s", serverMapPath.c_str());
+    exit(EXIT_FAILURE);
+  }
+}
+
+bool RosManager::getMapFromServer()
 {
   RobotPose tmp;
   if(m_shmemUtil->getMapAndPose(&m_pathToBin, &tmp))
   {
     RCLCPP_INFO(this->get_logger(), "%sCreating img from bin%s", 
       m_colorMap[Color::green], m_colorMap[Color::endColor]);
+    createServerMapDir();
     auto request = std::make_shared<ros2_com::srv::CreateMapImg_Request>();
     request->path = m_pathToBin;
 
@@ -130,7 +204,7 @@ const bool RosManager::getMapFromServer()
   return false;
 }
 
-const bool RosManager::getRosFlags()
+bool RosManager::getRosFlags()
 {
   auto m_flagConsumer = m_shmemUtil->getShmem<shmem::CBConsumer<RosFlags>>(ConsProdNames::c_RosFlags);
   if(!m_flagConsumer) return false;
@@ -278,7 +352,7 @@ void RosManager::pausePoseSend(const bool pause)
   }
 }
 
-const bool RosManager::incompatibleProcesses(const processId & t_processId)
+bool RosManager::incompatibleProcesses(const processId & t_processId)
 {
   //check if starting localization or mapping
   if(t_processId == processId::localization && isProcessRunning(processId::mapping))
@@ -363,7 +437,7 @@ void RosManager::startProcess(const processId & t_processId)
   }
 }
 
-const bool RosManager::waitForOtherProcess(const processId & t_processId)
+bool RosManager::waitForOtherProcess(const processId & t_processId)
 {
   if(t_processId == processId::localization && m_resetOdomFlag)
   {
@@ -412,7 +486,7 @@ void RosManager::sendStop(const processId & t_processId)
   }
 }
 
-const bool RosManager::isProcessRunning(const processId & t_processId)
+bool RosManager::isProcessRunning(const processId & t_processId)
 {
   //check if valid pid
   if(m_pidMap[t_processId] > 0)
@@ -465,6 +539,10 @@ void RosManager::saveMap()
         mapYamlPath += ".yaml";
         m_latestMapPath = mapYamlPath;
         RCLCPP_INFO(this->get_logger(), "Map saved to %s", m_latestMapPath.c_str());
+        
+        //remove last loaded server map
+        if(std::filesystem::exists(m_slamMapsDir / "server_map"))
+          std::filesystem::remove_all(m_slamMapsDir / "server_map");
 
         m_saveMapFlag = false;
       }
@@ -511,7 +589,7 @@ std::string RosManager::createMapSavePath()
   if(!std::filesystem::create_directory(saveDir))
   {
     RCLCPP_FATAL(this->get_logger(), "Couldn't create map save directory: %s", saveDir.c_str());
-    throw -1;
+    exit(EXIT_FAILURE);
   }
 
   std::ofstream fileWriter(numFilePath);
@@ -530,91 +608,49 @@ std::string RosManager::createMapSavePath()
 
 std::filesystem::path RosManager::getLatestMapYamlPath()
 {
-  std::filesystem::path tmpSavePath{m_slamMapsDir};
-  tmpSavePath.append("tmp");
+  std::filesystem::path serverMapPath{m_slamMapsDir / "server_map"};
+  std::filesystem::path numFilePath{m_slamMapsDir / "num.txt"};
 
-  if(!std::filesystem::exists(m_slamMapsDir))
-  {
-    if(!std::filesystem::create_directories(m_slamMapsDir))
-    {
-      RCLCPP_FATAL(this->get_logger(), "Couldn't create map save directory: %s", m_slamMapsDir.c_str());
-      throw -1;
-    }
-    if(!std::filesystem::create_directory(tmpSavePath))
-    {
-      RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", tmpSavePath.c_str());
-      throw -1;
-    }
-  }
-
-  if(!std::filesystem::exists(tmpSavePath))
-  {
-    if(!std::filesystem::create_directory(tmpSavePath))
-    {
-      RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", tmpSavePath.c_str());
-      throw -1;
-    }
-  }
-
-  std::filesystem::path serverMapPath{m_slamMapsDir};
-  serverMapPath.append("server_map");
-  if(!std::filesystem::exists(serverMapPath))
-  {
-    if(!std::filesystem::create_directory(serverMapPath))
-    {
-      RCLCPP_FATAL(this->get_logger(), "Couldn't create tmp map save directory: %s", serverMapPath.c_str());
-      throw -1;
-    }
-  }
-  else
+  if(std::filesystem::exists(serverMapPath))
   {
     serverMapPath.append("map.yaml");
     if(std::filesystem::exists(serverMapPath))
       return serverMapPath;
   }
-
-  std::filesystem::path numFilePath = m_slamMapsDir;
-  numFilePath.append("num.txt");
-
-  if(!std::filesystem::exists(numFilePath))
+  else if(std::filesystem::exists(numFilePath))
   {
-     std::ofstream fileWriter(numFilePath);
-    if(!fileWriter.is_open())
+    std::ifstream fileReader(numFilePath);
+    if(!fileReader.is_open())
     {
-      RCLCPP_FATAL(this->get_logger(), "Couldn't open file %s for write", numFilePath.c_str());
-      throw -1;
+      RCLCPP_FATAL(this->get_logger(), 
+        "Couldn't open file %s",
+        numFilePath.c_str());
+      exit(EXIT_FAILURE);
     }
-    fileWriter << 0;
-    fileWriter.flush();
-    fileWriter.close();
-  }
 
-  std::ifstream fileReader(numFilePath);
-  if(!fileReader.is_open())
+    std::string num;
+    fileReader >> num;
+    fileReader.clear();
+    fileReader.close();
+
+    std::filesystem::path mapYamlPath{m_slamMapsDir / num / "map.yaml"};
+    if(!std::filesystem::exists(mapYamlPath))
+    {
+      RCLCPP_WARN(this->get_logger(), 
+        "Map yaml file:\"%s\" does not exist!",
+        mapYamlPath.c_str());
+      return "";
+    }
+
+    return mapYamlPath;
+  }
+  else
   {
     RCLCPP_FATAL(this->get_logger(), 
-      "Couldn't open file %s",
-       numFilePath.c_str());
-    throw -1;
+        "The file \"%s\" has been deleted durring runtime",
+        numFilePath.c_str());
+      exit(EXIT_FAILURE);
   }
-
-  int num;
-  fileReader >> num;
-  fileReader.clear();
-  fileReader.close();
-
-  std::filesystem::path mapYamlPath{m_slamMapsDir};
-  mapYamlPath.append(std::to_string(num));
-  mapYamlPath.append("map.yaml");
-  if(!std::filesystem::exists(mapYamlPath))
-  {
-    RCLCPP_WARN(this->get_logger(), 
-      "Map yaml file:\"%s\" does not exist!",
-       mapYamlPath.c_str());
-    return "";
-  }
-
-  return mapYamlPath;
 }
 
 void RosManager::resetOdom()

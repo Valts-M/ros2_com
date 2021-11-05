@@ -49,18 +49,12 @@ private:
    */
   rclcpp::Service<ros2_com::srv::SaveMap>::SharedPtr m_saveMapService{nullptr};
 
-  rclcpp::Service<ros2_com::srv::CreateMapImg>::SharedPtr m_createMapImgService{nullptr};
-
   /**
    * @brief Shmem util
    * 
    */
   std::unique_ptr<ShmemUtility> m_shmemUtil;
   
-  inline static constexpr double m_occupiedThreashold{65.0};
-
-  inline static constexpr double m_freeThreashold{25.0};
-
   double m_lidarOffset{-9999999.0};
 
   /**
@@ -83,13 +77,6 @@ private:
 
   cv::Mat m_mapImage;
 
-  void updateImage(const size_t& i);
-
-  bool saveMapYamlFile(const std::string& t_path);
-
-  void bin2img(const std::shared_ptr<ros2_com::srv::CreateMapImg::Request> request,
-          std::shared_ptr<ros2_com::srv::CreateMapImg::Response> response);
-
   /**
    * @brief Pointer to the map message
    * 
@@ -104,8 +91,6 @@ private:
   void topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
 
   bool m_savingMap{false};
-
-  bool m_loadedMap{false};
 };
 }
 #endif //MAP_SAVER_H

@@ -3,8 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/install/include",
                 "/opt/ros/foxy/include/**",
                 "/opt/ros/foxy/include",
                 "/vcpkg/installed/arm64-linux/include",

@@ -66,7 +66,7 @@ def generate_launch_description():
     return launch.LaunchDescription([      
     launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='false',
                                         description='Flag to enable use_sim_time'),                               
-    # map_saver_server,
+    map_saver_server,
     slam_toolbox_node,
     event_hand,
     ])
