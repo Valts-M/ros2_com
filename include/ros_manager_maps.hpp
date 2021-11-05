@@ -40,8 +40,8 @@ std::map<zbot::processId, int8_t> m_stopCountMap
 
 std::map<zbot::processId, bool> m_flagMap
 {
-  {odom, false},
-  {localization, false},
+  {odom, true},
+  {localization, true},
   {mapping, false},
   {logging, false}
 };

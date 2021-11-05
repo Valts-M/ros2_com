@@ -9,7 +9,8 @@
                 "/opt/ros/foxy/include",
                 "/vcpkg/installed/arm64-linux/include",
                 "/code/RobotV3/MainCore/include",
-                "/usr/include/pcl-1.10"
+                "/usr/include/pcl-1.10",
+                "/usr/include/opencv4"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

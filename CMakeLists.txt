@@ -51,6 +51,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SendInitialPose.srv"
   "srv/SaveInitialPose.srv"
   "srv/PausePoseSend.srv"
+  "srv/CreateMapImg.srv"
   DEPENDENCIES nav_msgs
  )
 

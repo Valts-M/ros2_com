@@ -11,6 +11,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "ros2_com/srv/save_map.hpp"
+#include "ros2_com/srv/create_map_img.hpp"
 
 #include "shmem_util.hpp"
 #include <opencv2/opencv.hpp>
@@ -47,6 +48,9 @@ private:
    * 
    */
   rclcpp::Service<ros2_com::srv::SaveMap>::SharedPtr m_saveMapService{nullptr};
+
+  rclcpp::Service<ros2_com::srv::CreateMapImg>::SharedPtr m_createMapImgService{nullptr};
+
   /**
    * @brief Shmem util
    * 
@@ -82,6 +86,9 @@ private:
   void updateImage(const size_t& i);
 
   bool saveMapYamlFile(const std::string& t_path);
+
+  void bin2img(const std::shared_ptr<ros2_com::srv::CreateMapImg::Request> request,
+          std::shared_ptr<ros2_com::srv::CreateMapImg::Response> response);
 
   /**
    * @brief Pointer to the map message

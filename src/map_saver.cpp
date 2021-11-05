@@ -22,8 +22,11 @@ MapSaver::MapSaver() : Node("map_saver_server")
     ("map", 10, std::bind(&MapSaver::topicCallback, this, _1));
   m_saveMapService = this->create_service<ros2_com::srv::SaveMap>
     ("map_saver/save_map", std::bind(&MapSaver::saveMapHandler, this, _1, _2));
+  m_createMapImgService = this->create_service<ros2_com::srv::CreateMapImg>
+    ("map_saver/create_map_img", std::bind(&MapSaver::bin2img, this, _1, _2));
   m_shmemUtil = std::make_unique<ShmemUtility>(std::vector<ConsProdNames>{ConsProdNames::p_MapPath});
   m_shmemUtil->start();
+  m_map = std::make_shared<nav_msgs::msg::OccupancyGrid>();
 }
 
 MapSaver::~MapSaver()
@@ -48,7 +51,7 @@ void MapSaver::saveMapHandler(const std::shared_ptr<ros2_com::srv::SaveMap::Requ
           std::shared_ptr<ros2_com::srv::SaveMap::Response> response)
 {
   response->success = saveMap(request->filename, true);
-  m_savingMap = false;
+  // m_savingMap = false;
 }
 
 int MapSaver::saveMap(const std::string &path, const bool saveImage)
@@ -151,26 +154,82 @@ int MapSaver::saveMap(const std::string &path, const bool saveImage)
     return -2;
   }
   
-  m_savingMap = false;
+  // m_savingMap = false;
   return 1;
 }
 
 void MapSaver::updateImage(const size_t& i)
 {
-    const size_t row = m_map->info.height - i / m_map->info.width - 1;
-    const size_t col = i % m_map->info.width;
-    
-    if (m_map->data[i] >= 0 && m_map->data[i] <= 100) 
+  const size_t row = m_map->info.height - i / m_map->info.width - 1;
+  const size_t col = i % m_map->info.width;
+  const int8_t map_cell = m_map->data[i];
+  // if(map_cell == 0)
+  //   RCLCPP_INFO(this->get_logger(), "%d %d %d", x ,y ,map_cell);
+  
+  if (map_cell >= 0 && map_cell <= 100) 
+  {
+    if (map_cell <= m_freeThreashold) 
     {
-      if (m_map->data[i] <= m_freeThreashold) 
-      {
-        m_mapImage.at<unsigned char>(row, col) = 254;
-      } 
-      else if (m_map->data[i] >= m_occupiedThreashold) 
-      {
-        m_mapImage.at<unsigned char>(row, col) = 0;
-      }
+      m_mapImage.at<unsigned char>(row, col) = 254;
+    } 
+    else if (map_cell >= m_occupiedThreashold) 
+    {
+      m_mapImage.at<unsigned char>(row, col) = 0;
     }
+  }
+}
+
+void MapSaver::bin2img(const std::shared_ptr<ros2_com::srv::CreateMapImg::Request> request,
+          std::shared_ptr<ros2_com::srv::CreateMapImg::Response> response)
+{
+  m_savingMap = true;
+  std::ifstream binReader(request->path, std::ios::in | std::ios::binary);
+  if(!binReader) 
+  {
+    RCLCPP_ERROR(
+      this->get_logger(),
+      "Failed to read %s",
+      request->path.c_str());
+      response->success=false;
+      return;
+  }
+
+  //read map info
+  binReader.read((char *) &m_map->info, sizeof(m_map->info));
+  m_map->info.origin.position.x += m_lidarOffset;
+  m_map->data.resize(m_map->info.height * m_map->info.width);
+
+  m_mapImage = cv::Mat(m_map->info.height, m_map->info.width, CV_8U, 205);
+
+  for(size_t i = 0U; i < m_map->info.height * m_map->info.width; ++i)
+  {
+    binReader.read((char *) &m_map->data[i], sizeof(int8_t));
+    try
+    {
+      updateImage(i);
+    }
+    catch(const std::exception& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), e.what());
+      response->success = false;
+      return;
+    }
+  }
+
+  binReader.close();
+  if(binReader.good())
+    RCLCPP_INFO(this->get_logger(), "Map bin file read successfully");
+  else
+  {
+    RCLCPP_ERROR(this->get_logger(), "Error while reading bin file");
+    response->success = false;
+    return;
+  }
+
+  RCLCPP_INFO(this->get_logger(), "Saving map as /home/RobotV3/slam_maps/server_map/map.pgm");
+  saveMapYamlFile("/home/RobotV3/slam_maps/server_map/map");
+  cv::imwrite("/home/RobotV3/slam_maps/server_map/map.pgm", m_mapImage);
+  response->success = true;
 }
 
 bool MapSaver::saveMapYamlFile(const std::string& t_path)
@@ -188,9 +247,9 @@ bool MapSaver::saveMapYamlFile(const std::string& t_path)
   e << YAML::BeginMap;
   e << YAML::Key << "image" << YAML::Value << t_path + ".pgm";
   e << YAML::Key << "mode" << YAML::Value << "trinary";
-  e << YAML::Key << "resolution" << YAML::Value << m_map->info.resolution;
-  e << YAML::Key << "origin" << YAML::Flow << YAML::BeginSeq << m_map->info.origin.position.x <<
-    m_map->info.origin.position.y << yaw << YAML::EndSeq;
+  e << YAML::Key << "resolution" << YAML::Value <<  m_map->info.resolution;
+  e << YAML::Key << "origin" << YAML::Flow << YAML::BeginSeq <<  m_map->info.origin.position.x <<
+     m_map->info.origin.position.y << yaw << YAML::EndSeq;
   e << YAML::Key << "negate" << YAML::Value << 0;
   e << YAML::Key << "occupied_thresh" << YAML::Value << m_occupiedThreashold/100;
   e << YAML::Key << "free_thresh" << YAML::Value << m_freeThreashold/100;
