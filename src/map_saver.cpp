@@ -34,13 +34,14 @@ MapSaver::~MapSaver()
 
 void MapSaver::topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
-  if(!m_savingMap) //check if we're not in the progress of saving a map
+  if(!m_savingMap && !m_loadedMap) //check if we're not in the progress of saving a map
   {
     m_map = msg;
     saveMap("/home/RobotV3/slam_maps/tmp/map", false);
     // saveMap("/workspaces/RobotV3/ros/src/ros2_com/test", true);
   }
   m_savingMap = false; //should be done by next topic callback
+  m_loadedMap = false;
 }
 
 void MapSaver::saveMapHandler(const std::shared_ptr<ros2_com::srv::SaveMap::Request> request,
@@ -158,17 +159,14 @@ void MapSaver::updateImage(const size_t& i)
 {
     const size_t row = m_map->info.height - i / m_map->info.width - 1;
     const size_t col = i % m_map->info.width;
-    const int8_t map_cell = m_map->data[i];
-    // if(map_cell == 0)
-    //   RCLCPP_INFO(this->get_logger(), "%d %d %d", x ,y ,map_cell);
     
-    if (map_cell >= 0 && map_cell <= 100) 
+    if (m_map->data[i] >= 0 && m_map->data[i] <= 100) 
     {
-      if (map_cell <= m_freeThreashold) 
+      if (m_map->data[i] <= m_freeThreashold) 
       {
         m_mapImage.at<unsigned char>(row, col) = 254;
       } 
-      else if (map_cell >= m_occupiedThreashold) 
+      else if (m_map->data[i] >= m_occupiedThreashold) 
       {
         m_mapImage.at<unsigned char>(row, col) = 0;
       }
@@ -215,7 +213,7 @@ bool MapSaver::saveMapYamlFile(const std::string& t_path)
     else
       return false;
   }
-  catch(std::exception e)
+  catch(const std::exception& e)
   {
     RCLCPP_ERROR(this->get_logger(), "Error while writing map metadata to yaml file: %s", e.what());
     return false;

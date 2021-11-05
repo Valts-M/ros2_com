@@ -97,6 +97,8 @@ private:
   void topicCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
 
   bool m_savingMap{false};
+
+  bool m_loadedMap{false};
 };
 }
 #endif //MAP_SAVER_H
