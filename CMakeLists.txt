@@ -166,7 +166,7 @@ target_include_directories(map_loader PUBLIC
 target_link_libraries(map_loader shmem_util ${YAML_CPP_LIBRARIES})
 rosidl_target_interfaces(map_loader ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-install(TARGETS map_saver
+install(TARGETS map_loader
   DESTINATION lib/${PROJECT_NAME})
 
 install(TARGETS ${libraries}

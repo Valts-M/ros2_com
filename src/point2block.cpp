@@ -152,8 +152,8 @@ void Point2Block::pcTopicCallback(const sensor_msgs::msg::PointCloud2::SharedPtr
     return;
   }
 
-  cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
-  cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
+  // cv::imwrite("/code/RobotV3/ros/src/ros2_com/obstacles.png", m_obstacleMap);
+  // cv::imwrite("/code/RobotV3/ros/src/ros2_com/map.png", m_clearMap);
     
   m_clearMap.setTo(127);
   m_obstacleMap.setTo(0U);
