@@ -80,11 +80,13 @@ private:
    * 
    */
   RobotPose m_odomPose;
-    /**
+
+  /**
    * @brief Stores the map->laser_sensor_frame pose
    * 
    */
   RobotPose m_mapPose;
+
   /**
    * @brief Shmem utility
    * 

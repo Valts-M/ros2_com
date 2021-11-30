@@ -1,0 +1,7 @@
+path_publisher:
+  ros__parameters:
+    publish_lidar_map_path: true
+    publish_robot_map_path: false
+    publish_lidar_odom_path: true
+    publish_robot_odom_path: false
+    

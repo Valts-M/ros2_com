@@ -87,6 +87,13 @@ def generate_launch_description():
         name='clock_server'
     )
 
+    path_publisher = launch_ros.actions.Node(
+        package='ros2_com',
+        executable='path_publisher',
+        name='path_publisher',
+        parameters=[os.path.join(config_path, 'config', 'path_pub_config.yaml')]
+    )
+
     velodyne_driver_node = launch_ros.actions.Node(package='velodyne_driver',
         executable='velodyne_driver_node',
         output='screen',
@@ -201,6 +208,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     ld.add_action(urdf_model)
+    ld.add_action(path_publisher)
     ld.add_action(use_sim_time_arg)
     ld.add_action(clock_server)
     ld.add_action(map_loader)

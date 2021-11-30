@@ -11,7 +11,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "nav_msgs/msg/path.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
@@ -83,20 +82,11 @@ private:
   */
   void updateOdom();
 
-  /*!
-    * @brief Updates the travelled path in the odom frame
-  */
-  void updatePath();
 
   /*!
     * @brief Shared pointer to the ros odometry message publisher
   */
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odomPublisher{nullptr};
-
-  /*!
-    * @brief Shared pointer to the ros path message publisher
-  */
-  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr m_pathPublisher{nullptr};
 
   /*!
     * @brief Service for pausing the publishing of odometry messages
@@ -148,31 +138,10 @@ private:
   */
   nav_msgs::msg::Odometry m_odomMsg{};
 
-  /*!
-    * @brief Stores the ros2 odometry mesage
-    * @details http://docs.ros.org/en/api/nav_msgs/html/msg/Odometry.html
-  */
-  nav_msgs::msg::Path m_pathMsg{};
-
   /**
     * @brief Stores the timestamp
   */
   double m_ts{0.0};
-
-  /**
-    * @brief Stores the X position of the previous message (m)
-  */
-  double m_previousX{0.0};
-
-  /**
-    * @brief Stores the Y position of the previous message (m)
-  */
-  double m_previousY{0.0};
-
-  /**
-    * @brief Stores the angle from the previous message (rad)
-  */
-  double m_previousAngle{0.0};
 
   /**
     * @brief Timer for periodic message publishing
