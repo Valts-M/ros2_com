@@ -92,15 +92,19 @@ namespace ros2_com
       m_paths[i].prevTf = m_paths[i].currTf;
       m_paths[i].path.header = m_paths[i].currTf.header;
       m_paths[i].path.poses.push_back(toPose(m_paths[i].currTf));
+      m_paths[i].pathPublisher->publish(m_paths[i].path);
+
     }
     else
     {
       if((m_paths[i].currTf.transform.translation - m_paths[i].prevTf.transform.translation) > m_pathUpdateDist)
+      {
         m_paths[i].prevTf = m_paths[i].currTf;
         m_paths[i].path.header = m_paths[i].currTf.header;
         m_paths[i].path.poses.push_back(toPose(m_paths[i].currTf));
+        m_paths[i].pathPublisher->publish(m_paths[i].path);
+      }
     }
-    m_paths[i].pathPublisher->publish(m_paths[i].path);
   }
 
   geometry_msgs::msg::PoseStamped PathPublisher::toPose(geometry_msgs::msg::TransformStamped& tf)
