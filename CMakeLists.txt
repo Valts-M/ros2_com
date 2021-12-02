@@ -36,6 +36,7 @@ find_package(rosgraph_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_eigen REQUIRED)
 find_package(Boost REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(PCL REQUIRED)
@@ -87,6 +88,17 @@ target_include_directories(point2block PUBLIC
 target_link_libraries(point2block shmem_util ${PCL_LIBRARIES} ${OpenCV_LIBS})
 
 install(TARGETS point2block
+DESTINATION lib/${PROJECT_NAME})
+
+add_executable(point_cloud_stitcher src/point_cloud_stitcher.cpp)
+ament_target_dependencies(point_cloud_stitcher rclcpp tf2 tf2_eigen tf2_ros PCL sensor_msgs)
+target_include_directories(point_cloud_stitcher PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${PCL_INCLUDE_DIRS})
+target_link_libraries(point_cloud_stitcher ${PCL_LIBRARIES})
+
+install(TARGETS point_cloud_stitcher
 DESTINATION lib/${PROJECT_NAME})
 
 add_executable(tf_filter src/tf_filter.cpp)
