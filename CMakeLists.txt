@@ -166,6 +166,9 @@ target_include_directories(map_saver PUBLIC
 target_link_libraries(map_saver shmem_util ${YAML_CPP_LIBRARIES})
 rosidl_target_interfaces(map_saver ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
+install(TARGETS map_saver
+  DESTINATION lib/${PROJECT_NAME})
+
 add_executable(map_loader src/map_loader.cpp)
 ament_target_dependencies(map_loader rclcpp nav_msgs OpenCV yaml-cpp) 
 target_include_directories(map_loader PUBLIC
