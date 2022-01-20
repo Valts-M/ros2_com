@@ -2,6 +2,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/duration.hpp"
 #include <signal.h>
+#include <filesystem>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -260,8 +261,17 @@ void RosManager::setStateFlag(const processId & t_processId)
       //if localization set to active, turn off mapping
       if(t_processId == processId::localization && !isProcessRunning(processId::localization))
       {
-        turnOffMapping();
-        m_resetOdomFlag = true;
+        //if map path is empty then we can't start localization
+        if(m_latestMapPath.empty())
+        {
+          RCLCPP_ERROR(this->get_logger(), "Can't start localization, no valid map!");
+          m_flagMap[t_processId] = false;
+        }
+        else
+        {
+          turnOffMapping();
+          m_resetOdomFlag = true;
+        }
         // m_sendInitialPose = true;
       }
       //if mapping set to active, turn off localization, reset odometry
@@ -606,6 +616,13 @@ std::string RosManager::createMapSavePath()
   return saveDir;
 }
 
+bool RosManager::checkMapFiles(std::filesystem::path& t_path)
+{
+  return (std::filesystem::exists(t_path / "map.yaml") 
+      && std::filesystem::exists(t_path / "map.pgm") 
+      && std::filesystem::exists(t_path / "map.bin"));
+}
+
 std::filesystem::path RosManager::getLatestMapYamlPath()
 {
   std::filesystem::path serverMapPath{m_slamMapsDir / "server_map"};
@@ -613,9 +630,8 @@ std::filesystem::path RosManager::getLatestMapYamlPath()
 
   if(std::filesystem::exists(serverMapPath))
   {
-    serverMapPath.append("map.yaml");
-    if(std::filesystem::exists(serverMapPath))
-      return serverMapPath;
+    if(checkMapFiles(serverMapPath))
+        return serverMapPath / "map.yaml";
   }
   else if(std::filesystem::exists(numFilePath))
   {
@@ -633,16 +649,16 @@ std::filesystem::path RosManager::getLatestMapYamlPath()
     fileReader.clear();
     fileReader.close();
 
-    std::filesystem::path mapYamlPath{m_slamMapsDir / num / "map.yaml"};
-    if(!std::filesystem::exists(mapYamlPath))
+    std::filesystem::path mapPath{m_slamMapsDir / num};
+    if(checkMapFiles(mapPath))
     {
       RCLCPP_WARN(this->get_logger(), 
-        "Map yaml file:\"%s\" does not exist!",
-        mapYamlPath.c_str());
+        "One or more map files missing at :\"%s\"!",
+        mapPath.c_str());
       return "";
     }
 
-    return mapYamlPath;
+    return mapPath / "map.yaml";
   }
   else
   {

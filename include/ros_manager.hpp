@@ -180,6 +180,8 @@ private:
 
   void createServerMapDir();
 
+  bool checkMapFiles(std::filesystem::path& t_path);
+
   /**
    * @brief Sets the appropriate flags depending on what process gets turned on or off
    * 
