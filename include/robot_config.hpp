@@ -12,7 +12,8 @@ namespace ros2_com
     double leftEncScale;
     double rightEncScale;
     double leftGyroScale;
-    double RightGyroScale;
+    double rightGyroScale;
+    bool robotCalibration;
   };
 }
 

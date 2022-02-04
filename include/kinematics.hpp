@@ -35,17 +35,25 @@ public:
    * @param output Odometry message to update
    */
   void calcPosAndVelocity(const zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output);
-  double m_yaw{0.0}; //rad
-  int leftEncTicCount{0};
-  int rightEncTicCount{0};
-  double gyroTicCount{0.0};
+
+  double getYaw();
+
+  void setYaw(const double value);
+
+  void resetTicCounts();
 
 private:
+
+  double m_yaw{0.0}; //rad
+  int m_leftEncTicCount{0};
+  int m_rightEncTicCount{0};
+  int m_gyroTicCount{0};
 
   const double m_leftEncScale;
   const double m_rightEncScale;
   const double m_rightGyroScale;
   const double m_leftGyroScale;
+  const bool m_robotCalibration;
   int m_noMovementCount{0};
 
   boost::circular_buffer<int> gyroBuf{40};

@@ -44,15 +44,17 @@ RobotConfig OdometryPublisher::getRobotConfig()
   this->declare_parameter("right_enc_scale");
   this->declare_parameter("left_gyro_scale");
   this->declare_parameter("right_gyro_scale");
+  this->declare_parameter("robot_calibration", false);
 
   RobotConfig config{};
   config.leftEncScale = get_parameter("left_enc_scale").as_double();
   config.rightEncScale = get_parameter("right_enc_scale").as_double();
   config.leftGyroScale = get_parameter("left_gyro_scale").as_double();
-  config.RightGyroScale = get_parameter("right_gyro_scale").as_double();
+  config.rightGyroScale = get_parameter("right_gyro_scale").as_double();
+  config.robotCalibration = get_parameter("robot_calibration").as_bool();
 
-  RCLCPP_DEBUG(this->get_logger(), "le: %f, re: %f, lg: %f, rg: %f",
-   config.leftEncScale, config.rightEncScale, config.leftGyroScale, config.RightGyroScale);
+  RCLCPP_DEBUG(this->get_logger(), "le: %f, re: %f, lg: %f, rg: %f, rc:%i",
+   config.leftEncScale, config.rightEncScale, config.leftGyroScale, config.rightGyroScale, config.robotCalibration);
 
   return config;
 }
@@ -98,11 +100,13 @@ void OdometryPublisher::resetOdom(const std::shared_ptr<ros2_com::srv::ResetOdom
 {
   m_odomMsg.pose.pose.position.x = 0.0;
   m_odomMsg.pose.pose.position.y = 0.0;
-  m_kinematics.m_yaw = 0.0;
+  m_kinematics.setYaw(0.0);
   m_odomMsg.pose.pose.orientation = geometry_msgs::msg::Quaternion();
   m_tfMsg.transform.rotation = m_odomMsg.pose.pose.orientation;
   m_tfMsg.transform.translation.x = m_odomMsg.pose.pose.position.x;
   m_tfMsg.transform.translation.y = m_odomMsg.pose.pose.position.y;
+
+  m_kinematics.resetTicCounts();
 }
 
 void OdometryPublisher::updateOdom()
@@ -132,10 +136,8 @@ void OdometryPublisher::updateHandler()
       "x=%f, y=%f, yaw=%f", 
       m_odomMsg.pose.pose.position.x, 
       m_odomMsg.pose.pose.position.y, 
-      m_kinematics.m_yaw);
+      m_kinematics.getYaw());
   }
-  RCLCPP_DEBUG(this->get_logger(), "leftEnc=%d; rightEnc=%d; gyro=%f", 
-    m_kinematics.leftEncTicCount, m_kinematics.rightEncTicCount, m_kinematics.gyroTicCount);
 }
 
 bool OdometryPublisher::getPoseAndVelocity()

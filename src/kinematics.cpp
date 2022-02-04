@@ -11,7 +11,25 @@ namespace ros2_com
     m_leftEncScale(config.leftEncScale), 
     m_rightEncScale(config.rightEncScale), 
     m_leftGyroScale(config.leftGyroScale), 
-    m_rightGyroScale(config.RightGyroScale){}
+    m_rightGyroScale(config.rightGyroScale),
+    m_robotCalibration(config.robotCalibration){}
+
+  double Kinematics::getYaw()
+  {
+    return m_yaw;
+  }
+
+  void Kinematics::setYaw(const double value)
+  {
+    m_yaw = value;
+  }
+
+  void Kinematics::resetTicCounts()
+  {
+    m_leftEncTicCount = 0;
+    m_rightEncTicCount = 0;
+    m_gyroTicCount = 0;
+  }
 
   void Kinematics::calcPosAndVelocity(const zbot::MsgRawStatus& input, nav_msgs::msg::Odometry& output)
   {
@@ -20,7 +38,7 @@ namespace ros2_com
     const double distanceTraveled{(leftDistance + rightDistance) / 2};
 
     //const double deltaAngle{(rightDistance - leftDistance) / m_wheelDistance};
-    const double trueGyroZ = input.gyroDelta - m_gyroBias;
+    const int trueGyroZ = input.gyroDelta - m_gyroBias;
     const double deltaAngle{ trueGyroZ < 0 ? trueGyroZ * m_leftGyroScale : trueGyroZ * m_rightGyroScale};
 
     //if moving update message
@@ -29,11 +47,6 @@ namespace ros2_com
       m_yaw += deltaAngle;
       output.pose.pose.position.x += distanceTraveled * cos(m_yaw);
       output.pose.pose.position.y += distanceTraveled * sin(m_yaw);
-
-      //calibration
-      leftEncTicCount += input.encoders[0];
-      rightEncTicCount += input.encoders[1];
-      gyroTicCount += trueGyroZ;
 
       //check if orientation is within bounds
       if( m_yaw >= M_PI)
@@ -47,6 +60,17 @@ namespace ros2_com
 
       output.twist.twist.linear.x = distanceTraveled / input.time;
       output.twist.twist.angular.z = deltaAngle / input.time;
+
+      if(m_robotCalibration)
+      {
+        m_gyroTicCount += input.gyroDelta;
+        m_leftEncTicCount += input.encoders[0];
+        m_rightEncTicCount += input.encoders[1];
+
+        std::cout << "LeftEncTicCount = " << m_leftEncTicCount
+                  << "RightEncTicCount = " << m_rightEncTicCount
+                  << "GyroTicSum = " << m_gyroTicCount;
+      }
     }
     else //if not moving recalculate gyro bias
     {
