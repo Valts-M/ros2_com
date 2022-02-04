@@ -650,7 +650,7 @@ std::filesystem::path RosManager::getLatestMapYamlPath()
     fileReader.close();
 
     std::filesystem::path mapPath{m_slamMapsDir / num};
-    if(checkMapFiles(mapPath))
+    if(!checkMapFiles(mapPath))
     {
       RCLCPP_WARN(this->get_logger(), 
         "One or more map files missing at :\"%s\"!",
