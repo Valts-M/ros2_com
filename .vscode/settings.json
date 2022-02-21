@@ -146,5 +146,6 @@
         ".vscode",
         ".vscode-insiders",
         ".devcontainer/devcontainer.json"
-    ]
+    ],
+    "cmake.configureOnOpen": true
 }

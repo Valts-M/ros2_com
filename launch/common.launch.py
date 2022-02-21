@@ -78,7 +78,7 @@ def generate_launch_description():
         package='joint_state_publisher',
         executable='joint_state_publisher',
         name='joint_state_publisher',
-        parameters=[{'use_sim_time': use_sim_time}],
+        parameters=[{'use_sim_time': use_sim_time}]
     )
 
     clock_server = launch_ros.actions.Node(
@@ -94,19 +94,22 @@ def generate_launch_description():
         parameters=[os.path.join(config_path, 'config', 'path_pub_config.yaml')]
     )
 
-    velodyne_driver_node = launch_ros.actions.Node(package='velodyne_driver',
+    velodyne_driver_node = launch_ros.actions.Node(
+        package='velodyne_driver',
         executable='velodyne_driver_node',
         output='screen',
         parameters=[lidar_config],
     )
 
-    velodyne_convert_node = launch_ros.actions.Node(package='velodyne_pointcloud',
+    velodyne_convert_node = launch_ros.actions.Node(
+        package='velodyne_pointcloud',
         executable='velodyne_convert_node',
         output='screen',
         parameters=[os.path.join(config_path, 'config', 'velodyne_converter_config.yaml')]
     )
 
-    velodyne_laserscan_node = launch_ros.actions.Node(package='velodyne_laserscan',
+    velodyne_laserscan_node = launch_ros.actions.Node(
+        package='velodyne_laserscan',
         executable='velodyne_laserscan_node',
         output='screen',
         parameters=[os.path.join(config_path, 'config', 'velodyne_laserscan_config.yaml')]
@@ -122,15 +125,16 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', 'INFO'],
     )
 
-    ouster_node = LifecycleNode(package='ros2_ouster',
-                                executable='ouster_driver',
-                                name="ouster_driver",
-                                output='screen',
-                                emulate_tty=True,
-                                parameters=[lidar_config],
-                                arguments=['--ros-args', '--log-level', 'INFO'],
-                                namespace='/',
-                                )
+    ouster_node = LifecycleNode(
+        package='ros2_ouster',
+        executable='ouster_driver',
+        name="ouster_driver",
+        output='screen',
+        emulate_tty=True,
+        parameters=[lidar_config],
+        arguments=['--ros-args', '--log-level', 'INFO'],
+        namespace='/',
+    )
 
     configure_event = EmitEvent(
         event=ChangeState(

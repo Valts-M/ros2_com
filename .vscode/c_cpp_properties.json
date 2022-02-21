@@ -4,19 +4,22 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/install/include",
+                "${workspaceFolder}/install/**",
                 "/opt/ros/foxy/include/**",
                 "/opt/ros/foxy/include",
-                "/vcpkg/installed/arm64-linux/include",
+                "/vcpkg/installed/x64-linux/include",
                 "/code/RobotV3/MainCore/include",
                 "/usr/include/pcl-1.10",
-                "/usr/include/opencv4"
+                "/usr/include/opencv4",
+                "/opt/ros/foxy/include",
+                "/workspaces/RobotV3/ros/src/ros2_com/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
     "version": 4

@@ -19,7 +19,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 list(APPEND CMAKE_PREFIX_PATH 
-  "/vcpkg/installed/arm64-linux" 
+  "/vcpkg/installed/x64-linux" 
   "/opt/ros/foxy/opt/yaml_cpp_vendor")
 
 include_directories(${Boost_INCLUDE_DIR})
@@ -45,13 +45,13 @@ find_package(yaml-cpp REQUIRED)
 include_directories(include)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "srv/SaveMap.srv"
-  "srv/PauseOdom.srv"
-  "srv/ResetOdom.srv"
-  "srv/SendInitialPose.srv"
-  "srv/SaveInitialPose.srv"
-  "srv/PausePoseSend.srv"
-  "srv/CreateMapImg.srv"
+"srv/SaveMap.srv"
+"srv/PauseOdom.srv"
+"srv/ResetOdom.srv"
+"srv/SendInitialPose.srv"
+"srv/SaveInitialPose.srv"
+"srv/PausePoseSend.srv"
+"srv/CreateMapImg.srv"
   DEPENDENCIES nav_msgs
  )
 
@@ -98,15 +98,15 @@ target_include_directories(tf_filter PUBLIC
 install(TARGETS tf_filter
   DESTINATION lib/${PROJECT_NAME})
 
-add_executable(ros_manager src/ros_manager.cpp)
-ament_target_dependencies(ros_manager rclcpp)
-target_include_directories(ros_manager PUBLIC
+add_executable(slam_controller src/slam_controller.cpp)
+ament_target_dependencies(slam_controller rclcpp)
+target_include_directories(slam_controller PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(ros_manager shmem_util)
-rosidl_target_interfaces(ros_manager ${PROJECT_NAME} "rosidl_typesupport_cpp")
+target_link_libraries(slam_controller shmem_util)
+rosidl_target_interfaces(slam_controller ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-install(TARGETS ros_manager
+install(TARGETS slam_controller
   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(pose_listener src/pose_listener.cpp)

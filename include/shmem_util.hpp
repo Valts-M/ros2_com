@@ -54,7 +54,7 @@ private:
   inline static const MyConsProdDescriptions m_consProdDescriptions =
   {
       {static_cast<size_t>(ConsProdNames::c_MsgRawStatus), { shmem::createCBConsumer<MsgRawStatus>, ConsProdDescription("MsgRawStatus", "ShmemUtility")}},
-      {static_cast<size_t>(ConsProdNames::c_RosFlags), { shmem::createCBConsumer<RosFlags>, ConsProdDescription("RosFlags", "ShmemUtility")}},
+      {static_cast<size_t>(ConsProdNames::c_RosFlags), { shmem::createCBConsumer<SlamMode>, ConsProdDescription("RosFlags", "ShmemUtility")}},
       {static_cast<size_t>(ConsProdNames::c_ForcePoseROS), { shmem::createRawConsumer<ForcePose>, ConsProdDescription("ForcePoseROS", "ShmemUtility")}},
       {static_cast<size_t>(ConsProdNames::c_MapAndPose), { shmem::createRawConsumer<TextAndPose>, ConsProdDescription("MapAndPose", "ShmemUtility")}},
       {static_cast<size_t>(ConsProdNames::p_MapPath), { shmem::createRawProducer<TextualInfo>, ConsProdDescription("SlamMapPath")}},
