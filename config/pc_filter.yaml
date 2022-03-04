@@ -1,0 +1,9 @@
+pc_filter:
+  ros__parameters:
+    length: 2.0
+    width: 1.0
+    height: 5.0
+    centerX: 0.0
+    centerY: 0.0
+    centerZ: 0.0
+    

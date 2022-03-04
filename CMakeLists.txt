@@ -52,18 +52,16 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "srv/SaveInitialPose.srv"
 "srv/PausePoseSend.srv"
 "srv/CreateMapImg.srv"
-  DEPENDENCIES nav_msgs
- )
+DEPENDENCIES nav_msgs
+)
 
 ament_export_dependencies(rosidl_default_runtime)
 
-add_library(lidar_log_reader STATIC src/lidar_log_reader.cpp)
 add_library(kinematics STATIC src/kinematics.cpp)
 add_library(shmem_util STATIC src/shmem_util.cpp)
 ament_target_dependencies(kinematics sensor_msgs)
 
 set(libraries 
-    lidar_log_reader
     kinematics
     shmem_util)
 
@@ -89,6 +87,17 @@ target_link_libraries(point2block shmem_util ${PCL_LIBRARIES} ${OpenCV_LIBS})
 install(TARGETS point2block
 DESTINATION lib/${PROJECT_NAME})
 
+add_executable(pc_filter src/pc_filter.cpp)
+ament_target_dependencies(pc_filter rclcpp PCL sensor_msgs)
+target_include_directories(pc_filter PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${PCL_INCLUDE_DIRS})
+target_link_libraries(pc_filter ${PCL_LIBRARIES})
+
+install(TARGETS pc_filter
+DESTINATION lib/${PROJECT_NAME})
+
 add_executable(tf_filter src/tf_filter.cpp)
 ament_target_dependencies(tf_filter rclcpp tf2 tf2_ros geometry_msgs)
 target_include_directories(tf_filter PUBLIC
@@ -98,16 +107,16 @@ target_include_directories(tf_filter PUBLIC
 install(TARGETS tf_filter
   DESTINATION lib/${PROJECT_NAME})
 
-add_executable(slam_controller src/slam_controller.cpp)
-ament_target_dependencies(slam_controller rclcpp)
-target_include_directories(slam_controller PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_link_libraries(slam_controller shmem_util)
-rosidl_target_interfaces(slam_controller ${PROJECT_NAME} "rosidl_typesupport_cpp")
+# add_executable(slam_controller src/slam_controller.cpp)
+# ament_target_dependencies(slam_controller rclcpp)
+# target_include_directories(slam_controller PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
+# target_link_libraries(slam_controller shmem_util)
+# rosidl_target_interfaces(slam_controller ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-install(TARGETS slam_controller
-  DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS slam_controller
+#   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(pose_listener src/pose_listener.cpp)
 ament_target_dependencies(pose_listener rclcpp tf2 tf2_ros geometry_msgs)
@@ -120,33 +129,14 @@ rosidl_target_interfaces(pose_listener ${PROJECT_NAME} "rosidl_typesupport_cpp")
 install(TARGETS pose_listener
   DESTINATION lib/${PROJECT_NAME})
 
-add_executable(lidar_publisher src/lidar_publisher.cpp)
-ament_target_dependencies(lidar_publisher rclcpp sensor_msgs)
-target_include_directories(lidar_publisher PUBLIC
+add_executable(path_publisher src/path_publisher.cpp)
+ament_target_dependencies(path_publisher rclcpp nav_msgs tf2 tf2_ros)
+target_include_directories(path_publisher PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(lidar_publisher lidar_log_reader)
 
-install(TARGETS lidar_publisher
+install(TARGETS path_publisher
   DESTINATION lib/${PROJECT_NAME})
-
-  add_executable(path_publisher src/path_publisher.cpp)
-  ament_target_dependencies(path_publisher rclcpp nav_msgs tf2 tf2_ros)
-  target_include_directories(path_publisher PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-  
-  install(TARGETS path_publisher
-    DESTINATION lib/${PROJECT_NAME})
-
-# add_executable(minimal_publisher src/minimal_publisher.cpp)
-# ament_target_dependencies(minimal_publisher rclcpp std_msgs nav_msgs tf2_ros geometry_msgs)
-# target_include_directories(minimal_publisher PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   $<INSTALL_INTERFACE:include>)
-
-# install(TARGETS minimal_publisher
-#   DESTINATION lib/${PROJECT_NAME})
 
 add_executable(clock_server src/clock.cpp)
 ament_target_dependencies(clock_server rclcpp rosgraph_msgs)
